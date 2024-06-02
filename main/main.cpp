@@ -9,6 +9,6 @@ int main() {
 
 	LOG_TRACE("Testing the logger with a trace message");
 
-
+	std::cin.get();
 	return 0;
 }
