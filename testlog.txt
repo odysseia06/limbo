@@ -1,7 +1,0 @@
-*****ERROR******
-22:58:36
-Error Num: 1
-Error Desc: This is a test error
-Src File: C:\dev\limbo\main\main.cpp
-Line Number: 8
-***************

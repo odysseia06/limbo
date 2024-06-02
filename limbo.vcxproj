@@ -143,13 +143,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="include\ErrorLog.h" />
     <ClCompile Include="main\main.cpp" />
-    <ClCompile Include="src\ErrorLog.cpp" />
-    <ClCompile Include="src\LObject.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\LObject.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="docs\notes.txt" />
