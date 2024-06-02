@@ -22,4 +22,12 @@
   <ItemGroup>
     <Text Include="docs\notes.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\core\logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\typedefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
