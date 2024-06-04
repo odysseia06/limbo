@@ -2,7 +2,8 @@
 #include <string>
 #include <fstream>
 #include <iostream>
-#include <mutex>>
+#include <mutex>
+#include <filesystem>
 
 namespace Limbo {
 	enum class LogLevel {
@@ -82,7 +83,17 @@ namespace Limbo {
 			if (m_logFile.is_open()) {
 				m_logFile.close();
 			}
-			m_logFile.open(filename, std::ios::out || std::ios::app);
+			std::filesystem::path logFilePath = filename;
+			if (!std::filesystem::exists(logFilePath)) {
+				std::ofstream file(filename);
+				if (!file) {
+					std::cerr << "Failed to create log file: " << filename << std::endl;
+					return;
+				}
+				file.close();
+			}
+
+			m_logFile.open(filename, std::ios::out | std::ios::app);
 			if (!m_logFile) {
 				std::cerr << "Failed to open log file: " << filename << std::endl;
 			}
