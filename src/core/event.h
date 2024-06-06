@@ -60,7 +60,7 @@ namespace Limbo {
 		}
 		return os;
 	}
-#define EVENT_CLASS_TYPE(type) static EventType getStaticType() { return EventType::##type; } \
+#define EVENT_CLASS_TYPE(type) static EventType getStaticType() { return EventType::type; } \
 								virtual EventType getEventType() const override { return getStaticType(); } \
 								virtual const char* getEventName() const override { return #type; }
 #define EVENT_CLASS_CATEGORY(category) virtual EventCategory getCategoryFlags() const override { return category; }
@@ -257,6 +257,7 @@ namespace Limbo {
 				for (auto listener : it->second) {
 					event.m_handled = listener->onEvent(event);
 					if (event.isHandled()) {
+						LOG_TRACE("Event handled: " + event.toString());
 						break;
 					}
 				}

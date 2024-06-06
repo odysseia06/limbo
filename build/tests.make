@@ -19,7 +19,7 @@ endif
 # #############################################
 
 RESCOMP = windres
-INCLUDES += -I../src -I../vendor/googletest/googletest/include
+INCLUDES += -I../src -I../vendor/googletest/googletest/include -I../vendor/googletest/googlemock/include
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
@@ -66,8 +66,10 @@ GENERATED :=
 OBJECTS :=
 
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/test_events.o
 GENERATED += $(OBJDIR)/test_logger.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/test_events.o
 OBJECTS += $(OBJDIR)/test_logger.o
 
 # Rules
@@ -133,6 +135,9 @@ endif
 # #############################################
 
 $(OBJDIR)/main.o: ../tests/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_events.o: ../tests/test_events.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_logger.o: ../tests/test_logger.cpp

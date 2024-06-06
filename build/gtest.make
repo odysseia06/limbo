@@ -19,7 +19,7 @@ endif
 # #############################################
 
 RESCOMP = windres
-INCLUDES += -I../vendor/googletest/googletest/include -I../vendor/googletest/googletest/src -I../vendor/googletest/googletest
+INCLUDES += -I../vendor/googletest/googletest/include -I../vendor/googletest/googletest/src -I../vendor/googletest/googletest -I../vendor/googletest/googlemock/include -I../vendor/googletest/googlemock/src -I../vendor/googletest/googlemock
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
@@ -63,7 +63,9 @@ endif
 GENERATED :=
 OBJECTS :=
 
+GENERATED += $(OBJDIR)/gmock-all.o
 GENERATED += $(OBJDIR)/gtest-all.o
+OBJECTS += $(OBJDIR)/gmock-all.o
 OBJECTS += $(OBJDIR)/gtest-all.o
 
 # Rules
@@ -128,6 +130,9 @@ endif
 # File Rules
 # #############################################
 
+$(OBJDIR)/gmock-all.o: ../vendor/googletest/googlemock/src/gmock-all.cc
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/gtest-all.o: ../vendor/googletest/googletest/src/gtest-all.cc
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"

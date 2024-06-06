@@ -23,8 +23,9 @@ project "gtest"
 	language "C++"
 	cppdialect "C++20"
 	targetdir "bin/%{cfg.buildcfg}"
-	files { "vendor/googletest/googletest/src/gtest-all.cc" }
-	includedirs { "vendor/googletest/googletest/include", "vendor/googletest/googletest/src", "vendor/googletest/googletest" }
+	files { "vendor/googletest/googletest/src/gtest-all.cc", "vendor/googletest/googlemock/src/gmock-all.cc" }
+	includedirs { "vendor/googletest/googletest/include", "vendor/googletest/googletest/src", "vendor/googletest/googletest",
+				  "vendor/googletest/googlemock/include", "vendor/googletest/googlemock/src", "vendor/googletest/googlemock"}
 	filter "configurations:Debug"
 		defines { "DEBUG" }
 		symbols "On"
@@ -39,7 +40,7 @@ project "tests"
 	cppdialect "C++20"
 	targetdir "bin/%{cfg.buildcfg}"
 	files { "tests/**.h", "tests/**.cpp" }
-	includedirs { "src", "vendor/googletest/googletest/include" }
+	includedirs { "src", "vendor/googletest/googletest/include", "vendor/googletest/googlemock/include" }
 	links { "limbo", "gtest" }
 	filter "configurations:Debug"
 		defines { "DEBUG" }
