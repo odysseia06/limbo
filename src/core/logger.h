@@ -91,11 +91,31 @@ namespace Limbo {
 					return;
 				}
 				file.close();
+				m_logFilename = filename;
 			}
 
 			m_logFile.open(filename, std::ios::out | std::ios::app);
 			if (!m_logFile) {
 				std::cerr << "Failed to open log file: " << filename << std::endl;
+			}
+		}
+		void closeLogFile() {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			if (m_logFile.is_open()) {
+				m_logFile.close();
+			}
+		}
+		void eraseLogFile() {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			if (m_logFile.is_open()) {
+				m_logFile.close();
+			}
+			m_logFile.open(m_logFilename, std::ofstream::out | std::ofstream::trunc);
+			if (m_logFile.is_open()) {
+				std::cout << "Log file erased" << std::endl;
+			}
+			else {
+				std::cerr << "Failed to erase log file" << std::endl;
 			}
 		}
 		const char* getLogLevelString(LogLevel level) {
@@ -119,6 +139,7 @@ namespace Limbo {
 		Logger& operator=(const Logger&) = delete;
 		LogLevel m_logLevel;
 		std::ofstream m_logFile;
+		std::string m_logFilename;
 		std::mutex m_mutex;
 	};
 

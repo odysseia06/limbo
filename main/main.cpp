@@ -25,5 +25,7 @@ int main() {
 	dispatcher.dispatch(resizeEvent);
 
 	std::cin.get();
+
+	logger.eraseLogFile();
 	return 0;
 }
