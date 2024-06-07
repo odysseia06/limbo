@@ -9,20 +9,15 @@ int main() {
 	logger.setLogFile("test.txt");
 	logger.setLogLevel(Limbo::LogLevel::Trace);
 
-
-	LOG_TRACE("Testing the logger with a trace message");
-
 	EventDispatcher dispatcher;
-	ConcreteEventListener listener;
+	ConcreteEventListener listener1;
+	ConcreteEventListener listener2;
 
-	dispatcher.registerListener(EventType::WindowClose, &listener);
-	dispatcher.registerListener(EventType::WindowResize, &listener);
+	dispatcher.registerListener(EventType::KeyPressed, &listener1);
+	dispatcher.registerListener(EventType::KeyPressed, &listener2);
 
-	WindowCloseEvent closeEvent;
-	dispatcher.dispatch(closeEvent);
-
-	WindowResizeEvent resizeEvent(1280, 720);
-	dispatcher.dispatch(resizeEvent);
+	KeyPressedEvent event(0, 0);
+	dispatcher.dispatch(event, true);
 
 	std::cin.get();
 

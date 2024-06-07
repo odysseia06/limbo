@@ -251,15 +251,18 @@ namespace Limbo {
 			auto& listeners = m_listeners[type];
 			listeners.erase(std::remove(listeners.begin(), listeners.end(), listener), listeners.end());
 		}
-		void dispatch(Event& event) {
+		void dispatch(Event& event, bool stopOnHandled = true) {
 			auto it = m_listeners.find(event.getEventType());
 			if (it != m_listeners.end()) {
 				for (auto listener : it->second) {
 					event.m_handled = listener->onEvent(event);
-					if (event.isHandled()) {
+					if (event.isHandled() && stopOnHandled) {
 						LOG_TRACE("Event handled: " + event.toString());
 						break;
 					}
+				}
+				if (!stopOnHandled && event.isHandled()) {
+					LOG_TRACE("Event handled: " + event.toString());
 				}
 			}
 		}
