@@ -21,10 +21,16 @@
     <ClInclude Include="..\src\core\typedefs.h">
       <Filter>src\core</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\lmbpch.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main\main.cpp">
       <Filter>main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\lmbpch.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

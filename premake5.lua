@@ -8,6 +8,8 @@ project "limbo"
 	language "C++"
 	cppdialect "C++20"
 	targetdir "bin/%{cfg.buildcfg}"
+	pchheader "lmbpch.h"
+	pchsource "src/lmbpch.cpp"
 	files { "src/**.h", "src/**.cpp", "main/**.cpp" }
 	includedirs { "src" }
 	filter "configurations:Debug"

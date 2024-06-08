@@ -1,10 +1,6 @@
 #pragma once
+#include "lmbpch.h"
 #include "core/typedefs.h"
-#include <unordered_map>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <algorithm>
 
 namespace Limbo {
 	enum class EventType {
