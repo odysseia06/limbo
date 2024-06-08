@@ -251,6 +251,7 @@ namespace Limbo {
 			auto& listeners = m_listeners[type];
 			listeners.erase(std::remove(listeners.begin(), listeners.end(), listener), listeners.end());
 		}
+		// Dispatch event to all listeners of the same type. If stopOnHandled is true, stop dispatching when the event is handled.
 		void dispatch(Event& event, bool stopOnHandled = true) {
 			auto it = m_listeners.find(event.getEventType());
 			if (it != m_listeners.end()) {
