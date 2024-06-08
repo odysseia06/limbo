@@ -9,19 +9,17 @@ int main() {
 	Logger& logger = Logger::GetInstance();
 	logger.setLogFile("test.txt");
 	logger.setLogLevel(Limbo::LogLevel::Trace);
+	logger.setMaxFileSize(static_cast<size_t>(1024) * 1024);
 
-	EventDispatcher dispatcher;
-	ConcreteEventListener listener1;
-	ConcreteEventListener listener2;
-
-	dispatcher.registerListener(EventType::KeyPressed, &listener1);
-	dispatcher.registerListener(EventType::KeyPressed, &listener2);
-
-	KeyPressedEvent event(0, 0);
-	dispatcher.dispatch(event, true);
+	for (int i = 0; i < 10000; i++) {
+		logger.logTrace("This is a trace message");
+		logger.logDebug("This is a debug message");
+		logger.logInfo("This is an info message");
+		logger.logWarning("This is a warning message");
+		logger.logError("This is an error message");
+		logger.logCritical("This is a critical message");
+	}
 
 	std::cin.get();
-
-	logger.eraseLogFile();
 	return 0;
 }
