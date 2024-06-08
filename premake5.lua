@@ -11,10 +11,10 @@ project "limbo"
 	files { "src/**.h", "src/**.cpp", "main/**.cpp" }
 	includedirs { "src" }
 	filter "configurations:Debug"
-		defines { "DEBUG" }
+		defines { "L_DEBUG" }
 		symbols "On"
 	filter "configurations:Release"
-		defines { "NDEBUG" }
+		defines { "L_RELEASE" }
 		optimize "On"
 
 -- Google Test project
