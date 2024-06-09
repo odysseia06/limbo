@@ -32,25 +32,25 @@ define POSTBUILDCMDS
 endef
 
 ifeq ($(config),debug)
-TARGETDIR = ../bin/Debug
+TARGETDIR = ../bin/Debug-windows-x86_64/tests
 TARGET = $(TARGETDIR)/tests.exe
-OBJDIR = obj/Debug/tests
-DEFINES += -DDEBUG
+OBJDIR = ../bin-int/Debug-windows-x86_64/tests
+DEFINES += -DL_DEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20
-LIBS += ../bin/Debug/gtest.lib
-LDDEPS += ../bin/Debug/gtest.lib
+LIBS += ../bin/Debug-windows-x86_64/gtest/gtest.lib
+LDDEPS += ../bin/Debug-windows-x86_64/gtest/gtest.lib
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 
 else ifeq ($(config),release)
-TARGETDIR = ../bin/Release
+TARGETDIR = ../bin/Release-windows-x86_64/tests
 TARGET = $(TARGETDIR)/tests.exe
-OBJDIR = obj/Release/tests
-DEFINES += -DNDEBUG
+OBJDIR = ../bin-int/Release-windows-x86_64/tests
+DEFINES += -DL_RELEASE
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++20
-LIBS += ../bin/Release/gtest.lib
-LDDEPS += ../bin/Release/gtest.lib
+LIBS += ../bin/Release-windows-x86_64/gtest/gtest.lib
+LDDEPS += ../bin/Release-windows-x86_64/gtest/gtest.lib
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 
 endif

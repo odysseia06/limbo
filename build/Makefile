@@ -9,11 +9,13 @@ ifndef verbose
 endif
 
 ifeq ($(config),debug)
+  GLFW_config = debug
   limbo_config = debug
   gtest_config = debug
   tests_config = debug
 
 else ifeq ($(config),release)
+  GLFW_config = release
   limbo_config = release
   gtest_config = release
   tests_config = release
@@ -22,13 +24,19 @@ else
   $(error "invalid configuration $(config)")
 endif
 
-PROJECTS := limbo gtest tests
+PROJECTS := GLFW limbo gtest tests
 
 .PHONY: all clean help $(PROJECTS) 
 
 all: $(PROJECTS)
 
-limbo:
+GLFW:
+ifneq (,$(GLFW_config))
+	@echo "==== Building GLFW ($(GLFW_config)) ===="
+	@${MAKE} --no-print-directory -C . -f GLFW.make config=$(GLFW_config)
+endif
+
+limbo: GLFW
 ifneq (,$(limbo_config))
 	@echo "==== Building limbo ($(limbo_config)) ===="
 	@${MAKE} --no-print-directory -C . -f limbo.make config=$(limbo_config)
@@ -47,6 +55,7 @@ ifneq (,$(tests_config))
 endif
 
 clean:
+	@${MAKE} --no-print-directory -C . -f GLFW.make clean
 	@${MAKE} --no-print-directory -C . -f limbo.make clean
 	@${MAKE} --no-print-directory -C . -f gtest.make clean
 	@${MAKE} --no-print-directory -C . -f tests.make clean
@@ -61,6 +70,7 @@ help:
 	@echo "TARGETS:"
 	@echo "   all (default)"
 	@echo "   clean"
+	@echo "   GLFW"
 	@echo "   limbo"
 	@echo "   gtest"
 	@echo "   tests"

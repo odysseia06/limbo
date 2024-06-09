@@ -19,12 +19,13 @@ endif
 # #############################################
 
 RESCOMP = windres
-INCLUDES += -I../src
+PCH = ../src/lmbpch.h
+PCH_PLACEHOLDER = $(OBJDIR)/$(notdir $(PCH))
+GCH = $(PCH_PLACEHOLDER).gch
+INCLUDES += -I../src -I../vendor/GLFW/include
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-LIBS +=
-LDDEPS +=
 LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
 define PREBUILDCMDS
 endef
@@ -34,21 +35,25 @@ define POSTBUILDCMDS
 endef
 
 ifeq ($(config),debug)
-TARGETDIR = ../bin/Debug
+TARGETDIR = ../bin/Debug-windows-x86_64/limbo
 TARGET = $(TARGETDIR)/limbo.exe
-OBJDIR = obj/Debug/limbo
-DEFINES += -DDEBUG
+OBJDIR = ../bin-int/Debug-windows-x86_64/limbo
+DEFINES += -DL_DEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20
+LIBS += ../vendor/GLFW/bin/Debug-windows-x86_64/GLFW/GLFW.lib -lopengl32 -ldwmapi
+LDDEPS += ../vendor/GLFW/bin/Debug-windows-x86_64/GLFW/GLFW.lib
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 
 else ifeq ($(config),release)
-TARGETDIR = ../bin/Release
+TARGETDIR = ../bin/Release-windows-x86_64/limbo
 TARGET = $(TARGETDIR)/limbo.exe
-OBJDIR = obj/Release/limbo
-DEFINES += -DNDEBUG
+OBJDIR = ../bin-int/Release-windows-x86_64/limbo
+DEFINES += -DL_RELEASE
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++20
+LIBS += ../vendor/GLFW/bin/Release-windows-x86_64/GLFW/GLFW.lib -lopengl32 -ldwmapi
+LDDEPS += ../vendor/GLFW/bin/Release-windows-x86_64/GLFW/GLFW.lib
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 
 endif
@@ -63,7 +68,9 @@ endif
 GENERATED :=
 OBJECTS :=
 
+GENERATED += $(OBJDIR)/lmbpch.o
 GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/lmbpch.o
 OBJECTS += $(OBJDIR)/main.o
 
 # Rules
@@ -130,7 +137,10 @@ endif
 
 $(OBJDIR)/main.o: ../main/main.cpp
 	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/lmbpch.o: ../src/lmbpch.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
 -include $(OBJECTS:%.o=%.d)
 ifneq (,$(PCH))

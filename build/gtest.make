@@ -34,19 +34,19 @@ define POSTBUILDCMDS
 endef
 
 ifeq ($(config),debug)
-TARGETDIR = ../bin/Debug
+TARGETDIR = ../bin/Debug-windows-x86_64/gtest
 TARGET = $(TARGETDIR)/gtest.lib
-OBJDIR = obj/Debug/gtest
-DEFINES += -DDEBUG
+OBJDIR = ../bin-int/Debug-windows-x86_64/gtest
+DEFINES += -DL_DEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 
 else ifeq ($(config),release)
-TARGETDIR = ../bin/Release
+TARGETDIR = ../bin/Release-windows-x86_64/gtest
 TARGET = $(TARGETDIR)/gtest.lib
-OBJDIR = obj/Release/gtest
-DEFINES += -DNDEBUG
+OBJDIR = ../bin-int/Release-windows-x86_64/gtest
+DEFINES += -DL_RELEASE
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++20
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s

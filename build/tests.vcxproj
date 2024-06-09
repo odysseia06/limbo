@@ -41,14 +41,14 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\bin\Debug-windows-x86_64%\{prj.name}\</OutDir>
+    <OutDir>..\bin\Debug-windows-x86_64\tests\</OutDir>
     <IntDir>..\bin-int\Debug-windows-x86_64\tests\</IntDir>
     <TargetName>tests</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\bin\Release-windows-x86_64%\{prj.name}\</OutDir>
+    <OutDir>..\bin\Release-windows-x86_64\tests\</OutDir>
     <IntDir>..\bin-int\Release-windows-x86_64\tests\</IntDir>
     <TargetName>tests</TargetName>
     <TargetExt>.exe</TargetExt>
