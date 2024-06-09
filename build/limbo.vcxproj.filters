@@ -10,6 +10,12 @@
     <Filter Include="src\core">
       <UniqueIdentifier>{C55F2ECF-B12C-89DA-DA45-7782C671BE68}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\platform">
+      <UniqueIdentifier>{41663D6D-2DC9-CC11-D64E-05C8C2909894}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\platform\windows">
+      <UniqueIdentifier>{9B5931A8-87E8-BA71-3007-CF6C1C75CB17}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\core\event.h">
@@ -24,6 +30,12 @@
     <ClInclude Include="..\src\lmbpch.h">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\platform\windows\windowswindow.h">
+      <Filter>src\platform\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\window.h">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main\main.cpp">
@@ -31,6 +43,9 @@
     </ClCompile>
     <ClCompile Include="..\src\lmbpch.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\platform\windows\windowswindow.cpp">
+      <Filter>src\platform\windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

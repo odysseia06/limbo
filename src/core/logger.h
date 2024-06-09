@@ -85,6 +85,42 @@ namespace Limbo {
 		void logCritical(const std::string& message) {
 			log(LogLevel::Critical, message);
 		}
+		template<typename... Args> void logTrace(const std::string& format, Args... args) {
+			logTrace(formatString(format, args...));
+		}
+		template<typename... Args> void logDebug(const std::string& format, Args... args) {
+			logDebug(formatString(format, args...));
+		}
+		template<typename... Args> void logInfo(const std::string& format, Args... args) {
+			logInfo(formatString(format, args...));
+		}
+		template<typename... Args> void logWarning(const std::string& format, Args... args) {
+			logWarning(formatString(format, args...));
+		}
+		template<typename... Args> void logError(const std::string& format, Args... args) {
+			logError(formatString(format, args...));
+		}
+		template<typename... Args> void logCritical(const std::string& format, Args... args) {
+			logCritical(formatString(format, args...));
+		}
+		template<typename... Args> void logTrace(const std::string& format, const char* file, int line, Args... args) {
+			logTrace(formatString(format, args...), file, line);
+		}
+		template<typename... Args> void logDebug(const std::string& format, const char* file, int line, Args... args) {
+			logDebug(formatString(format, args...), file, line);
+		}
+		template<typename... Args> void logInfo(const std::string& format, const char* file, int line, Args... args) {
+			logInfo(formatString(format, args...), file, line);
+		}
+		template<typename... Args> void logWarning(const std::string& format, const char* file, int line, Args... args) {
+			logWarning(formatString(format, args...), file, line);
+		}
+		template<typename... Args> void logError(const std::string& format, const char* file, int line, Args... args) {
+			logError(formatString(format, args...), file, line);
+		}
+		template<typename... Args> void logCritical(const std::string& format, const char* file, int line, Args... args) {
+			logCritical(formatString(format, args...), file, line);
+		}
 		void setLogFile(const std::string& filename) {
 			std::lock_guard<std::mutex> lock(m_mutex);
 			if (m_logFile.is_open()) {
@@ -133,6 +169,7 @@ namespace Limbo {
 			case LogLevel::Warning: return "WARNING";
 			case LogLevel::Error: return "ERROR";
 			case LogLevel::Critical: return "CRITICAL";
+			default: return "UNKNOWN";
 			}
 		}
 		void setMaxFileSize(std::size_t size) {
@@ -179,9 +216,44 @@ namespace Limbo {
 			inputFile.close();
 			outputFile.close();
 			m_logFile.open(m_logFilename, std::ios::out | std::ios::app);
-		}	
+		}
+		template<typename... Args>
+		std::string formatString(const std::string& format, Args... args) {
+			std::ostringstream stream;
+			formatImpl(stream, format.c_str(), args...);
+			return stream.str();
+		}
+		void formatImpl(std::ostringstream& stream, const char* format) {
+			while (*format) {
+				if (*format == '{' && *(format + 1) == '}') {
+					stream << "{}"; // Handle unexpected single {}
+					format += 2;
+				}
+				else {
+					stream << *format++;
+				}
+			}
+		}
+		template<typename T, typename... Args>
+		void formatImpl(std::ostringstream& stream, const char* format, T value, Args... args) {
+			while (*format) {
+				if (*format == '{' && *(format + 1) == '}' && *(format + 2) != '}') {
+					stream << value;
+					formatImpl(stream, format + 2, args...);
+					return;
+				}
+				else if (*format == '{' && *(format + 1) == '{') {
+					stream << '{';
+					format += 2;
+				}
+				else if (*format == '}' && *(format + 1) == '}') {
+					stream << '}';
+					format += 2;
+				}
+				else {
+					stream << *format++;
+				}
+			}
+		}
 	};
-
-
-
 }

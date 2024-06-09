@@ -41,7 +41,7 @@ OBJDIR = ../bin-int/Debug-windows-x86_64/limbo
 DEFINES += -DL_DEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20
-LIBS += ../vendor/GLFW/bin/Debug-windows-x86_64/GLFW/GLFW.lib -lopengl32 -ldwmapi
+LIBS += ../vendor/GLFW/bin/Debug-windows-x86_64/GLFW/GLFW.lib -ldwmapi -lwinmm -lgdi32 -lopengl32
 LDDEPS += ../vendor/GLFW/bin/Debug-windows-x86_64/GLFW/GLFW.lib
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 
@@ -52,7 +52,7 @@ OBJDIR = ../bin-int/Release-windows-x86_64/limbo
 DEFINES += -DL_RELEASE
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++20
-LIBS += ../vendor/GLFW/bin/Release-windows-x86_64/GLFW/GLFW.lib -lopengl32 -ldwmapi
+LIBS += ../vendor/GLFW/bin/Release-windows-x86_64/GLFW/GLFW.lib -ldwmapi -lwinmm -lgdi32 -lopengl32
 LDDEPS += ../vendor/GLFW/bin/Release-windows-x86_64/GLFW/GLFW.lib
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 
@@ -70,8 +70,10 @@ OBJECTS :=
 
 GENERATED += $(OBJDIR)/lmbpch.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/windowswindow.o
 OBJECTS += $(OBJDIR)/lmbpch.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/windowswindow.o
 
 # Rules
 # #############################################
@@ -139,6 +141,9 @@ $(OBJDIR)/main.o: ../main/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/lmbpch.o: ../src/lmbpch.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/windowswindow.o: ../src/platform/windows/windowswindow.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

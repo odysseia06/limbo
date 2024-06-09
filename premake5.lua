@@ -13,15 +13,20 @@ project "limbo"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"
+	staticruntime "On"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	pchheader "lmbpch.h"
 	pchsource "src/lmbpch.cpp"
 	files { "src/**.h", "src/**.cpp", "main/**.cpp" }
 	includedirs { "src", "%{IncludeDir.GLFW}" }
-	links	{ "GLFW", 
+	links	{ 
+			  "dwmapi",
+			  "winmm",
+			  "gdi32",
+			  "GLFW", 
 			  "opengl32",
-			  "dwmapi"
+			  
 			}
 	filter "configurations:Debug"
 		defines { "L_DEBUG" }
@@ -35,6 +40,7 @@ project "gtest"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++20"
+	staticruntime "On"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	files { "vendor/googletest/googletest/src/gtest-all.cc", "vendor/googletest/googlemock/src/gmock-all.cc" }
@@ -52,6 +58,7 @@ project "tests"
 	kind "ConsoleApp"
 	language "C++"
 	cppdialect "C++20"
+	staticruntime "On"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin-int/" .. outputdir .. "/%{prj.name}")
 	files { "tests/**.h", "tests/**.cpp" }

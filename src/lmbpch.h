@@ -15,5 +15,6 @@
 #include <unordered_set>
 #include <functional>
 #include <sstream>
+#include <cstdlib>
 
 #include <Windows.h>
