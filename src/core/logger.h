@@ -217,30 +217,31 @@ namespace Limbo {
 			outputFile.close();
 			m_logFile.open(m_logFilename, std::ios::out | std::ios::app);
 		}
-		template<typename... Args>
-		std::string formatString(const std::string& format, Args... args) {
-			std::ostringstream stream;
-			formatImpl(stream, format.c_str(), args...);
-			return stream.str();
-		}
-		void formatImpl(std::ostringstream& stream, const char* format) {
-			while (*format) {
-				if (*format == '{' && *(format + 1) == '}') {
-					stream << "{}"; // Handle unexpected single {}
-					format += 2;
-				}
-				else {
-					stream << *format++;
-				}
+		int parseIndex(const char*& format) {
+			int index = 0;
+			while (*format >= '0' && *format <= '9') {
+				index = index * 10 + (*format - '0');
+				++format;
 			}
+			return index;
 		}
-		template<typename T, typename... Args>
-		void formatImpl(std::ostringstream& stream, const char* format, T value, Args... args) {
+		void formatImpl(std::ostringstream& stream, const char* format, const std::vector<std::string>& args) {
 			while (*format) {
-				if (*format == '{' && *(format + 1) == '}' && *(format + 2) != '}') {
-					stream << value;
-					formatImpl(stream, format + 2, args...);
-					return;
+				if (*format == '{' && *(format + 1) >= '0' && *(format + 1) <= '9') {
+					++format; // Skip '{'
+					int index = parseIndex(format);
+					if (*format == '}') {
+						if (index >= 0 && index < static_cast<int>(args.size())) {
+							stream << args[index];
+						}
+						else {
+							throw std::out_of_range("Format index out of range");
+						}
+						++format; // Skip '}'
+					}
+					else {
+						throw std::runtime_error("Invalid format specifier");
+					}
 				}
 				else if (*format == '{' && *(format + 1) == '{') {
 					stream << '{';
@@ -254,6 +255,28 @@ namespace Limbo {
 					stream << *format++;
 				}
 			}
+		}
+		template<typename T>
+		void collectArgs(std::vector<std::string>& args, T value) {
+			std::ostringstream stream;
+			stream << value;
+			args.push_back(stream.str());
+		}
+
+		template<typename T, typename... Args>
+		void collectArgs(std::vector<std::string>& args, T value, Args... rest) {
+			collectArgs(args, value);
+			collectArgs(args, rest...);
+		}
+
+		// Main formatting function that starts the process.
+		template<typename... Args>
+		std::string formatString(const std::string& format, Args... args) {
+			std::vector<std::string> argList;
+			collectArgs(argList, args...);
+			std::ostringstream stream;
+			formatImpl(stream, format.c_str(), argList);
+			return stream.str();
 		}
 	};
 }
