@@ -68,9 +68,11 @@ endif
 GENERATED :=
 OBJECTS :=
 
+GENERATED += $(OBJDIR)/application.o
 GENERATED += $(OBJDIR)/lmbpch.o
 GENERATED += $(OBJDIR)/main.o
 GENERATED += $(OBJDIR)/windowswindow.o
+OBJECTS += $(OBJDIR)/application.o
 OBJECTS += $(OBJDIR)/lmbpch.o
 OBJECTS += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/windowswindow.o
@@ -138,6 +140,9 @@ endif
 # #############################################
 
 $(OBJDIR)/main.o: ../main/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/application.o: ../src/application.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) -include $(PCH_PLACEHOLDER) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/lmbpch.o: ../src/lmbpch.cpp

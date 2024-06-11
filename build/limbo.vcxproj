@@ -96,6 +96,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\application.h" />
     <ClInclude Include="..\src\core\event.h" />
     <ClInclude Include="..\src\core\logger.h" />
     <ClInclude Include="..\src\core\typedefs.h" />
@@ -105,6 +106,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\main\main.cpp" />
+    <ClCompile Include="..\src\application.cpp" />
     <ClCompile Include="..\src\lmbpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

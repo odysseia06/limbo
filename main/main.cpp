@@ -2,6 +2,8 @@
 #include "core/logger.h"
 #include "core/typedefs.h"
 #include "core/event.h"
+#include "window.h"
+#include "application.h"
 
 using Limbo::Logger;
 using namespace Limbo;
@@ -11,7 +13,11 @@ int main() {
 	logger.setLogLevel(Limbo::LogLevel::Trace);
 	logger.setMaxFileSize(static_cast<size_t>(1024) * 1024);
 
+	LOGF_INFO("Hello World! {0} {1} {2}", 5, 6, 7);
 
+	auto app = new Application();
+	app -> Run();
+	delete app;
 	std::cin.get();
 	return 0;
 }
