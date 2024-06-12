@@ -225,7 +225,7 @@ namespace Limbo {
 			}
 			return index;
 		}
-		void formatImpl(std::ostringstream& stream, const char* format, const std::vector<std::string>& args) {
+		void formatImpl(std::ostringstream& stream, const char* format, const std::vector<std::string>& args) {//TODO: NEED REFACTORING
 			while (*format) {
 				if (*format == '{' && *(format + 1) >= '0' && *(format + 1) <= '9') {
 					++format; // Skip '{'
