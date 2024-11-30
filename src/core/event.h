@@ -270,14 +270,107 @@ namespace Limbo {
 	public:
 		bool onEvent(Event& event) override {
 			LOG_TRACE("Event received: " + event.toString());
-			if (event.getEventType() == EventType::WindowClose) {
+			switch (event.getEventType()) {
+			case EventType::WindowClose: {
 				LOG_TRACE("Window close event received");
+				// Handle window close logic here
+				return true; // Event handled
 			}
-			else if (event.getEventType() == EventType::WindowResize) {
+			case EventType::WindowResize: {
 				auto& resizeEvent = static_cast<WindowResizeEvent&>(event);
-				LOG_TRACE("Window resize event received: " + std::to_string(resizeEvent.getWidth()) + ", " + std::to_string(resizeEvent.getHeight()));
+				LOG_TRACE("Window resize event received: Width = " +
+					std::to_string(resizeEvent.getWidth()) + ", Height = " +
+					std::to_string(resizeEvent.getHeight()));
+				// Handle window resize logic here
+				return true; // Event handled
 			}
-			return true;
+			case EventType::WindowFocus: {
+				LOG_TRACE("Window focus event received");
+				// Handle window focus logic here
+				return true; // Event handled
+			}
+			case EventType::WindowLostFocus: {
+				LOG_TRACE("Window lost focus event received");
+				// Handle window lost focus logic here
+				return true; // Event handled
+			}
+			case EventType::WindowMoved: {
+				LOG_TRACE("Window moved event received");
+				// Handle window moved logic here
+				return true; // Event handled
+			}
+			case EventType::AppTick: {
+				LOG_TRACE("App tick event received");
+				// Handle app tick logic here
+				return true; // Event handled
+			}
+			case EventType::AppUpdate: {
+				LOG_TRACE("App update event received");
+				// Handle app update logic here
+				return true; // Event handled
+			}
+			case EventType::AppRender: {
+				LOG_TRACE("App render event received");
+				// Handle app render logic here
+				return true; // Event handled
+			}
+			case EventType::KeyPressed: {
+				auto& keyEvent = static_cast<KeyPressedEvent&>(event);
+				LOG_TRACE("Key pressed event received: KeyCode = " +
+					std::to_string(keyEvent.getKeyCode()) + ", RepeatCount = " +
+					std::to_string(keyEvent.getRepeatCount()));
+				// Handle key pressed logic here
+				return true; // Event handled
+			}
+			case EventType::KeyReleased: {
+				auto& keyEvent = static_cast<KeyReleasedEvent&>(event);
+				LOG_TRACE("Key released event received: KeyCode = " +
+					std::to_string(keyEvent.getKeyCode()));
+				// Handle key released logic here
+				return true; // Event handled
+			}
+			case EventType::KeyTyped: {
+				auto& keyEvent = static_cast<KeyTypedEvent&>(event);
+				LOG_TRACE("Key typed event received: KeyCode = " +
+					std::to_string(keyEvent.getKeyCode()));
+				// Handle key typed logic here
+				return true; // Event handled
+			}
+			case EventType::MouseButtonPressed: {
+				auto& mouseButtonEvent = static_cast<MouseButtonPressedEvent&>(event);
+				LOG_TRACE("Mouse button pressed event received: Button = " +
+					std::to_string(mouseButtonEvent.getButton()));
+				// Handle mouse button pressed logic here
+				return true; // Event handled
+			}
+			case EventType::MouseButtonReleased: {
+				auto& mouseButtonEvent = static_cast<MouseButtonReleasedEvent&>(event);
+				LOG_TRACE("Mouse button released event received: Button = " +
+					std::to_string(mouseButtonEvent.getButton()));
+				// Handle mouse button released logic here
+				return true; // Event handled
+			}
+			case EventType::MouseMoved: {
+				auto& mouseMovedEvent = static_cast<MouseMovedEvent&>(event);
+				LOG_TRACE("Mouse moved event received: X = " +
+					std::to_string(mouseMovedEvent.getX()) + ", Y = " +
+					std::to_string(mouseMovedEvent.getY()));
+				// Handle mouse moved logic here
+				return true; // Event handled
+			}
+			case EventType::MouseScrolled: {
+				auto& mouseScrolledEvent = static_cast<MouseScrolledEvent&>(event);
+				LOG_TRACE("Mouse scrolled event received: XOffset = " +
+					std::to_string(mouseScrolledEvent.getXOffset()) + ", YOffset = " +
+					std::to_string(mouseScrolledEvent.getYOffset()));
+				// Handle mouse scrolled logic here
+				return true; // Event handled
+			}
+			default: {
+				LOG_TRACE("Unhandled event type: " + event.toString());
+				return false; // Event not handled
+			}
+			}
 		}
 	};
 	inline std::ostream& operator<<(std::ostream& os, const Event& event) {

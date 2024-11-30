@@ -22,7 +22,7 @@ namespace Limbo {
 	private:
 		virtual void Init(const WindowProps& props);
 		virtual void Shutdown();
-
+		virtual void SetGLFWCallbacks();
 	private:
 		GLFWwindow* m_Window;
 

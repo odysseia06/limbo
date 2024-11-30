@@ -13,8 +13,6 @@ int main() {
 	logger.setLogLevel(Limbo::LogLevel::Trace);
 	logger.setMaxFileSize(static_cast<size_t>(1024) * 1024);
 
-	LOGF_INFO("Creating window {0} ({1}, {2})", 400, 800, 600);
-
 	auto app = new Application();
 	app -> Run();
 	delete app;
