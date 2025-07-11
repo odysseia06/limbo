@@ -25,6 +25,16 @@ jobs:
     - name: Install Premake
       uses: Jarod42/install-premake5@v6   # one-line installer for all platforms :contentReference[oaicite:1]{index=1}
 
+    # ---------- LINUX ONLY: upgrade to GCC 14 -------------
+    - name: Install GCC 14
+      if: runner.os != 'Windows'
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+        sudo apt-get update
+        sudo apt-get install -y g++-14
+        echo "CC=gcc-14"  >> $GITHUB_ENV
+        echo "CXX=g++-14" >> $GITHUB_ENV
+
     # ❸ Generate build files into build/<generator>
     - name: Run Premake
       run: |
