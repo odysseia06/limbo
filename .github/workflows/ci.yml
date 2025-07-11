@@ -30,10 +30,10 @@ jobs:
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
           mkdir -p build/vs2022 && cd build/vs2022
-          premake5 vs2022
+          premake5 --file=../../premake5.lua vs2022
         else
           mkdir -p build/gmake && cd build/gmake
-          premake5 gmake
+          premake5 --file=../../premake5.lua gmake
         fi
 
     # ❹ Build on Windows with MSBuild
@@ -50,5 +50,5 @@ jobs:
     - name: Build (Linux)
       if: runner.os != 'Windows'
       run: |
-        cd build/gmake2
+        cd build/gmake
         make config=${{ matrix.config }} -j$(nproc)
