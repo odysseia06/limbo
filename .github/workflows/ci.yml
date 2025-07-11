@@ -1,0 +1,52 @@
+name: Limbo-CI
+
+# Run on every push to main and on all PRs
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    # Build Debug and Release on both OSes
+    strategy:
+      matrix:
+        os:      [windows-latest, ubuntu-latest]
+        config:  [Debug, Release]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    # ❶ Check out your code
+    - uses: actions/checkout@v4        # clones repo into runner :contentReference[oaicite:0]{index=0}
+
+    # ❷ Install Premake 5
+    - name: Install Premake
+      uses: Jarod42/install-premake5@v6   # one-line installer for all platforms :contentReference[oaicite:1]{index=1}
+
+    # ❸ Generate build files into build/<generator>
+    - name: Run Premake
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          premake5 vs2022 --to=build/vs2022
+        else
+          premake5 gmake2 --to=build/gmake2
+        fi
+
+    # ❹ Build on Windows with MSBuild
+    - name: Add MSBuild to PATH
+      if: runner.os == 'Windows'
+      uses: microsoft/setup-msbuild@v2   # locates msbuild.exe on the VM :contentReference[oaicite:2]{index=2}
+
+    - name: Build (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        msbuild build/vs2022/Limbo.sln -property:Configuration=${{ matrix.config }} -maxCpuCount
+
+    # ❺ Build on Linux with Make
+    - name: Build (Linux)
+      if: runner.os != 'Windows'
+      run: |
+        cd build/gmake2
+        make config=${{ matrix.config }} -j$(nproc)
