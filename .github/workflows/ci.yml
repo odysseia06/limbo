@@ -49,5 +49,4 @@ jobs:
     - name: Build (Linux)
       if: runner.os != 'Windows'
       run: |
-        cd build/gmake
         make config=${{ matrix.config }} -j$(nproc)
