@@ -2,7 +2,7 @@ workspace "Limbo"
     architecture "x64"
     configurations { "Debug", "Release" }
     startproject "Playground"
-
+	location ("build/" .. _ACTION)
     -- Output directory pattern: bin/Debug-Windows-x64/Limbo
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 

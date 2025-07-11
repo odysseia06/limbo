@@ -36,16 +36,14 @@ jobs:
         echo "CXX=g++-14" >> $GITHUB_ENV
 
     # ❸ Generate build files into build/<generator>
-    - name: Run Premake (Windows)
-      if: runner.os == 'Windows'
-      shell: bash
+    - name: Run Premake
+      shell: bash                # use bash on Windows too
       run: |
-        mkdir -p build/vs2022 && cd build/vs2022
-        premake5 --file=../../premake5.lua --location=. vs2022
-
-    - name: Run Premake (Linux)
-      if: runner.os != 'Windows'
-      run: premake5 gmake
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          premake5 vs2022        # files go to build/vs2022/
+        else
+          premake5 gmake         # files go to build/gmake/
+        fi
 
     # ❹ Build on Windows with MSBuild
     - name: Add MSBuild to PATH
@@ -63,4 +61,5 @@ jobs:
       shell: bash
       run: |
         CFG=$(echo "${{ matrix.config }}" | tr '[:upper:]' '[:lower:]')
+        cd build/gmake
         make config=$CFG -j$(nproc)
