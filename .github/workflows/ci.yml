@@ -29,9 +29,11 @@ jobs:
     - name: Run Premake
       run: |
         if [ "${{ runner.os }}" == "Windows" ]; then
-          premake5 vs2022 --to=build/vs2022
+          mkdir -p build/vs2022 && cd build/vs2022
+          premake5 vs2022
         else
-          premake5 gmake2 --to=build/gmake2
+          mkdir -p build/gmake && cd build/gmake
+          premake5 gmake
         fi
 
     # ❹ Build on Windows with MSBuild
