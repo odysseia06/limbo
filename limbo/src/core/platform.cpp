@@ -1,9 +1,12 @@
-#include "limbo/core/platform.hpp"
+﻿#include "limbo/core/platform.hpp"
 #include "limbo/core/log.hpp"
 #include <GLFW/glfw3.h>
 #include <chrono>
+#include <mutex>
 
 namespace limbo {
+    static std::vector<Event> queuedEvents;
+    static std::mutex         queueMutex;
 
     static Event translate_glfw_key(int key, int action)
     {
@@ -30,6 +33,20 @@ namespace limbo {
             glfwTerminate();
             return false;
         }
+        glfwSetKeyCallback(window_,
+            [](GLFWwindow*, int key, int /*scancode*/, int action, int /*mods*/)
+            {
+                Event ev{};
+                if (action == GLFW_PRESS)        ev.type = EventType::KeyDown;
+                else if (action == GLFW_RELEASE) ev.type = EventType::KeyUp;
+                else                             return;
+
+                ev.key.key = static_cast<std::uint32_t>(key);
+
+                // Buffer the event in a thread-local queue so poll_events() can forward it
+                std::lock_guard lock(queueMutex);
+                queuedEvents.push_back(ev);
+            });
         return true;
     }
 
@@ -51,12 +68,10 @@ namespace limbo {
     {
         glfwPollEvents();
 
-        // Key events
-        glfwSetKeyCallback(window_, [](GLFWwindow*, int key, int, int action, int) {
-            Event ev = translate_glfw_key(key, action);
-            if (ev.type != EventType::None)
-                limbo::log::info("Key event {}", key); // simple debug
-            });
+        std::lock_guard lock(queueMutex);
+        for (auto& e : queuedEvents)
+            sink(e);
+        queuedEvents.clear();
 
         // Window close
         if (glfwWindowShouldClose(window_)) {

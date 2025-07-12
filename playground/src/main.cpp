@@ -11,6 +11,11 @@ public:
             acc_ = 0.0;
         }
     }
+    void on_event(const limbo::Event& e) override
+    {
+        if (e.type == limbo::EventType::KeyDown)
+            limbo::log::info("Key {} pressed", e.key.key);
+    }
 };
 
 static limbo::Application* CreateApplication() {
