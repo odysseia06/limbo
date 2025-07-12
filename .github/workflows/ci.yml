@@ -20,8 +20,9 @@ jobs:
     steps:
     # ❶ Check out your code
     - uses: actions/checkout@v4        # clones repo into runner :contentReference[oaicite:0]{index=0}
-    with:
-        submodules: 'recursive'
+    
+    - name: Init submodules
+      run: git submodule update --init --recursive
     
     # ❷ Install Premake 5
     - name: Install Premake
