@@ -5,6 +5,9 @@ workspace "Limbo"
 	location ("build/" .. _ACTION)
     -- Output directory pattern: bin/Debug-Windows-x64/Limbo
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
+	
+	include "third_party/glfw"
+	
 	filter "configurations:Debug"
         defines { "LIMBO_ENABLE_ASSERTS" }
     filter {}  -- reset filters
@@ -26,11 +29,18 @@ project "Limbo"
     }
 
     includedirs {
-        "%{prj.location}/include"
+        "%{prj.location}/include",
+		"third_party/glfw/include"
     }
+
+	links { "GLFW" }
 
     filter "system:windows"
         systemversion "latest"
+		links { "opengl32" }
+
+	filter "system:linux"
+		links { "X11", "dl", "pthread" }
 
     filter "configurations:Debug"
         symbols "On"
@@ -49,12 +59,16 @@ project "Playground"
     objdir    ("bin-int/".. outputdir .. "/%{prj.name}")
 
     files { "%{prj.location}/src/**.cpp" }
-    includedirs { "limbo/include" }
-    links { "Limbo" }
+    includedirs { "limbo/include", "third_party/glfw/include" }
+    links { "GLFW", "Limbo" }
 
     filter "system:windows"
         systemversion "latest"
-
+		links { "opengl32" }
+	
+	filter "system:linux"
+		links { "X11", "dl", "pthread" }
+	
     filter "configurations:Debug"
         symbols "On"
 

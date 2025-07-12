@@ -25,13 +25,14 @@ jobs:
     - name: Install Premake
       uses: Jarod42/install-premake5@v6   # one-line installer for all platforms :contentReference[oaicite:1]{index=1}
 
-    # ---------- LINUX ONLY: upgrade to GCC 14 -------------
+    # ---------- LINUX ONLY: upgrade necessary stuff -------------
     - name: Install GCC 14
       if: runner.os != 'Windows'
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
         sudo apt-get update
         sudo apt-get install -y g++-14
+        sudo apt-get install -y libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libgl1-mesa-dev
         echo "CC=gcc-14"  >> $GITHUB_ENV
         echo "CXX=g++-14" >> $GITHUB_ENV
 
