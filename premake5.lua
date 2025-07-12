@@ -60,7 +60,8 @@ project "Playground"
 
     files { "%{prj.location}/src/**.cpp" }
     includedirs { "limbo/include", "third_party/glfw/include" }
-    links { "GLFW", "Limbo" }
+    links { "Limbo", "GLFW" }
+	linkgroups "On"
 
     filter "system:windows"
         systemversion "latest"
