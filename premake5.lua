@@ -68,7 +68,7 @@ project "Playground"
 		links { "opengl32" }
 	
 	filter "system:linux"
-		links { "X11", "dl", "pthread" }
+		links { "X11", "GL", "dl", "pthread" }
 	
     filter "configurations:Debug"
         symbols "On"
