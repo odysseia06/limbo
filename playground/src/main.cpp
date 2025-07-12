@@ -1,6 +1,12 @@
-#include <print>
+#include <limbo/core/log.hpp>
 
-int main() {
-	std::println("Hello, world!");
-	return 0;
+int main()
+{
+    limbo::log::init(limbo::log::Level::Debug,
+        limbo::log::Level::Trace);   // console, file
+
+    limbo::log::info("Hello, {}!", "Limbo");
+    limbo::log::warning("Everything's fine – probably.");
+
+    limbo::log::shutdown();
 }

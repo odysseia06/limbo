@@ -5,7 +5,10 @@ workspace "Limbo"
 	location ("build/" .. _ACTION)
     -- Output directory pattern: bin/Debug-Windows-x64/Limbo
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
-
+	filter "configurations:Debug"
+        defines { "LIMBO_ENABLE_ASSERTS" }
+    filter {}  -- reset filters
+	
 project "Limbo"
     location "limbo"
     kind "StaticLib"
