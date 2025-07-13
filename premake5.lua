@@ -1,7 +1,7 @@
 workspace "Limbo"
     architecture "x64"
     configurations { "Debug", "Release" }
-    startproject "Playground"
+    startproject "LimboHost"
 	location ("build/" .. _ACTION)
     -- Output directory pattern: bin/Debug-Windows-x64/Limbo
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
@@ -48,30 +48,56 @@ project "Limbo"
     filter "configurations:Release"
         optimize "On"
 
-project "Playground"
-    location "playground"
+project "Game"
+    location "game"
+    kind "SharedLib"
+    language "C++"
+    cppdialect "C++23"
+    staticruntime "on"
+
+    targetdir ("bin/" .. outputdir)      -- put DLL/so beside host
+    objdir    ("bin-int/" .. outputdir .. "/%{prj.name}")
+
+    files { "%{prj.location}/src/**.cpp", "include/public/**.hpp" }
+    includedirs { "include", "limbo/include" }
+    links { "Limbo" }
+
+    filter "system:windows"
+        systemversion "latest"
+        targetextension ".dll"
+
+    filter "system:linux"
+        links { "dl", "pthread" }     -- dlopen inside host
+
+    filter "configurations:Debug"
+        symbols "On"
+    filter "configurations:Release"
+        optimize "Speed"
+		
+project "LimboHost"
+    location "host"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++23"
     staticruntime "on"
 
-    targetdir ("bin/"    .. outputdir .. "/%{prj.name}")
-    objdir    ("bin-int/".. outputdir .. "/%{prj.name}")
+    targetdir ("bin/" .. outputdir)
+    objdir    ("bin-int/" .. outputdir .. "/%{prj.name}")
 
-    files { "%{prj.location}/src/**.cpp" }
-    includedirs { "limbo/include", "third_party/glfw/include" }
+    files { "%{prj.location}/src/**.cpp", "include/public/**.hpp" }
+    includedirs { "include", "limbo/include", "third_party/glfw/include" }
+	dependson { "Game" }
     links { "Limbo", "GLFW" }
-	linkgroups "On"
 
     filter "system:windows"
         systemversion "latest"
-		links { "opengl32" }
-	
-	filter "system:linux"
-		links { "X11", "GL", "dl", "pthread" }
-	
+        links { "opengl32" }
+
+    filter "system:linux"
+        links { "dl", "pthread", "X11", "GL" }
+        linkgroups "On"               -- resolve circular refs
+
     filter "configurations:Debug"
         symbols "On"
-
     filter "configurations:Release"
-        optimize "On"
+        optimize "Speed"
