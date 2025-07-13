@@ -40,6 +40,7 @@ project "Limbo"
 		links { "opengl32" }
 
 	filter "system:linux"
+		pic "On"
 		links { "X11", "dl", "pthread" }
 
     filter "configurations:Debug"
@@ -95,7 +96,7 @@ project "LimboHost"
 
     filter "system:linux"
         links { "dl", "pthread", "X11", "GL" }
-        linkgroups "On"               -- resolve circular refs
+        linkgroups "On"
 
     filter "configurations:Debug"
         symbols "On"
