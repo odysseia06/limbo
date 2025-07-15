@@ -1,12 +1,13 @@
 #include <limbo/core/launch.hpp>
 #include <limbo/core/log.hpp>
 #include "game_host.hpp"
+#include <gl/GL.h>
 
 class HostApp : public limbo::Application
 {
     GameHost host_;
     bool ok_ = false;
-
+    
 public:
     HostApp() { ok_ = host_.load("game"); }
     ~HostApp() override { host_.unload(); }
@@ -16,6 +17,7 @@ public:
         if (!ok_) return;
         host_.maybe_hot_reload();
         host_.tick(dt);
+        glClear(GL_COLOR_BUFFER_BIT);
     }
     void on_event(const limbo::Event& e) override
     {

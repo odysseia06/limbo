@@ -25,9 +25,23 @@ namespace limbo {
             limbo::log::error("GLFW init failed");
             return false;
         }
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);   // no GL context yet
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         window_ = glfwCreateWindow(w, h, std::string(title).c_str(),
             nullptr, nullptr);
+
+		glfwMakeContextCurrent(window_);
+        int fbw, fbh;
+        glfwGetFramebufferSize(window_, &fbw, &fbh);
+        glViewport(0, 0, fbw, fbh);
+        glfwSetFramebufferSizeCallback(window_,
+            [](GLFWwindow*, int w, int h)
+            {
+                glViewport(0, 0, w, h);
+            });
+		glfwSwapInterval(1); // Enable vsync
+        glClearColor(0.1f, 0.2f, 0.8f, 1.0f);  // sky-blue
         if (!window_) {
             limbo::log::error("GLFW window creation failed");
             glfwTerminate();
@@ -83,7 +97,7 @@ namespace limbo {
 
     void Platform::swap_buffers(bool /*vsync*/)
     {
-        // No GL context yet; nothing to swap
+		glfwSwapBuffers(window_);
     }
 
     double Platform::time_seconds() const
