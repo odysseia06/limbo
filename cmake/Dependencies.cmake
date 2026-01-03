@@ -220,6 +220,12 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC glfw)
 
+# On Linux, ImGui GLFW backend needs X11 for certain operations
+if(UNIX AND NOT APPLE)
+    find_package(X11 REQUIRED)
+    target_link_libraries(imgui PUBLIC ${X11_LIBRARIES})
+endif()
+
 # Catch2 (only if tests enabled)
 if(LIMBO_BUILD_TESTS)
     FetchContent_MakeAvailable(catch2)
