@@ -36,10 +36,6 @@ jobs:
         if: runner.os == 'Windows'
         run: choco install llvm ninja -y
 
-      - name: Set Python for CMake (Windows)
-        if: runner.os == 'Windows'
-        run: echo "Python3_ROOT_DIR=$env:pythonLocation" >> $env:GITHUB_ENV
-
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -59,7 +55,8 @@ jobs:
             extra-cmake-modules
 
       - name: Configure CMake (Debug)
-        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
+        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="${{ env.pythonLocation }}/python"
+        shell: bash
 
       - name: Build (Debug)
         run: cmake --build build-debug --parallel
@@ -68,7 +65,8 @@ jobs:
         run: ctest --test-dir build-debug --output-on-failure
 
       - name: Configure CMake (Release)
-        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
+        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="${{ env.pythonLocation }}/python"
+        shell: bash
 
       - name: Build (Release)
         run: cmake --build build-release --parallel
