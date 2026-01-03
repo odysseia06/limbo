@@ -57,13 +57,7 @@ jobs:
             extra-cmake-modules
 
       - name: Configure CMake (Debug)
-        shell: bash
-        run: |
-          cmake -B build-debug -S . \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
-            -DLIMBO_BUILD_TESTS=ON
+        run: cmake -B build-debug -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DLIMBO_BUILD_TESTS=ON
 
       - name: Build (Debug)
         run: cmake --build build-debug --config Debug --parallel
@@ -72,13 +66,7 @@ jobs:
         run: ctest --test-dir build-debug --build-config Debug --output-on-failure
 
       - name: Configure CMake (Release)
-        shell: bash
-        run: |
-          cmake -B build-release -S . \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
-            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
-            -DLIMBO_BUILD_TESTS=ON
+        run: cmake -B build-release -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DLIMBO_BUILD_TESTS=ON
 
       - name: Build (Release)
         run: cmake --build build-release --config Release --parallel
