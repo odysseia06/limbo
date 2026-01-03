@@ -55,7 +55,7 @@ jobs:
             extra-cmake-modules
 
       - name: Configure CMake (Debug)
-        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="${{ env.pythonLocation }}/python"
+        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="$(which python)"
         shell: bash
 
       - name: Build (Debug)
@@ -65,7 +65,7 @@ jobs:
         run: ctest --test-dir build-debug --output-on-failure
 
       - name: Configure CMake (Release)
-        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="${{ env.pythonLocation }}/python"
+        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="$(which python)"
         shell: bash
 
       - name: Build (Release)
