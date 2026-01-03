@@ -56,6 +56,9 @@ jobs:
             wayland-protocols \
             extra-cmake-modules
 
+      - name: Install Python dependencies for GLAD
+        run: pip install jinja2
+
       - name: Configure CMake (Debug)
         run: cmake -B build-debug -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DLIMBO_BUILD_TESTS=ON
 
