@@ -14,14 +14,8 @@ namespace limbo {
 /**
  * @brief Material property value types
  */
-using MaterialPropertyValue = std::variant<
-    float,
-    glm::vec2,
-    glm::vec3,
-    glm::vec4,
-    i32,
-    glm::mat3,
-    glm::mat4>;
+using MaterialPropertyValue =
+    std::variant<float, glm::vec2, glm::vec3, glm::vec4, i32, glm::mat3, glm::mat4>;
 
 /**
  * @brief Texture slot assignment for materials
@@ -93,9 +87,9 @@ public:
     void unbind() const;
 
     // Common material presets
-    static Shared<Material> createUnlit();      // No lighting, just color/texture
-    static Shared<Material> createPhong();      // Classic Phong shading
-    static Shared<Material> createPBR();        // Physically-based rendering
+    static Shared<Material> createUnlit();  // No lighting, just color/texture
+    static Shared<Material> createPhong();  // Classic Phong shading
+    static Shared<Material> createPBR();    // Physically-based rendering
 
 private:
     Shared<Shader> m_shader;

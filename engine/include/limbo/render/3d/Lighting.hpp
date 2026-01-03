@@ -72,9 +72,9 @@ struct LightComponent {
     Type type = Type::Point;
     glm::vec3 color{1.0f};
     float intensity = 1.0f;
-    float range = 10.0f;          // Point/Spot
-    float innerCutoff = 12.5f;    // Spot only
-    float outerCutoff = 17.5f;    // Spot only
+    float range = 10.0f;        // Point/Spot
+    float innerCutoff = 12.5f;  // Spot only
+    float outerCutoff = 17.5f;  // Spot only
     bool castShadows = false;
 
     // Attenuation (Point/Spot)

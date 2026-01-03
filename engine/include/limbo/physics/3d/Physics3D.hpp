@@ -48,9 +48,8 @@ public:
                        float maxDistance = 1000.0f);
 
     /// Cast a ray and return all hits
-    std::vector<RaycastHit> raycastAll(const glm::vec3& origin,
-                                        const glm::vec3& direction,
-                                        float maxDistance = 1000.0f);
+    std::vector<RaycastHit> raycastAll(const glm::vec3& origin, const glm::vec3& direction,
+                                       float maxDistance = 1000.0f);
 
     // Shape queries
     std::vector<Entity> overlapSphere(const glm::vec3& center, float radius);
