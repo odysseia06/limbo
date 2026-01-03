@@ -18,7 +18,7 @@ namespace limbo {
  * Usage:
  *   SceneSerializer serializer(world);
  *   serializer.saveToFile("scenes/level1.json");
- *   
+ *
  *   // Later...
  *   serializer.loadFromFile("scenes/level1.json");
  */
@@ -69,4 +69,4 @@ private:
     String m_error;
 };
 
-} // namespace limbo
+}  // namespace limbo

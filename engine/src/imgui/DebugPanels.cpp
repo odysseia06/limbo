@@ -33,7 +33,8 @@ void showStatsPanel(f32 deltaTime) {
     if (fpsUpdateTimer >= 0.25f) {
         fpsUpdateTimer = 0.0f;
         float sum = 0.0f;
-        for (float f : fpsHistory) sum += f;
+        for (float f : fpsHistory)
+            sum += f;
         displayFps = sum / 120.0f;
         displayMs = 1000.0f / displayFps;
     }
@@ -69,14 +70,15 @@ void showEntityInspector(World& world) {
 
     // Get all entities with NameComponent
     auto view = world.view<NameComponent>();
-    
+
     static World::EntityId selectedEntity = entt::null;
-    
+
     // Entity list
-    if (ImGui::BeginChild("EntityList", ImVec2(200, 0), ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX)) {
+    if (ImGui::BeginChild("EntityList", ImVec2(200, 0),
+                          ImGuiChildFlags_Borders | ImGuiChildFlags_ResizeX)) {
         for (auto entity : view) {
             const auto& name = view.get<NameComponent>(entity);
-            
+
             bool isSelected = (selectedEntity == entity);
             if (ImGui::Selectable(name.name.c_str(), isSelected)) {
                 selectedEntity = entity;
@@ -101,14 +103,14 @@ void showEntityInspector(World& world) {
             if (world.hasComponent<TransformComponent>(selectedEntity)) {
                 if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen)) {
                     auto& transform = world.getComponent<TransformComponent>(selectedEntity);
-                    
+
                     ImGui::DragFloat3("Position", &transform.position.x, 0.01f);
-                    
+
                     glm::vec3 rotationDeg = glm::degrees(transform.rotation);
                     if (ImGui::DragFloat3("Rotation", &rotationDeg.x, 1.0f)) {
                         transform.rotation = glm::radians(rotationDeg);
                     }
-                    
+
                     ImGui::DragFloat3("Scale", &transform.scale.x, 0.01f, 0.01f, 100.0f);
                 }
             }
@@ -117,7 +119,7 @@ void showEntityInspector(World& world) {
             if (world.hasComponent<SpriteRendererComponent>(selectedEntity)) {
                 if (ImGui::CollapsingHeader("Sprite Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
                     auto& sprite = world.getComponent<SpriteRendererComponent>(selectedEntity);
-                    
+
                     ImGui::ColorEdit4("Color", &sprite.color.x);
                 }
             }
@@ -171,7 +173,7 @@ void showDemoWindow() {
 // Simple ring buffer for log messages
 struct LogEntry {
     std::string message;
-    int level; // 0=trace, 1=debug, 2=info, 3=warn, 4=error
+    int level;  // 0=trace, 1=debug, 2=info, 3=warn, 4=error
 };
 
 static std::deque<LogEntry> s_logBuffer;
@@ -204,20 +206,39 @@ void showLogConsole() {
     ImGui::Separator();
 
     // Log display
-    if (ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar)) {
+    if (ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), ImGuiChildFlags_None,
+                          ImGuiWindowFlags_HorizontalScrollbar)) {
         for (const auto& entry : s_logBuffer) {
             bool show = false;
             ImVec4 color;
-            
+
             switch (entry.level) {
-                case 0: show = showTrace; color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f); break;
-                case 1: show = showDebug; color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); break;
-                case 2: show = showInfo;  color = ImVec4(0.4f, 0.8f, 0.4f, 1.0f); break;
-                case 3: show = showWarn;  color = ImVec4(1.0f, 0.8f, 0.3f, 1.0f); break;
-                case 4: show = showError; color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break;
-                default: show = true; color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); break;
+            case 0:
+                show = showTrace;
+                color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+                break;
+            case 1:
+                show = showDebug;
+                color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
+                break;
+            case 2:
+                show = showInfo;
+                color = ImVec4(0.4f, 0.8f, 0.4f, 1.0f);
+                break;
+            case 3:
+                show = showWarn;
+                color = ImVec4(1.0f, 0.8f, 0.3f, 1.0f);
+                break;
+            case 4:
+                show = showError;
+                color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f);
+                break;
+            default:
+                show = true;
+                color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+                break;
             }
-            
+
             if (show) {
                 ImGui::PushStyleColor(ImGuiCol_Text, color);
                 ImGui::TextUnformatted(entry.message.c_str());
@@ -235,5 +256,5 @@ void showLogConsole() {
     ImGui::End();
 }
 
-} // namespace DebugPanels
-} // namespace limbo
+}  // namespace DebugPanels
+}  // namespace limbo

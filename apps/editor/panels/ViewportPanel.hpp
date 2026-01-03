@@ -47,4 +47,4 @@ private:
     f32 m_gridSize = 1.0f;
 };
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

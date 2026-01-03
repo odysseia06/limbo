@@ -44,4 +44,4 @@ private:
     std::vector<Unique<AudioSource>> m_sources;
 };
 
-} // namespace limbo
+}  // namespace limbo

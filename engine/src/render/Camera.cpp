@@ -33,7 +33,7 @@ void OrthographicCamera::setRotation(f32 rotation) {
 
 void OrthographicCamera::recalculateViewMatrix() {
     glm::mat4 transform = glm::translate(glm::mat4(1.0f), m_position) *
-        glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+                          glm::rotate(glm::mat4(1.0f), m_rotation, glm::vec3(0.0f, 0.0f, 1.0f));
 
     m_viewMatrix = glm::inverse(transform);
     m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
@@ -73,9 +73,9 @@ void PerspectiveCamera::lookAt(const glm::vec3& target, const glm::vec3& up) {
 
     // Extract rotation from view matrix (optional, for getRotation() consistency)
     glm::vec3 direction = glm::normalize(target - m_position);
-    m_rotation.x = glm::asin(-direction.y); // pitch
-    m_rotation.y = glm::atan(direction.x, direction.z); // yaw
-    m_rotation.z = 0.0f; // roll (not extracted from lookAt)
+    m_rotation.x = glm::asin(-direction.y);              // pitch
+    m_rotation.y = glm::atan(direction.x, direction.z);  // yaw
+    m_rotation.z = 0.0f;                                 // roll (not extracted from lookAt)
 }
 
 glm::vec3 PerspectiveCamera::getForward() const {
@@ -100,9 +100,9 @@ glm::vec3 PerspectiveCamera::getUp() const {
 void PerspectiveCamera::recalculateViewMatrix() {
     // Build rotation matrix from Euler angles (pitch, yaw, roll)
     glm::mat4 rotation = glm::mat4(1.0f);
-    rotation = glm::rotate(rotation, m_rotation.z, glm::vec3(0.0f, 0.0f, 1.0f)); // roll
-    rotation = glm::rotate(rotation, m_rotation.y, glm::vec3(0.0f, 1.0f, 0.0f)); // yaw
-    rotation = glm::rotate(rotation, m_rotation.x, glm::vec3(1.0f, 0.0f, 0.0f)); // pitch
+    rotation = glm::rotate(rotation, m_rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));  // roll
+    rotation = glm::rotate(rotation, m_rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));  // yaw
+    rotation = glm::rotate(rotation, m_rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));  // pitch
 
     glm::mat4 translation = glm::translate(glm::mat4(1.0f), m_position);
 
@@ -111,4 +111,4 @@ void PerspectiveCamera::recalculateViewMatrix() {
     m_viewProjectionMatrix = m_projectionMatrix * m_viewMatrix;
 }
 
-} // namespace limbo
+}  // namespace limbo

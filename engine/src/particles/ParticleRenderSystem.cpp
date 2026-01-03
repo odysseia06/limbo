@@ -9,9 +9,7 @@
 
 namespace limbo {
 
-ParticleRenderSystem::ParticleRenderSystem(u32 maxParticles)
-    : m_pool(maxParticles) {
-}
+ParticleRenderSystem::ParticleRenderSystem(u32 maxParticles) : m_pool(maxParticles) {}
 
 void ParticleRenderSystem::onAttach(World& world) {
     (void)world;
@@ -21,38 +19,38 @@ void ParticleRenderSystem::onAttach(World& world) {
 void ParticleRenderSystem::update(World& world, f32 deltaTime) {
     // Process all emitter components
     world.each<TransformComponent, ParticleEmitterComponent>(
-        [this, deltaTime](World::EntityId, TransformComponent& transform, ParticleEmitterComponent& emitter) {
+        [this, deltaTime](World::EntityId, TransformComponent& transform,
+                          ParticleEmitterComponent& emitter) {
             if (!emitter.emitting) {
                 return;
             }
-            
+
             // Update emitter position from transform
             ParticleEmitterProps props = emitter.props;
             props.position = transform.position;
-            
+
             // Emit particles based on rate
             if (props.emissionRate > 0.0f) {
                 emitter.emitAccumulator += deltaTime;
                 f32 emitInterval = 1.0f / props.emissionRate;
-                
+
                 while (emitter.emitAccumulator >= emitInterval) {
                     emitter.emitAccumulator -= emitInterval;
                     m_pool.emit(props);
                 }
             }
-        }
-    );
-    
+        });
+
     // Update all particles (physics, lifetime)
     m_pool.update(deltaTime);
-    
+
     // Apply acceleration to particles
     for (auto& particle : const_cast<std::vector<Particle>&>(m_pool.getParticles())) {
         if (particle.active) {
             // Find the emitter props for this particle's acceleration
             // For simplicity, we apply a default gravity-like acceleration
             // In a more complex system, each particle would store its own acceleration
-            particle.velocity.y -= 2.0f * deltaTime; // Simple gravity
+            particle.velocity.y -= 2.0f * deltaTime;  // Simple gravity
         }
     }
 }
@@ -65,29 +63,24 @@ void ParticleRenderSystem::onDetach(World& world) {
 
 void ParticleRenderSystem::render() {
     const auto& particles = m_pool.getParticles();
-    
+
     for (const auto& particle : particles) {
         if (!particle.active) {
             continue;
         }
-        
+
         // Calculate life progress (0 = just born, 1 = about to die)
         f32 lifeProgress = 1.0f - (particle.lifeRemaining / particle.lifetime);
-        
+
         // Interpolate color
         glm::vec4 color = glm::mix(particle.colorStart, particle.colorEnd, lifeProgress);
-        
+
         // Interpolate size
         f32 size = glm::mix(particle.sizeStart, particle.sizeEnd, lifeProgress);
-        
+
         // Render the particle
-        Renderer2D::drawRotatedQuad(
-            particle.position,
-            glm::vec2(size),
-            particle.rotation,
-            color
-        );
+        Renderer2D::drawRotatedQuad(particle.position, glm::vec2(size), particle.rotation, color);
     }
 }
 
-} // namespace limbo
+}  // namespace limbo

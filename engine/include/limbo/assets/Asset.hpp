@@ -12,10 +12,10 @@ namespace limbo {
  * Asset loading state
  */
 enum class AssetState : u8 {
-    Unloaded,   // Asset not yet loaded
-    Loading,    // Asset currently loading (async)
-    Loaded,     // Asset loaded and ready to use
-    Failed      // Asset failed to load
+    Unloaded,  // Asset not yet loaded
+    Loading,   // Asset currently loading (async)
+    Loaded,    // Asset loaded and ready to use
+    Failed     // Asset failed to load
 };
 
 /**
@@ -129,4 +129,4 @@ private:
     String m_errorMessage;
 };
 
-} // namespace limbo
+}  // namespace limbo

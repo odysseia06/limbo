@@ -63,4 +63,4 @@ private:
     std::mutex m_sourcesMutex;
 };
 
-} // namespace limbo
+}  // namespace limbo

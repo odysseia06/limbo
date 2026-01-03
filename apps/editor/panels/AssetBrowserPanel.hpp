@@ -37,4 +37,4 @@ private:
     float m_padding = 8.0f;
 };
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

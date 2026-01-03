@@ -12,7 +12,7 @@ namespace limbo {
 
 /**
  * TilemapRenderer - Renders tilemaps using the batch renderer
- * 
+ *
  * This is a utility class for rendering tilemaps. It can be used
  * standalone or through the TilemapRenderSystem.
  */
@@ -25,18 +25,17 @@ public:
      * @param camera Optional camera for culling (if null, renders all tiles)
      */
     static void render(const Tilemap& tilemap, const glm::vec3& position,
-                      const OrthographicCamera* camera = nullptr);
-    
+                       const OrthographicCamera* camera = nullptr);
+
     /**
      * Render a single layer of a tilemap
      */
-    static void renderLayer(const Tilemap& tilemap, u32 layerIndex,
-                           const glm::vec3& position,
-                           const OrthographicCamera* camera = nullptr);
+    static void renderLayer(const Tilemap& tilemap, u32 layerIndex, const glm::vec3& position,
+                            const OrthographicCamera* camera = nullptr);
 
 private:
-    static void renderTile(const Tilemap& tilemap, u32 tileId,
-                          const glm::vec3& position, f32 opacity);
+    static void renderTile(const Tilemap& tilemap, u32 tileId, const glm::vec3& position,
+                           f32 opacity);
 };
 
 /**
@@ -45,13 +44,13 @@ private:
 class LIMBO_API TilemapRenderSystem : public System {
 public:
     TilemapRenderSystem() = default;
-    
+
     void setCamera(const OrthographicCamera* camera) { m_camera = camera; }
-    
+
     void onAttach(World& world) override;
     void update(World& world, f32 deltaTime) override;
     void onDetach(World& world) override;
-    
+
     /**
      * Render all tilemaps (call during render phase)
      */
@@ -61,4 +60,4 @@ private:
     const OrthographicCamera* m_camera = nullptr;
 };
 
-} // namespace limbo
+}  // namespace limbo

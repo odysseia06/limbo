@@ -59,4 +59,4 @@ private:
     String m_filepath;
 };
 
-} // namespace limbo
+}  // namespace limbo

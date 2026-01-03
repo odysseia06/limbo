@@ -16,14 +16,14 @@ namespace limbo {
  * Usage:
  *   ImGuiLayer imgui;
  *   imgui.init(window);
- *   
+ *
  *   // In render loop:
  *   imgui.beginFrame();
  *   ImGui::Begin("Debug");
  *   ImGui::Text("Hello!");
  *   ImGui::End();
  *   imgui.endFrame();
- *   
+ *
  *   imgui.shutdown();
  */
 class LIMBO_API ImGuiLayer {
@@ -94,4 +94,4 @@ private:
     bool m_enabled = true;
 };
 
-} // namespace limbo
+}  // namespace limbo

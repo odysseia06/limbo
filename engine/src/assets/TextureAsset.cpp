@@ -15,7 +15,8 @@ bool TextureAsset::load() {
         return false;
     }
 
-    spdlog::debug("Loaded texture: {} ({}x{})", getPath().string(), m_texture->getWidth(), m_texture->getHeight());
+    spdlog::debug("Loaded texture: {} ({}x{})", getPath().string(), m_texture->getWidth(),
+                  m_texture->getHeight());
     return true;
 }
 
@@ -23,4 +24,4 @@ void TextureAsset::unload() {
     m_texture.reset();
 }
 
-} // namespace limbo
+}  // namespace limbo

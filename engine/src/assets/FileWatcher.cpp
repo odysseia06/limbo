@@ -11,7 +11,7 @@ void FileWatcher::watch(const std::filesystem::path& path, Callback callback) {
     }
 
     String key = path.generic_string();
-    
+
     WatchedFile watched;
     watched.path = path;
     watched.callback = std::move(callback);
@@ -41,8 +41,8 @@ void FileWatcher::poll() {
 
     for (auto& [key, watched] : m_watchedFiles) {
         // Skip if we checked too recently
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - watched.lastChecked);
+        auto elapsed =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - watched.lastChecked);
         if (elapsed < m_pollInterval) {
             continue;
         }
@@ -64,7 +64,7 @@ void FileWatcher::poll() {
         if (currentModTime != watched.lastModified) {
             watched.lastModified = currentModTime;
             spdlog::info("FileWatcher: File changed: {}", watched.path.string());
-            
+
             // Trigger callback
             if (watched.callback) {
                 watched.callback(watched.path);
@@ -78,4 +78,4 @@ bool FileWatcher::isWatching(const std::filesystem::path& path) const {
     return m_watchedFiles.find(key) != m_watchedFiles.end();
 }
 
-} // namespace limbo
+}  // namespace limbo

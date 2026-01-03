@@ -27,18 +27,17 @@ void AnimationSystem::update(World& world, f32 deltaTime) {
             if (world.hasComponent<SpriteRendererComponent>(entity)) {
                 auto& sprite = world.getComponent<SpriteRendererComponent>(entity);
                 const SpriteFrame* frame = animator.getCurrentFrame();
-                
+
                 if (frame) {
                     sprite.uvMin = frame->uvMin;
                     sprite.uvMax = frame->uvMax;
                 }
             }
-        }
-    );
+        });
 }
 
 void AnimationSystem::onDetach(World& /*world*/) {
     spdlog::debug("AnimationSystem shutdown");
 }
 
-} // namespace limbo
+}  // namespace limbo

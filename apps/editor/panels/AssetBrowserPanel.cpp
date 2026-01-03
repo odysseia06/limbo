@@ -5,10 +5,7 @@
 
 namespace limbo::editor {
 
-AssetBrowserPanel::AssetBrowserPanel(EditorApp& editor)
-    : m_editor(editor)
-{
-}
+AssetBrowserPanel::AssetBrowserPanel(EditorApp& editor) : m_editor(editor) {}
 
 void AssetBrowserPanel::init() {
     m_baseDirectory = std::filesystem::current_path() / "assets";
@@ -20,11 +17,11 @@ void AssetBrowserPanel::init() {
     }
 }
 
-void AssetBrowserPanel::shutdown() {
-}
+void AssetBrowserPanel::shutdown() {}
 
 void AssetBrowserPanel::render() {
-    if (!m_open) return;
+    if (!m_open)
+        return;
 
     ImGui::Begin("Asset Browser", &m_open);
 
@@ -57,7 +54,8 @@ void AssetBrowserPanel::drawDirectoryTree(const std::filesystem::path& path) {
 void AssetBrowserPanel::drawAssetGrid() {
     float panelWidth = ImGui::GetContentRegionAvail().x;
     int columnCount = static_cast<int>(panelWidth / (m_thumbnailSize + m_padding));
-    if (columnCount < 1) columnCount = 1;
+    if (columnCount < 1)
+        columnCount = 1;
 
     ImGui::Columns(columnCount, nullptr, false);
 
@@ -154,4 +152,4 @@ void AssetBrowserPanel::refreshDirectory() {
     // Re-scan directory
 }
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

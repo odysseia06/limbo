@@ -12,21 +12,21 @@
 // MSVC: _MSVC_LANG >= 202302L for C++23
 // GCC/Clang: __cplusplus >= 202302L for C++23
 #if defined(__cpp_lib_expected) && __cpp_lib_expected >= 202202L
-    #include <expected>
-    #define LIMBO_HAS_EXPECTED 1
+#include <expected>
+#define LIMBO_HAS_EXPECTED 1
 #else
-    #define LIMBO_HAS_EXPECTED 0
+#define LIMBO_HAS_EXPECTED 0
 #endif
 
 namespace limbo {
 
 // Fixed-size integer types
-using i8  = std::int8_t;
+using i8 = std::int8_t;
 using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
-using u8  = std::uint8_t;
+using u8 = std::uint8_t;
 using u16 = std::uint16_t;
 using u32 = std::uint32_t;
 using u64 = std::uint64_t;
@@ -40,22 +40,22 @@ using usize = std::size_t;
 using isize = std::ptrdiff_t;
 
 // Smart pointer aliases
-template<typename T>
+template <typename T>
 using Unique = std::unique_ptr<T>;
 
-template<typename T>
+template <typename T>
 using Shared = std::shared_ptr<T>;
 
-template<typename T>
+template <typename T>
 using Weak = std::weak_ptr<T>;
 
 // Helper functions for smart pointers
-template<typename T, typename... Args>
+template <typename T, typename... Args>
 constexpr Unique<T> make_unique(Args&&... args) {
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
-template<typename T, typename... Args>
+template <typename T, typename... Args>
 constexpr Shared<T> make_shared(Args&&... args) {
     return std::make_shared<T>(std::forward<Args>(args)...);
 }
@@ -65,22 +65,22 @@ using String = std::string;
 using StringView = std::string_view;
 
 // Optional type alias
-template<typename T>
+template <typename T>
 using Optional = std::optional<T>;
 
 // Forward declaration for unexpected
-template<typename E>
+template <typename E>
 struct unexpected;
 
 // Result type for fallible operations
 #if LIMBO_HAS_EXPECTED
-template<typename T, typename E = String>
+template <typename T, typename E = String>
 using Result = std::expected<T, E>;
 
 using std::unexpected;
 #else
 // unexpected wrapper for error values
-template<typename E>
+template <typename E>
 struct unexpected {
     E m_error;
     explicit unexpected(const E& e) : m_error(e) {}
@@ -89,7 +89,7 @@ struct unexpected {
 };
 
 // Fallback Result implementation for compilers without std::expected
-template<typename T, typename E = String>
+template <typename T, typename E = String>
 class Result {
 public:
     Result(const T& value) : m_value(value), m_hasValue(true) {}
@@ -116,7 +116,7 @@ private:
 };
 
 // Specialization for void
-template<typename E>
+template <typename E>
 class Result<void, E> {
 public:
     Result() : m_hasValue(true) {}
@@ -136,4 +136,4 @@ private:
 };
 #endif
 
-} // namespace limbo
+}  // namespace limbo

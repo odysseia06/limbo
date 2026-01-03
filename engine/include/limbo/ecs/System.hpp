@@ -97,7 +97,7 @@ public:
      * @param args Constructor arguments
      * @return Pointer to the added system
      */
-    template<typename T, typename... Args>
+    template <typename T, typename... Args>
     T* addSystem(Args&&... args) {
         static_assert(std::is_base_of_v<System, T>, "T must derive from System");
         auto system = std::make_unique<T>(std::forward<Args>(args)...);
@@ -113,7 +113,7 @@ public:
      * @tparam T System type
      * @return Pointer to the system, or nullptr if not found
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] T* getSystem() {
         auto it = m_systemMap.find(std::type_index(typeid(T)));
         if (it != m_systemMap.end()) {
@@ -127,7 +127,7 @@ public:
      * @tparam T System type
      * @return Const pointer to the system, or nullptr if not found
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] const T* getSystem() const {
         auto it = m_systemMap.find(std::type_index(typeid(T)));
         if (it != m_systemMap.end()) {
@@ -141,7 +141,7 @@ public:
      * @tparam T System type
      * @return True if the system exists
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] bool hasSystem() const {
         return m_systemMap.contains(std::type_index(typeid(T)));
     }
@@ -151,7 +151,7 @@ public:
      * @tparam T System type
      * @return True if the system was removed
      */
-    template<typename T>
+    template <typename T>
     bool removeSystem() {
         auto typeIdx = std::type_index(typeid(T));
         auto it = m_systemMap.find(typeIdx);
@@ -162,9 +162,10 @@ public:
         System* ptr = it->second;
         m_systemMap.erase(it);
 
-        auto sysIt = std::find_if(m_systems.begin(), m_systems.end(),
-            [ptr](const std::unique_ptr<System>& s) { return s.get() == ptr; });
-        
+        auto sysIt =
+            std::find_if(m_systems.begin(), m_systems.end(),
+                         [ptr](const std::unique_ptr<System>& s) { return s.get() == ptr; });
+
         if (sysIt != m_systems.end()) {
             m_systems.erase(sysIt);
         }
@@ -211,4 +212,4 @@ private:
     bool m_sorted = true;
 };
 
-} // namespace limbo
+}  // namespace limbo

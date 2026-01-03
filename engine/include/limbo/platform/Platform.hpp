@@ -51,6 +51,6 @@ LIMBO_API bool init();
 LIMBO_API void shutdown();
 LIMBO_API f64 getTime();
 
-} // namespace platform
+}  // namespace platform
 
-} // namespace limbo
+}  // namespace limbo

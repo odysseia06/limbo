@@ -7,9 +7,7 @@
 
 namespace limbo {
 
-PhysicsSystem::PhysicsSystem(Physics2D& physics)
-    : m_physics(physics) {
-}
+PhysicsSystem::PhysicsSystem(Physics2D& physics) : m_physics(physics) {}
 
 void PhysicsSystem::onAttach(World& world) {
     // Create bodies for all existing entities with physics components
@@ -80,15 +78,15 @@ void PhysicsSystem::createBody(World& world, World::EntityId entity) {
     bodyDef.angle = transform.rotation.z;
 
     switch (rb.type) {
-        case BodyType::Static:
-            bodyDef.type = b2_staticBody;
-            break;
-        case BodyType::Kinematic:
-            bodyDef.type = b2_kinematicBody;
-            break;
-        case BodyType::Dynamic:
-            bodyDef.type = b2_dynamicBody;
-            break;
+    case BodyType::Static:
+        bodyDef.type = b2_staticBody;
+        break;
+    case BodyType::Kinematic:
+        bodyDef.type = b2_kinematicBody;
+        break;
+    case BodyType::Dynamic:
+        bodyDef.type = b2_dynamicBody;
+        break;
     }
 
     bodyDef.gravityScale = rb.gravityScale;
@@ -107,12 +105,8 @@ void PhysicsSystem::createBody(World& world, World::EntityId entity) {
         auto& box = world.getComponent<BoxCollider2DComponent>(entity);
 
         b2PolygonShape boxShape;
-        boxShape.SetAsBox(
-            box.size.x * transform.scale.x,
-            box.size.y * transform.scale.y,
-            b2Vec2(box.offset.x, box.offset.y),
-            0.0f
-        );
+        boxShape.SetAsBox(box.size.x * transform.scale.x, box.size.y * transform.scale.y,
+                          b2Vec2(box.offset.x, box.offset.y), 0.0f);
 
         b2FixtureDef fixtureDef;
         fixtureDef.shape = &boxShape;
@@ -170,10 +164,8 @@ void PhysicsSystem::syncTransformToBody(World& world, World::EntityId entity) {
     auto& rb = world.getComponent<Rigidbody2DComponent>(entity);
 
     if (rb.runtimeBody) {
-        rb.runtimeBody->SetTransform(
-            b2Vec2(transform.position.x, transform.position.y),
-            transform.rotation.z
-        );
+        rb.runtimeBody->SetTransform(b2Vec2(transform.position.x, transform.position.y),
+                                     transform.rotation.z);
     }
 }
 
@@ -189,4 +181,4 @@ void PhysicsSystem::syncBodyToTransform(World& world, World::EntityId entity) {
     }
 }
 
-} // namespace limbo
+}  // namespace limbo

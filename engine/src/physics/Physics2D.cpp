@@ -50,4 +50,4 @@ glm::vec2 Physics2D::getGravity() const {
     return {0.0f, 0.0f};
 }
 
-} // namespace limbo
+}  // namespace limbo

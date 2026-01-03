@@ -37,4 +37,4 @@ private:
     const OrthographicCamera* m_camera = nullptr;
 };
 
-} // namespace limbo
+}  // namespace limbo

@@ -14,14 +14,14 @@ namespace limbo::editor {
  * Editor play state
  */
 enum class EditorState {
-    Edit,       // Editing mode - scene is not running
-    Play,       // Play mode - scene is simulating
-    Pause       // Paused - simulation paused
+    Edit,  // Editing mode - scene is not running
+    Play,  // Play mode - scene is simulating
+    Pause  // Paused - simulation paused
 };
 
 /**
  * EditorApp - The main Limbo Editor application
- * 
+ *
  * Provides a full-featured level editor with:
  * - Scene hierarchy view
  * - Entity inspector/properties
@@ -100,4 +100,4 @@ private:
     bool m_showDemoWindow = false;
 };
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

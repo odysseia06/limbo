@@ -9,10 +9,7 @@ namespace limbo {
 // Window implementation
 
 Window::Window(GLFWwindow* window, i32 width, i32 height)
-    : m_window(window)
-    , m_width(width)
-    , m_height(height) {
-}
+    : m_window(window), m_width(width), m_height(height) {}
 
 Window::~Window() {
     if (m_window) {
@@ -22,9 +19,7 @@ Window::~Window() {
 }
 
 Window::Window(Window&& other) noexcept
-    : m_window(other.m_window)
-    , m_width(other.m_width)
-    , m_height(other.m_height) {
+    : m_window(other.m_window), m_width(other.m_width), m_height(other.m_height) {
     other.m_window = nullptr;
     other.m_width = 0;
     other.m_height = 0;
@@ -59,13 +54,8 @@ Result<Window> Window::create(const WindowConfig& config) {
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #endif
 
-    GLFWwindow* window = glfwCreateWindow(
-        config.width,
-        config.height,
-        config.title.c_str(),
-        nullptr,
-        nullptr
-    );
+    GLFWwindow* window =
+        glfwCreateWindow(config.width, config.height, config.title.c_str(), nullptr, nullptr);
 
     if (!window) {
         return unexpected<String>("Failed to create GLFW window");
@@ -80,7 +70,8 @@ Result<Window> Window::create(const WindowConfig& config) {
         spdlog::debug("Window resized to {}x{}", width, height);
     });
 
-    spdlog::info(fmt::runtime("Window created: {} ({}x{})"), config.title, config.width, config.height);
+    spdlog::info(fmt::runtime("Window created: {} ({}x{})"), config.title, config.width,
+                 config.height);
 
     return Window(window, config.width, config.height);
 }
@@ -140,6 +131,6 @@ f64 getTime() {
     return glfwGetTime();
 }
 
-} // namespace platform
+}  // namespace platform
 
-} // namespace limbo
+}  // namespace limbo

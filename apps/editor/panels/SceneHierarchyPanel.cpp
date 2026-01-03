@@ -5,19 +5,15 @@
 
 namespace limbo::editor {
 
-SceneHierarchyPanel::SceneHierarchyPanel(EditorApp& editor)
-    : m_editor(editor)
-{
-}
+SceneHierarchyPanel::SceneHierarchyPanel(EditorApp& editor) : m_editor(editor) {}
 
-void SceneHierarchyPanel::init() {
-}
+void SceneHierarchyPanel::init() {}
 
-void SceneHierarchyPanel::shutdown() {
-}
+void SceneHierarchyPanel::shutdown() {}
 
 void SceneHierarchyPanel::render() {
-    if (!m_open) return;
+    if (!m_open)
+        return;
 
     ImGui::Begin("Hierarchy", &m_open);
 
@@ -30,7 +26,9 @@ void SceneHierarchyPanel::render() {
     });
 
     // Right-click context menu on empty space
-    if (ImGui::BeginPopupContextWindow("HierarchyContextMenu", ImGuiPopupFlags_NoOpenOverItems | ImGuiPopupFlags_MouseButtonRight)) {
+    if (ImGui::BeginPopupContextWindow("HierarchyContextMenu",
+                                       ImGuiPopupFlags_NoOpenOverItems |
+                                           ImGuiPopupFlags_MouseButtonRight)) {
         if (ImGui::MenuItem("Create Empty Entity")) {
             auto entity = m_editor.getWorld().createEntity("New Entity");
             entity.addComponent<TransformComponent>();
@@ -53,19 +51,21 @@ void SceneHierarchyPanel::render() {
 }
 
 void SceneHierarchyPanel::drawEntityNode(Entity entity) {
-    if (!entity.isValid()) return;
+    if (!entity.isValid())
+        return;
 
     auto& nameComp = entity.getComponent<NameComponent>();
-    
+
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth;
-    flags |= ImGuiTreeNodeFlags_Leaf; // No children for now
-    
+    flags |= ImGuiTreeNodeFlags_Leaf;  // No children for now
+
     if (m_selectedEntity.isValid() && m_selectedEntity.id() == entity.id()) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    bool opened = ImGui::TreeNodeEx(reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<u32>(entity.id()))), 
-                                     flags, "%s", nameComp.name.c_str());
+    bool opened = ImGui::TreeNodeEx(
+        reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<u32>(entity.id()))), flags, "%s",
+        nameComp.name.c_str());
 
     // Selection
     if (ImGui::IsItemClicked()) {
@@ -93,7 +93,6 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
     }
 }
 
-void SceneHierarchyPanel::drawContextMenu() {
-}
+void SceneHierarchyPanel::drawContextMenu() {}
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

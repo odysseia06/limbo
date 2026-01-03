@@ -34,4 +34,4 @@ private:
     f32 m_totalTime = 0.0f;
 };
 
-} // namespace limbo
+}  // namespace limbo

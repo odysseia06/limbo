@@ -68,7 +68,8 @@ Result<void, String> writeFileText(const std::filesystem::path& path, StringView
     return {};
 }
 
-Result<void, String> writeFileBinary(const std::filesystem::path& path, const std::vector<u8>& data) {
+Result<void, String> writeFileBinary(const std::filesystem::path& path,
+                                     const std::vector<u8>& data) {
     // Ensure parent directory exists
     if (path.has_parent_path()) {
         std::error_code ec;
@@ -83,7 +84,8 @@ Result<void, String> writeFileBinary(const std::filesystem::path& path, const st
         return unexpected<String>("Failed to open file for writing: " + path.string());
     }
 
-    file.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+    file.write(reinterpret_cast<const char*>(data.data()),
+               static_cast<std::streamsize>(data.size()));
 
     if (file.bad()) {
         return unexpected<String>("Error writing file: " + path.string());
@@ -125,4 +127,4 @@ String getStem(const std::filesystem::path& path) {
     return path.stem().string();
 }
 
-} // namespace limbo::util
+}  // namespace limbo::util

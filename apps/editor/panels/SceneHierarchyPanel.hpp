@@ -32,4 +32,4 @@ private:
     bool m_open = true;
 };
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

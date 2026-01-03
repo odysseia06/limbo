@@ -7,9 +7,7 @@ namespace limbo {
 // AnimationClip
 // ============================================================================
 
-AnimationClip::AnimationClip(const String& name)
-    : m_name(name) {
-}
+AnimationClip::AnimationClip(const String& name) : m_name(name) {}
 
 void AnimationClip::addFrame(u32 frameIndex, f32 duration) {
     AnimationFrame frame;
@@ -62,7 +60,7 @@ bool AnimationState::update(f32 deltaTime) {
     m_frameTime += deltaTime * speed;
 
     const AnimationFrame& currentFrame = m_clip->getFrame(m_currentFrame);
-    
+
     while (m_frameTime >= currentFrame.duration) {
         m_frameTime -= currentFrame.duration;
         advanceFrame();
@@ -167,48 +165,48 @@ void AnimationState::advanceFrame() {
     usize prevFrame = m_currentFrame;
 
     switch (m_clip->getPlayMode()) {
-        case AnimationPlayMode::Once:
+    case AnimationPlayMode::Once:
+        if (m_currentFrame + 1 >= frameCount) {
+            m_finished = true;
+            m_playing = false;
+            if (m_onComplete) {
+                m_onComplete();
+            }
+        } else {
+            m_currentFrame++;
+        }
+        break;
+
+    case AnimationPlayMode::Loop:
+        m_currentFrame = (m_currentFrame + 1) % frameCount;
+        break;
+
+    case AnimationPlayMode::PingPong:
+        if (m_reverse) {
+            if (m_currentFrame == 0) {
+                m_reverse = false;
+                m_currentFrame = 1;
+            } else {
+                m_currentFrame--;
+            }
+        } else {
             if (m_currentFrame + 1 >= frameCount) {
-                m_finished = true;
-                m_playing = false;
-                if (m_onComplete) {
-                    m_onComplete();
-                }
+                m_reverse = true;
+                m_currentFrame = frameCount > 1 ? frameCount - 2 : 0;
             } else {
                 m_currentFrame++;
             }
-            break;
+        }
+        break;
 
-        case AnimationPlayMode::Loop:
-            m_currentFrame = (m_currentFrame + 1) % frameCount;
-            break;
-
-        case AnimationPlayMode::PingPong:
-            if (m_reverse) {
-                if (m_currentFrame == 0) {
-                    m_reverse = false;
-                    m_currentFrame = 1;
-                } else {
-                    m_currentFrame--;
-                }
-            } else {
-                if (m_currentFrame + 1 >= frameCount) {
-                    m_reverse = true;
-                    m_currentFrame = frameCount > 1 ? frameCount - 2 : 0;
-                } else {
-                    m_currentFrame++;
-                }
-            }
-            break;
-
-        case AnimationPlayMode::ClampForever:
-            if (m_currentFrame + 1 < frameCount) {
-                m_currentFrame++;
-            } else {
-                m_finished = true;
-                // Keep playing (for ClampForever)
-            }
-            break;
+    case AnimationPlayMode::ClampForever:
+        if (m_currentFrame + 1 < frameCount) {
+            m_currentFrame++;
+        } else {
+            m_finished = true;
+            // Keep playing (for ClampForever)
+        }
+        break;
     }
 
     if (m_currentFrame != prevFrame && m_onFrameChange) {
@@ -216,4 +214,4 @@ void AnimationState::advanceFrame() {
     }
 }
 
-} // namespace limbo
+}  // namespace limbo

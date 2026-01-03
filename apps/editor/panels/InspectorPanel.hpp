@@ -33,7 +33,7 @@ private:
     void drawBoxCollider2DComponent(BoxCollider2DComponent& component);
     void drawCircleCollider2DComponent(CircleCollider2DComponent& component);
 
-    template<typename T>
+    template <typename T>
     void drawComponentHeader(const char* name, bool removable = true);
 
 private:
@@ -42,4 +42,4 @@ private:
     bool m_open = true;
 };
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

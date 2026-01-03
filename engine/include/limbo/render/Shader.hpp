@@ -23,16 +23,12 @@ public:
     Shader& operator=(Shader&& other) noexcept;
 
     // Load shader from source strings
-    [[nodiscard]] Result<void, String> loadFromSource(
-        StringView vertexSource,
-        StringView fragmentSource
-    );
+    [[nodiscard]] Result<void, String> loadFromSource(StringView vertexSource,
+                                                      StringView fragmentSource);
 
     // Load shader from files
-    [[nodiscard]] Result<void, String> loadFromFiles(
-        const std::filesystem::path& vertexPath,
-        const std::filesystem::path& fragmentPath
-    );
+    [[nodiscard]] Result<void, String> loadFromFiles(const std::filesystem::path& vertexPath,
+                                                     const std::filesystem::path& fragmentPath);
 
     // Bind/unbind the shader program
     void bind() const;
@@ -64,4 +60,4 @@ private:
     mutable std::unordered_map<String, i32> m_uniformLocationCache;
 };
 
-} // namespace limbo
+}  // namespace limbo

@@ -13,9 +13,8 @@ Shader::~Shader() {
 }
 
 Shader::Shader(Shader&& other) noexcept
-    : m_programId(other.m_programId)
-    , m_uniformLocationCache(std::move(other.m_uniformLocationCache))
-{
+    : m_programId(other.m_programId),
+      m_uniformLocationCache(std::move(other.m_uniformLocationCache)) {
     other.m_programId = 0;
 }
 
@@ -81,10 +80,8 @@ Result<void, String> Shader::loadFromSource(StringView vertexSource, StringView 
     return {};
 }
 
-Result<void, String> Shader::loadFromFiles(
-    const std::filesystem::path& vertexPath,
-    const std::filesystem::path& fragmentPath
-) {
+Result<void, String> Shader::loadFromFiles(const std::filesystem::path& vertexPath,
+                                           const std::filesystem::path& fragmentPath) {
     auto vertexSource = util::readFileText(vertexPath);
     if (!vertexSource) {
         return unexpected<String>("Failed to load vertex shader: " + vertexSource.error());
@@ -186,4 +183,4 @@ void Shader::destroy() {
     m_uniformLocationCache.clear();
 }
 
-} // namespace limbo
+}  // namespace limbo

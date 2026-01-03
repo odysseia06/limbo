@@ -56,7 +56,7 @@ public:
      * @param path Relative path to the asset
      * @return Shared pointer to the asset
      */
-    template<typename T>
+    template <typename T>
     Shared<T> load(const std::filesystem::path& path);
 
     /**
@@ -65,7 +65,7 @@ public:
      * @param id The asset's ID
      * @return Shared pointer to the asset, or nullptr if not found
      */
-    template<typename T>
+    template <typename T>
     Shared<T> get(AssetId id);
 
     /**
@@ -74,7 +74,7 @@ public:
      * @param path The asset's path
      * @return Shared pointer to the asset, or nullptr if not found
      */
-    template<typename T>
+    template <typename T>
     Shared<T> get(const std::filesystem::path& path);
 
     /**
@@ -90,7 +90,7 @@ public:
     /**
      * Unload all assets of a specific type
      */
-    template<typename T>
+    template <typename T>
     void unloadAll();
 
     /**
@@ -117,7 +117,8 @@ public:
     /**
      * Resolve a relative path to an absolute path using the asset root
      */
-    [[nodiscard]] std::filesystem::path resolvePath(const std::filesystem::path& relativePath) const;
+    [[nodiscard]] std::filesystem::path
+    resolvePath(const std::filesystem::path& relativePath) const;
 
     /**
      * Enable or disable hot-reloading
@@ -145,13 +146,13 @@ private:
     std::filesystem::path m_assetRoot = "assets";
     std::unordered_map<AssetId, Shared<Asset>> m_assets;
     std::unordered_map<std::type_index, std::vector<AssetId>> m_assetsByType;
-    
+
     FileWatcher m_fileWatcher;
     bool m_hotReloadEnabled = false;
 };
 
 // Template implementations
-template<typename T>
+template <typename T>
 Shared<T> AssetManager::load(const std::filesystem::path& path) {
     static_assert(std::is_base_of_v<Asset, T>, "T must derive from Asset");
 
@@ -174,13 +175,12 @@ Shared<T> AssetManager::load(const std::filesystem::path& path) {
     // Try to load
     if (asset->load()) {
         asset->setState(AssetState::Loaded);
-        
+
         // Register file dependencies for hot-reload
         if (m_hotReloadEnabled) {
             for (const auto& depPath : asset->getDependencies()) {
-                m_fileWatcher.watch(depPath, [this, id](const std::filesystem::path&) {
-                    reload(id);
-                });
+                m_fileWatcher.watch(depPath,
+                                    [this, id](const std::filesystem::path&) { reload(id); });
             }
         }
     } else {
@@ -194,7 +194,7 @@ Shared<T> AssetManager::load(const std::filesystem::path& path) {
     return asset;
 }
 
-template<typename T>
+template <typename T>
 Shared<T> AssetManager::get(AssetId id) {
     auto it = m_assets.find(id);
     if (it != m_assets.end()) {
@@ -203,14 +203,14 @@ Shared<T> AssetManager::get(AssetId id) {
     return nullptr;
 }
 
-template<typename T>
+template <typename T>
 Shared<T> AssetManager::get(const std::filesystem::path& path) {
     String pathStr = path.generic_string();
     AssetId id(pathStr);
     return get<T>(id);
 }
 
-template<typename T>
+template <typename T>
 void AssetManager::unloadAll() {
     auto typeIt = m_assetsByType.find(std::type_index(typeid(T)));
     if (typeIt == m_assetsByType.end()) {
@@ -228,4 +228,4 @@ void AssetManager::unloadAll() {
     m_assetsByType.erase(typeIt);
 }
 
-} // namespace limbo
+}  // namespace limbo

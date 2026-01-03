@@ -79,4 +79,4 @@ void AssetManager::pollHotReload() {
     }
 }
 
-} // namespace limbo
+}  // namespace limbo

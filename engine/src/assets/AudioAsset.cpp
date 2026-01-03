@@ -12,8 +12,8 @@ bool AudioAsset::load() {
         return false;
     }
 
-    spdlog::debug("Loaded audio asset: {} ({}s, {}Hz)", 
-        getPath().string(), m_clip->getDuration(), m_clip->getFormat().sampleRate);
+    spdlog::debug("Loaded audio asset: {} ({}s, {}Hz)", getPath().string(), m_clip->getDuration(),
+                  m_clip->getFormat().sampleRate);
 
     return true;
 }
@@ -22,4 +22,4 @@ void AudioAsset::unload() {
     m_clip.reset();
 }
 
-} // namespace limbo
+}  // namespace limbo

@@ -74,8 +74,8 @@ public:
     /**
      * Add a frame with custom pivot
      */
-    void addFrame(u32 x, u32 y, u32 width, u32 height, 
-                  const glm::vec2& pivot, const String& name = "");
+    void addFrame(u32 x, u32 y, u32 width, u32 height, const glm::vec2& pivot,
+                  const String& name = "");
 
     /**
      * Get frame by index
@@ -112,4 +112,4 @@ private:
     std::vector<SpriteFrame> m_frames;
 };
 
-} // namespace limbo
+}  // namespace limbo

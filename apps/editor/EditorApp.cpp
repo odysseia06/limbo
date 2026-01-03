@@ -6,12 +6,8 @@
 namespace limbo::editor {
 
 EditorApp::EditorApp()
-    : m_hierarchyPanel(*this)
-    , m_inspectorPanel(*this)
-    , m_viewportPanel(*this)
-    , m_assetBrowserPanel(*this)
-{
-}
+    : m_hierarchyPanel(*this), m_inspectorPanel(*this), m_viewportPanel(*this),
+      m_assetBrowserPanel(*this) {}
 
 void EditorApp::onInit() {
     spdlog::info("Limbo Editor initialized");
@@ -33,8 +29,10 @@ void EditorApp::onInit() {
     }
 
     // Initialize camera
-    float aspect = static_cast<float>(getWindow().getWidth()) / static_cast<float>(getWindow().getHeight());
-    m_editorCamera = OrthographicCamera(-aspect * m_cameraZoom, aspect * m_cameraZoom, -m_cameraZoom, m_cameraZoom);
+    float aspect =
+        static_cast<float>(getWindow().getWidth()) / static_cast<float>(getWindow().getHeight());
+    m_editorCamera = OrthographicCamera(-aspect * m_cameraZoom, aspect * m_cameraZoom,
+                                        -m_cameraZoom, m_cameraZoom);
 
     // Initialize physics (for play mode)
     m_physics.init({0.0f, -9.81f});
@@ -62,8 +60,10 @@ void EditorApp::onUpdate(f32 deltaTime) {
 
     // Handle global shortcuts
     if (Input::isKeyDown(Key::LeftControl) || Input::isKeyDown(Key::RightControl)) {
-        if (Input::isKeyPressed(Key::N)) newScene();
-        if (Input::isKeyPressed(Key::O)) openScene();
+        if (Input::isKeyPressed(Key::N))
+            newScene();
+        if (Input::isKeyPressed(Key::O))
+            openScene();
         if (Input::isKeyPressed(Key::S)) {
             if (Input::isKeyDown(Key::LeftShift) || Input::isKeyDown(Key::RightShift)) {
                 saveSceneAs();
@@ -191,7 +191,7 @@ void EditorApp::renderToolbar() {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-    
+
     if (ImGui::Begin("##Toolbar", nullptr, flags)) {
         // Play/Pause/Stop buttons
         bool isPlaying = (m_editorState == EditorState::Play);
@@ -236,8 +236,10 @@ void EditorApp::renderToolbar() {
 
         // Scene name on the right
         ImGui::SameLine(ImGui::GetWindowWidth() - 200);
-        String sceneName = m_currentScenePath.empty() ? "Untitled" : m_currentScenePath.filename().string();
-        if (m_sceneModified) sceneName += "*";
+        String sceneName =
+            m_currentScenePath.empty() ? "Untitled" : m_currentScenePath.filename().string();
+        if (m_sceneModified)
+            sceneName += "*";
         ImGui::Text("Scene: %s", sceneName.c_str());
     }
     ImGui::End();
@@ -248,16 +250,16 @@ void EditorApp::renderToolbar() {
 void EditorApp::renderDockspace() {
     // Setup dockspace
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-    
+
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
     ImGui::SetNextWindowSize(viewport->WorkSize);
     ImGui::SetNextWindowViewport(viewport->ID);
-    
+
     ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    
+
     windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
     windowFlags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
     windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
@@ -289,13 +291,11 @@ void EditorApp::renderDockspace() {
 
 void EditorApp::renderStatusBar() {
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
-    
+
     ImGui::Begin("Status Bar", nullptr, flags);
     ImGui::Text("FPS: %.0f | Entities: %zu | Draw Calls: %u | Quads: %u",
-        static_cast<double>(1.0f / m_deltaTime),
-        getWorld().entityCount(),
-        Renderer2D::getStats().drawCalls,
-        Renderer2D::getStats().quadCount);
+                static_cast<double>(1.0f / m_deltaTime), getWorld().entityCount(),
+                Renderer2D::getStats().drawCalls, Renderer2D::getStats().quadCount);
     ImGui::End();
 }
 
@@ -311,7 +311,7 @@ void EditorApp::openScene() {
     // TODO: Open file dialog
     // For now, try to load a default scene
     std::filesystem::path scenePath = m_assetManager.getAssetRoot() / "scenes" / "default.json";
-    
+
     if (std::filesystem::exists(scenePath)) {
         SceneSerializer serializer(getWorld());
         if (serializer.loadFromFile(scenePath)) {
@@ -347,7 +347,7 @@ void EditorApp::saveSceneAs() {
     // For now, save to default location
     std::filesystem::path scenePath = m_assetManager.getAssetRoot() / "scenes" / "default.json";
     std::filesystem::create_directories(scenePath.parent_path());
-    
+
     SceneSerializer serializer(getWorld());
     if (serializer.saveToFile(scenePath)) {
         m_currentScenePath = scenePath;
@@ -414,4 +414,4 @@ void EditorApp::onShutdown() {
     spdlog::info("Limbo Editor shutdown");
 }
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

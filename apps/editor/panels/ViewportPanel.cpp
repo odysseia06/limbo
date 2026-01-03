@@ -6,20 +6,16 @@
 
 namespace limbo::editor {
 
-ViewportPanel::ViewportPanel(EditorApp& editor)
-    : m_editor(editor)
-{
-}
+ViewportPanel::ViewportPanel(EditorApp& editor) : m_editor(editor) {}
 
 void ViewportPanel::init() {
     // Initialize camera
     float aspect = m_viewportSize.x / m_viewportSize.y;
-    m_camera = OrthographicCamera(-aspect * m_cameraZoom, aspect * m_cameraZoom, 
-                                   -m_cameraZoom, m_cameraZoom);
+    m_camera = OrthographicCamera(-aspect * m_cameraZoom, aspect * m_cameraZoom, -m_cameraZoom,
+                                  m_cameraZoom);
 }
 
-void ViewportPanel::shutdown() {
-}
+void ViewportPanel::shutdown() {}
 
 void ViewportPanel::update(f32 deltaTime) {
     if (m_viewportFocused || m_viewportHovered) {
@@ -63,13 +59,14 @@ void ViewportPanel::handleCameraInput(f32 deltaTime) {
 
     // Update camera projection
     float aspect = m_viewportSize.x / m_viewportSize.y;
-    m_camera.setProjection(-aspect * m_cameraZoom, aspect * m_cameraZoom,
-                           -m_cameraZoom, m_cameraZoom);
+    m_camera.setProjection(-aspect * m_cameraZoom, aspect * m_cameraZoom, -m_cameraZoom,
+                           m_cameraZoom);
     m_camera.setPosition(glm::vec3(m_cameraPosition, 0.0f));
 }
 
 void ViewportPanel::render() {
-    if (!m_open) return;
+    if (!m_open)
+        return;
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("Viewport", &m_open);
@@ -88,7 +85,7 @@ void ViewportPanel::render() {
     ImVec2 minBound = ImGui::GetWindowContentRegionMin();
     ImVec2 maxBound = ImGui::GetWindowContentRegionMax();
     ImVec2 windowPos = ImGui::GetWindowPos();
-    
+
     m_viewportBounds[0] = {minBound.x + windowPos.x, minBound.y + windowPos.y};
     m_viewportBounds[1] = {maxBound.x + windowPos.x, maxBound.y + windowPos.y};
 
@@ -113,8 +110,7 @@ void ViewportPanel::renderScene() {
     world.each<TransformComponent, SpriteRendererComponent>(
         [](World::EntityId, TransformComponent& transform, SpriteRendererComponent& sprite) {
             Renderer2D::drawQuad(transform.getMatrix(), sprite.color);
-        }
-    );
+        });
 
     // Draw gizmos for selected entity
     drawGizmos();
@@ -132,33 +128,31 @@ void ViewportPanel::drawGrid() {
     float step = m_gridSize;
 
     // Adjust step based on zoom
-    if (m_cameraZoom > 5.0f) step = 2.0f;
-    if (m_cameraZoom > 10.0f) step = 5.0f;
-    if (m_cameraZoom < 0.5f) step = 0.5f;
-    if (m_cameraZoom < 0.2f) step = 0.1f;
+    if (m_cameraZoom > 5.0f)
+        step = 2.0f;
+    if (m_cameraZoom > 10.0f)
+        step = 5.0f;
+    if (m_cameraZoom < 0.5f)
+        step = 0.5f;
+    if (m_cameraZoom < 0.2f)
+        step = 0.1f;
 
     // Draw vertical lines
     for (float x = -gridExtent; x <= gridExtent; x += step) {
         glm::vec4 color = (std::abs(x) < 0.001f) ? axisColorY : gridColor;
         float thickness = (std::abs(x) < 0.001f) ? 0.02f : 0.005f;
-        
-        Renderer2D::drawQuad(
-            glm::vec3(x, 0.0f, -0.1f),
-            glm::vec2(thickness, gridExtent * 2.0f),
-            color
-        );
+
+        Renderer2D::drawQuad(glm::vec3(x, 0.0f, -0.1f), glm::vec2(thickness, gridExtent * 2.0f),
+                             color);
     }
 
     // Draw horizontal lines
     for (float y = -gridExtent; y <= gridExtent; y += step) {
         glm::vec4 color = (std::abs(y) < 0.001f) ? axisColorX : gridColor;
         float thickness = (std::abs(y) < 0.001f) ? 0.02f : 0.005f;
-        
-        Renderer2D::drawQuad(
-            glm::vec3(0.0f, y, -0.1f),
-            glm::vec2(gridExtent * 2.0f, thickness),
-            color
-        );
+
+        Renderer2D::drawQuad(glm::vec3(0.0f, y, -0.1f), glm::vec2(gridExtent * 2.0f, thickness),
+                             color);
     }
 }
 
@@ -170,4 +164,4 @@ void ViewportPanel::drawGizmos() {
     // This would be implemented with the editor's selected entity
 }
 
-} // namespace limbo::editor
+}  // namespace limbo::editor

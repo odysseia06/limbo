@@ -37,13 +37,14 @@ bool ShaderAsset::load() {
                 // Track dependencies for hot-reload
                 m_shaderFiles.push_back(vertPath);
                 m_shaderFiles.push_back(fragPath);
-                
-                spdlog::debug("Loaded shader: {} ({}, {})",
-                    basePath.string(), ext.vertex, ext.fragment);
+
+                spdlog::debug("Loaded shader: {} ({}, {})", basePath.string(), ext.vertex,
+                              ext.fragment);
                 return true;
             } else {
                 setError(result.error());
-                spdlog::error("Failed to compile shader '{}': {}", basePath.string(), result.error());
+                spdlog::error("Failed to compile shader '{}': {}", basePath.string(),
+                              result.error());
                 m_shader.reset();
                 return false;
             }
@@ -62,4 +63,4 @@ void ShaderAsset::unload() {
     m_shader.reset();
 }
 
-} // namespace limbo
+}  // namespace limbo

@@ -53,16 +53,15 @@ void SpriteSheet::createFromGrid(u32 cellWidth, u32 cellHeight, u32 frameCount, 
         m_frames.push_back(frame);
     }
 
-    spdlog::debug("SpriteSheet: Created {} frames from {}x{} grid", 
-        m_frames.size(), cols, rows);
+    spdlog::debug("SpriteSheet: Created {} frames from {}x{} grid", m_frames.size(), cols, rows);
 }
 
 void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const String& name) {
     addFrame(x, y, width, height, glm::vec2(0.5f, 0.5f), name);
 }
 
-void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, 
-                           const glm::vec2& pivot, const String& name) {
+void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const glm::vec2& pivot,
+                           const String& name) {
     if (!m_texture) {
         spdlog::warn("SpriteSheet::addFrame: No texture set");
         return;
@@ -114,4 +113,4 @@ void SpriteSheet::clear() {
     m_frames.clear();
 }
 
-} // namespace limbo
+}  // namespace limbo

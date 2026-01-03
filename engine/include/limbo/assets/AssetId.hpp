@@ -26,10 +26,10 @@ private:
     u64 m_id = 0;
 };
 
-} // namespace limbo
+}  // namespace limbo
 
 // Hash support for use in containers
-template<>
+template <>
 struct std::hash<limbo::AssetId> {
     std::size_t operator()(const limbo::AssetId& id) const noexcept {
         return std::hash<limbo::u64>{}(id.value());

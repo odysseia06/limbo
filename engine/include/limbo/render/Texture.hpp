@@ -33,12 +33,7 @@ enum class TextureFilter : u8 {
     LinearMipmapLinear
 };
 
-enum class TextureWrap : u8 {
-    Repeat,
-    MirroredRepeat,
-    ClampToEdge,
-    ClampToBorder
-};
+enum class TextureWrap : u8 { Repeat, MirroredRepeat, ClampToEdge, ClampToBorder };
 
 struct TextureSpec {
     u32 width = 1;
@@ -92,4 +87,4 @@ private:
     TextureFormat m_format = TextureFormat::None;
 };
 
-} // namespace limbo
+}  // namespace limbo

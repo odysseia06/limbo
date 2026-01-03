@@ -47,10 +47,10 @@ void SystemManager::fixedUpdate(World& world, f32 fixedDeltaTime) {
 
 void SystemManager::sortSystems() {
     std::stable_sort(m_systems.begin(), m_systems.end(),
-        [](const std::unique_ptr<System>& a, const std::unique_ptr<System>& b) {
-            return a->priority() < b->priority();
-        });
+                     [](const std::unique_ptr<System>& a, const std::unique_ptr<System>& b) {
+                         return a->priority() < b->priority();
+                     });
     m_sorted = true;
 }
 
-} // namespace limbo
+}  // namespace limbo

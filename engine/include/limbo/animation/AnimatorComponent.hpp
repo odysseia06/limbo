@@ -58,16 +58,12 @@ struct LIMBO_API AnimatorComponent {
     /**
      * Get the current sprite frame for rendering
      */
-    const SpriteFrame* getCurrentFrame() const {
-        return currentState.getCurrentSpriteFrame();
-    }
+    const SpriteFrame* getCurrentFrame() const { return currentState.getCurrentSpriteFrame(); }
 
     /**
      * Check if an animation exists
      */
-    bool hasClip(const String& name) const {
-        return clips.find(name) != clips.end();
-    }
+    bool hasClip(const String& name) const { return clips.find(name) != clips.end(); }
 };
 
-} // namespace limbo
+}  // namespace limbo

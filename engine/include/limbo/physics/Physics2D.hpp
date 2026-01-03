@@ -18,7 +18,7 @@ namespace limbo {
  *   Physics2D physics;
  *   physics.init();
  *   physics.setGravity({0.0f, -9.81f});
- *   
+ *
  *   // In update loop:
  *   physics.step(deltaTime);
  */
@@ -83,16 +83,16 @@ public:
      * Convert from world units to physics units (pixels to meters)
      */
     static f32 toPhysics(f32 worldUnits) { return worldUnits * s_pixelsToMeters; }
-    static glm::vec2 toPhysics(const glm::vec2& worldUnits) { 
-        return worldUnits * s_pixelsToMeters; 
+    static glm::vec2 toPhysics(const glm::vec2& worldUnits) {
+        return worldUnits * s_pixelsToMeters;
     }
 
     /**
      * Convert from physics units to world units (meters to pixels)
      */
     static f32 toWorld(f32 physicsUnits) { return physicsUnits * s_metersToPixels; }
-    static glm::vec2 toWorld(const glm::vec2& physicsUnits) { 
-        return physicsUnits * s_metersToPixels; 
+    static glm::vec2 toWorld(const glm::vec2& physicsUnits) {
+        return physicsUnits * s_metersToPixels;
     }
 
     /**
@@ -114,4 +114,4 @@ private:
     static inline f32 s_metersToPixels = 1.0f;
 };
 
-} // namespace limbo
+}  // namespace limbo

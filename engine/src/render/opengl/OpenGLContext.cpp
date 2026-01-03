@@ -49,9 +49,7 @@ public:
         return true;
     }
 
-    void shutdown() override {
-        m_window = nullptr;
-    }
+    void shutdown() override { m_window = nullptr; }
 
     void beginFrame() override {
         // Nothing specific needed for OpenGL
@@ -83,14 +81,9 @@ public:
 
 private:
 #ifdef LIMBO_DEBUG
-    static void LIMBO_GL_CALLBACK debugCallback(
-        GLenum source,
-        GLenum type,
-        GLuint id,
-        GLenum severity,
-        GLsizei /*length*/,
-        const GLchar* message,
-        const void* /*userParam*/
+    static void LIMBO_GL_CALLBACK debugCallback(GLenum source, GLenum type, GLuint id,
+                                                GLenum severity, GLsizei /*length*/,
+                                                const GLchar* message, const void* /*userParam*/
     ) {
         // Ignore non-significant messages
         if (id == 131169 || id == 131185 || id == 131218 || id == 131204) {
@@ -99,43 +92,71 @@ private:
 
         const char* sourceStr = "Unknown";
         switch (source) {
-            case GL_DEBUG_SOURCE_API:             sourceStr = "API"; break;
-            case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   sourceStr = "Window System"; break;
-            case GL_DEBUG_SOURCE_SHADER_COMPILER: sourceStr = "Shader Compiler"; break;
-            case GL_DEBUG_SOURCE_THIRD_PARTY:     sourceStr = "Third Party"; break;
-            case GL_DEBUG_SOURCE_APPLICATION:     sourceStr = "Application"; break;
-            case GL_DEBUG_SOURCE_OTHER:           sourceStr = "Other"; break;
-            default: break;
+        case GL_DEBUG_SOURCE_API:
+            sourceStr = "API";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            sourceStr = "Window System";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            sourceStr = "Shader Compiler";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            sourceStr = "Third Party";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            sourceStr = "Application";
+            break;
+        case GL_DEBUG_SOURCE_OTHER:
+            sourceStr = "Other";
+            break;
+        default:
+            break;
         }
 
         const char* typeStr = "Unknown";
         switch (type) {
-            case GL_DEBUG_TYPE_ERROR:               typeStr = "Error"; break;
-            case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: typeStr = "Deprecated"; break;
-            case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  typeStr = "Undefined Behavior"; break;
-            case GL_DEBUG_TYPE_PORTABILITY:         typeStr = "Portability"; break;
-            case GL_DEBUG_TYPE_PERFORMANCE:         typeStr = "Performance"; break;
-            case GL_DEBUG_TYPE_MARKER:              typeStr = "Marker"; break;
-            case GL_DEBUG_TYPE_OTHER:               typeStr = "Other"; break;
-            default: break;
+        case GL_DEBUG_TYPE_ERROR:
+            typeStr = "Error";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            typeStr = "Deprecated";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            typeStr = "Undefined Behavior";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY:
+            typeStr = "Portability";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            typeStr = "Performance";
+            break;
+        case GL_DEBUG_TYPE_MARKER:
+            typeStr = "Marker";
+            break;
+        case GL_DEBUG_TYPE_OTHER:
+            typeStr = "Other";
+            break;
+        default:
+            break;
         }
 
         switch (severity) {
-            case GL_DEBUG_SEVERITY_HIGH:
-                spdlog::error(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
-                break;
-            case GL_DEBUG_SEVERITY_MEDIUM:
-                spdlog::warn(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
-                break;
-            case GL_DEBUG_SEVERITY_LOW:
-                spdlog::info(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
-                break;
-            case GL_DEBUG_SEVERITY_NOTIFICATION:
-                spdlog::debug(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
-                break;
-            default:
-                spdlog::debug(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
-                break;
+        case GL_DEBUG_SEVERITY_HIGH:
+            spdlog::error(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            break;
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            spdlog::warn(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            break;
+        case GL_DEBUG_SEVERITY_LOW:
+            spdlog::info(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            spdlog::debug(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            break;
+        default:
+            spdlog::debug(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            break;
         }
     }
 #endif
@@ -147,4 +168,4 @@ Unique<RenderContext> createOpenGLContext() {
     return make_unique<OpenGLContext>();
 }
 
-} // namespace limbo
+}  // namespace limbo

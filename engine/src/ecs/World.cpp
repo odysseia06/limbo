@@ -33,4 +33,4 @@ void World::clear() {
     m_registry.clear();
 }
 
-} // namespace limbo
+}  // namespace limbo

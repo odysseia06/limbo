@@ -8,7 +8,7 @@ namespace limbo {
 
 /**
  * ParticleRenderSystem - Updates and renders particles from ParticleEmitterComponents
- * 
+ *
  * This system manages a shared particle pool and handles:
  * - Emitting particles based on emitter components
  * - Updating particle physics (position, velocity, lifetime)
@@ -17,17 +17,17 @@ namespace limbo {
 class LIMBO_API ParticleRenderSystem : public System {
 public:
     explicit ParticleRenderSystem(u32 maxParticles = 10000);
-    
+
     void onAttach(World& world) override;
     void update(World& world, f32 deltaTime) override;
     void onDetach(World& world) override;
-    
+
     /**
      * Render all active particles
      * Call this during the render phase (after beginScene, before endScene)
      */
     void render();
-    
+
     /**
      * Get the particle pool for direct access
      */
@@ -38,4 +38,4 @@ private:
     ParticlePool m_pool;
 };
 
-} // namespace limbo
+}  // namespace limbo

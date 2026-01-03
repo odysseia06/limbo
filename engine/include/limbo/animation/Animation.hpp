@@ -13,18 +13,18 @@ namespace limbo {
  * Animation playback mode
  */
 enum class AnimationPlayMode : u8 {
-    Once,           // Play once and stop
-    Loop,           // Loop continuously
-    PingPong,       // Play forward then backward
-    ClampForever    // Play once and hold last frame
+    Once,         // Play once and stop
+    Loop,         // Loop continuously
+    PingPong,     // Play forward then backward
+    ClampForever  // Play once and hold last frame
 };
 
 /**
  * Animation frame with timing information
  */
 struct LIMBO_API AnimationFrame {
-    u32 frameIndex = 0;     // Index into sprite sheet
-    f32 duration = 0.1f;    // Duration in seconds
+    u32 frameIndex = 0;   // Index into sprite sheet
+    f32 duration = 0.1f;  // Duration in seconds
 };
 
 /**
@@ -183,7 +183,9 @@ public:
     /**
      * Set callback for each frame change
      */
-    void setOnFrameChange(std::function<void(u32)> callback) { m_onFrameChange = std::move(callback); }
+    void setOnFrameChange(std::function<void(u32)> callback) {
+        m_onFrameChange = std::move(callback);
+    }
 
 private:
     void advanceFrame();
@@ -200,4 +202,4 @@ private:
     std::function<void(u32)> m_onFrameChange;
 };
 
-} // namespace limbo
+}  // namespace limbo

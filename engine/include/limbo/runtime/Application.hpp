@@ -53,4 +53,4 @@ private:
     static Application* s_instance;
 };
 
-} // namespace limbo
+}  // namespace limbo

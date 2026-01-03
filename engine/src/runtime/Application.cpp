@@ -104,4 +104,4 @@ Application& Application::get() {
     return *s_instance;
 }
 
-} // namespace limbo
+}  // namespace limbo

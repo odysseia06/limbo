@@ -38,4 +38,4 @@ private:
     Physics2D& m_physics;
 };
 
-} // namespace limbo
+}  // namespace limbo

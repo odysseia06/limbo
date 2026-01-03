@@ -66,7 +66,7 @@ public:
     /**
      * Call a global Lua function
      */
-    template<typename... Args>
+    template <typename... Args>
     sol::protected_function_result callFunction(const String& name, Args&&... args) {
         sol::protected_function func = m_lua[name];
         if (!func.valid()) {
@@ -108,4 +108,4 @@ private:
     World* m_boundWorld = nullptr;
 };
 
-} // namespace limbo
+}  // namespace limbo

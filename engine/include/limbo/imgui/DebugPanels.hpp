@@ -49,6 +49,6 @@ LIMBO_API void showDemoWindow();
  */
 LIMBO_API void showLogConsole();
 
-} // namespace DebugPanels
+}  // namespace DebugPanels
 
-} // namespace limbo
+}  // namespace limbo

@@ -56,4 +56,4 @@ struct LIMBO_API AudioListenerComponent {
     AudioListenerComponent() = default;
 };
 
-} // namespace limbo
+}  // namespace limbo

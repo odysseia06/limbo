@@ -171,7 +171,8 @@ public:
      * @param rotation Rotation in radians
      * @param color RGBA color
      */
-    static void drawRotatedQuad(const glm::vec2& position, const glm::vec2& size, f32 rotation, const glm::vec4& color);
+    static void drawRotatedQuad(const glm::vec2& position, const glm::vec2& size, f32 rotation,
+                                const glm::vec4& color);
 
     /**
      * Draw a rotated colored quad with z-depth
@@ -180,7 +181,8 @@ public:
      * @param rotation Rotation in radians
      * @param color RGBA color
      */
-    static void drawRotatedQuad(const glm::vec3& position, const glm::vec2& size, f32 rotation, const glm::vec4& color);
+    static void drawRotatedQuad(const glm::vec3& position, const glm::vec2& size, f32 rotation,
+                                const glm::vec4& color);
 
     /**
      * Draw a rotated textured quad
@@ -235,4 +237,4 @@ private:
     static void nextBatch();
 };
 
-} // namespace limbo
+}  // namespace limbo

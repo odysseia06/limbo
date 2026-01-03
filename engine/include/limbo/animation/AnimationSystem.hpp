@@ -22,4 +22,4 @@ public:
     void onDetach(World& world) override;
 };
 
-} // namespace limbo
+}  // namespace limbo

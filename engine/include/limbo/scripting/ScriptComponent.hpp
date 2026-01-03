@@ -36,8 +36,7 @@ struct LIMBO_API ScriptComponent {
     bool enabled = true;
 
     ScriptComponent() = default;
-    explicit ScriptComponent(const std::filesystem::path& path)
-        : scriptPath(path) {}
+    explicit ScriptComponent(const std::filesystem::path& path) : scriptPath(path) {}
 };
 
-} // namespace limbo
+}  // namespace limbo

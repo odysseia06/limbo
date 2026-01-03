@@ -85,7 +85,7 @@ public:
      * @param args Constructor arguments
      * @return Reference to the added component (for non-empty types)
      */
-    template<typename T, typename... Args>
+    template <typename T, typename... Args>
     decltype(auto) addComponent(EntityId entity, Args&&... args) {
         if constexpr (std::is_empty_v<T>) {
             m_registry.emplace<T>(entity, std::forward<Args>(args)...);
@@ -102,7 +102,7 @@ public:
      * @param args Constructor arguments (used if component doesn't exist)
      * @return Reference to the component
      */
-    template<typename T, typename... Args>
+    template <typename T, typename... Args>
     T& getOrAddComponent(EntityId entity, Args&&... args) {
         return m_registry.get_or_emplace<T>(entity, std::forward<Args>(args)...);
     }
@@ -112,7 +112,7 @@ public:
      * @tparam T Component type
      * @param entity The entity
      */
-    template<typename T>
+    template <typename T>
     void removeComponent(EntityId entity) {
         m_registry.remove<T>(entity);
     }
@@ -123,7 +123,7 @@ public:
      * @param entity The entity
      * @return True if the entity has the component
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] bool hasComponent(EntityId entity) const {
         return m_registry.all_of<T>(entity);
     }
@@ -134,7 +134,7 @@ public:
      * @param entity The entity
      * @return True if the entity has all components
      */
-    template<typename... Ts>
+    template <typename... Ts>
     [[nodiscard]] bool hasAllComponents(EntityId entity) const {
         return m_registry.all_of<Ts...>(entity);
     }
@@ -145,7 +145,7 @@ public:
      * @param entity The entity
      * @return True if the entity has at least one component
      */
-    template<typename... Ts>
+    template <typename... Ts>
     [[nodiscard]] bool hasAnyComponent(EntityId entity) const {
         return m_registry.any_of<Ts...>(entity);
     }
@@ -156,7 +156,7 @@ public:
      * @param entity The entity
      * @return Reference to the component
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] T& getComponent(EntityId entity) {
         return m_registry.get<T>(entity);
     }
@@ -167,7 +167,7 @@ public:
      * @param entity The entity
      * @return Const reference to the component
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] const T& getComponent(EntityId entity) const {
         return m_registry.get<T>(entity);
     }
@@ -178,7 +178,7 @@ public:
      * @param entity The entity
      * @return Pointer to the component, or nullptr if not found
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] T* tryGetComponent(EntityId entity) {
         return m_registry.try_get<T>(entity);
     }
@@ -189,7 +189,7 @@ public:
      * @param entity The entity
      * @return Const pointer to the component, or nullptr if not found
      */
-    template<typename T>
+    template <typename T>
     [[nodiscard]] const T* tryGetComponent(EntityId entity) const {
         return m_registry.try_get<T>(entity);
     }
@@ -203,7 +203,7 @@ public:
      * @tparam Ts Component types to include
      * @return View for iteration
      */
-    template<typename... Ts>
+    template <typename... Ts>
     [[nodiscard]] auto view() {
         return m_registry.view<Ts...>();
     }
@@ -213,7 +213,7 @@ public:
      * @tparam Ts Component types to include
      * @return View for iteration
      */
-    template<typename... Ts>
+    template <typename... Ts>
     [[nodiscard]] auto view() const {
         return m_registry.view<Ts...>();
     }
@@ -223,7 +223,7 @@ public:
      * @tparam Ts Component types
      * @param func Callback function(EntityId, Ts&...)
      */
-    template<typename... Ts, typename Func>
+    template <typename... Ts, typename Func>
     void each(Func&& func) {
         m_registry.view<Ts...>().each(std::forward<Func>(func));
     }
@@ -243,4 +243,4 @@ private:
     entt::registry m_registry;
 };
 
-} // namespace limbo
+}  // namespace limbo

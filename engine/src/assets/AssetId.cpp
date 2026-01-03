@@ -17,4 +17,4 @@ AssetId::AssetId(StringView path) {
     m_id = hash;
 }
 
-} // namespace limbo
+}  // namespace limbo

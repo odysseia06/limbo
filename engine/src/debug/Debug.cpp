@@ -26,4 +26,4 @@ void shutdown() {
     spdlog::shutdown();
 }
 
-} // namespace limbo::debug
+}  // namespace limbo::debug

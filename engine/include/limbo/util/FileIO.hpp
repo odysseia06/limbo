@@ -22,7 +22,8 @@ LIMBO_API Result<void, String> writeFileText(const std::filesystem::path& path, 
 
 // Write binary data to file (overwrites if exists)
 // Returns Result<void> indicating success or error message
-LIMBO_API Result<void, String> writeFileBinary(const std::filesystem::path& path, const std::vector<u8>& data);
+LIMBO_API Result<void, String> writeFileBinary(const std::filesystem::path& path,
+                                               const std::vector<u8>& data);
 
 // Check if file exists
 LIMBO_API bool fileExists(const std::filesystem::path& path);
@@ -43,4 +44,4 @@ LIMBO_API String getExtension(const std::filesystem::path& path);
 // Get filename without extension
 LIMBO_API String getStem(const std::filesystem::path& path);
 
-} // namespace limbo::util
+}  // namespace limbo::util

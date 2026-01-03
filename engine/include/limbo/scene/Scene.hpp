@@ -14,4 +14,4 @@ public:
     void update(f32 deltaTime);
 };
 
-} // namespace limbo
+}  // namespace limbo

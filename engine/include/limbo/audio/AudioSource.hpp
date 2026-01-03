@@ -7,11 +7,7 @@
 namespace limbo {
 
 /// Playback state for audio source
-enum class AudioState : u8 {
-    Stopped = 0,
-    Playing,
-    Paused
-};
+enum class AudioState : u8 { Stopped = 0, Playing, Paused };
 
 /// Represents an audio playback source that can play AudioClips
 class LIMBO_API AudioSource {
@@ -80,4 +76,4 @@ private:
     usize m_samplePosition = 0;
 };
 
-} // namespace limbo
+}  // namespace limbo

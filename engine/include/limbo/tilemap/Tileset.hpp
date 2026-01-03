@@ -14,14 +14,14 @@ namespace limbo {
  * TileFlags - Properties for individual tiles
  */
 enum class TileFlags : u32 {
-    None        = 0,
-    Solid       = 1 << 0,   // Blocks movement/collision
-    Platform    = 1 << 1,   // One-way platform (solid from above)
-    Ladder      = 1 << 2,   // Climbable
-    Water       = 1 << 3,   // Liquid/swimmable
-    Hazard      = 1 << 4,   // Damages player
-    Breakable   = 1 << 5,   // Can be destroyed
-    Animated    = 1 << 6,   // Has animation frames
+    None = 0,
+    Solid = 1 << 0,      // Blocks movement/collision
+    Platform = 1 << 1,   // One-way platform (solid from above)
+    Ladder = 1 << 2,     // Climbable
+    Water = 1 << 3,      // Liquid/swimmable
+    Hazard = 1 << 4,     // Damages player
+    Breakable = 1 << 5,  // Can be destroyed
+    Animated = 1 << 6,   // Has animation frames
 };
 
 inline TileFlags operator|(TileFlags a, TileFlags b) {
@@ -40,20 +40,20 @@ inline bool hasFlag(TileFlags flags, TileFlags flag) {
  * TileDefinition - Defines properties of a tile type
  */
 struct TileDefinition {
-    u32 id = 0;                     // Tile ID (index in tileset)
-    glm::vec2 uvMin{0.0f};          // UV coordinates in texture
+    u32 id = 0;             // Tile ID (index in tileset)
+    glm::vec2 uvMin{0.0f};  // UV coordinates in texture
     glm::vec2 uvMax{1.0f};
     TileFlags flags = TileFlags::None;
-    String name;                    // Optional name for editor
-    
+    String name;  // Optional name for editor
+
     // Animation (if Animated flag is set)
-    std::vector<u32> animationFrames;   // Tile IDs for animation
-    f32 animationSpeed = 1.0f;          // Frames per second
+    std::vector<u32> animationFrames;  // Tile IDs for animation
+    f32 animationSpeed = 1.0f;         // Frames per second
 };
 
 /**
  * Tileset - A texture atlas containing tiles with metadata
- * 
+ *
  * Manages a grid of tiles from a single texture, with support for
  * tile properties, collision flags, and animations.
  */
@@ -61,13 +61,13 @@ class LIMBO_API Tileset {
 public:
     Tileset() = default;
     ~Tileset() = default;
-    
+
     // Non-copyable, movable
     Tileset(const Tileset&) = delete;
     Tileset& operator=(const Tileset&) = delete;
     Tileset(Tileset&&) = default;
     Tileset& operator=(Tileset&&) = default;
-    
+
     /**
      * Create tileset from a texture with uniform grid
      * @param texture The tileset texture
@@ -76,35 +76,35 @@ public:
      * @param margin Margin around the texture edge in pixels
      * @param spacing Spacing between tiles in pixels
      */
-    void create(Texture2D* texture, u32 tileWidth, u32 tileHeight,
-                u32 margin = 0, u32 spacing = 0);
-    
+    void create(Texture2D* texture, u32 tileWidth, u32 tileHeight, u32 margin = 0, u32 spacing = 0);
+
     /**
      * Get tile definition by ID
      */
     [[nodiscard]] const TileDefinition* getTile(u32 id) const;
     [[nodiscard]] TileDefinition* getTile(u32 id);
-    
+
     /**
      * Set tile flags
      */
     void setTileFlags(u32 id, TileFlags flags);
-    
+
     /**
      * Set tile name
      */
     void setTileName(u32 id, const String& name);
-    
+
     /**
      * Setup tile animation
      */
     void setTileAnimation(u32 id, const std::vector<u32>& frames, f32 speed);
-    
+
     /**
      * Get UV coordinates for a tile
      */
-    [[nodiscard]] glm::vec4 getTileUV(u32 id) const;  // Returns (uvMin.x, uvMin.y, uvMax.x, uvMax.y)
-    
+    [[nodiscard]] glm::vec4
+    getTileUV(u32 id) const;  // Returns (uvMin.x, uvMin.y, uvMax.x, uvMax.y)
+
     // Getters
     [[nodiscard]] Texture2D* getTexture() const { return m_texture; }
     [[nodiscard]] u32 getTileWidth() const { return m_tileWidth; }
@@ -112,7 +112,7 @@ public:
     [[nodiscard]] u32 getTileCount() const { return static_cast<u32>(m_tiles.size()); }
     [[nodiscard]] u32 getColumns() const { return m_columns; }
     [[nodiscard]] u32 getRows() const { return m_rows; }
-    
+
     /**
      * Check if a tile ID is valid
      */
@@ -126,8 +126,8 @@ private:
     u32 m_rows = 0;
     u32 m_margin = 0;
     u32 m_spacing = 0;
-    
+
     std::vector<TileDefinition> m_tiles;
 };
 
-} // namespace limbo
+}  // namespace limbo

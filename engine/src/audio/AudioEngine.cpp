@@ -8,7 +8,8 @@
 namespace limbo {
 
 // Static callback wrapper for miniaudio
-static void dataCallback(ma_device* device, void* output, const void* /*input*/, ma_uint32 frameCount) {
+static void dataCallback(ma_device* device, void* output, const void* /*input*/,
+                         ma_uint32 frameCount) {
     auto* engine = static_cast<AudioEngine*>(device->pUserData);
     if (engine) {
         engine->audioCallback(output, frameCount);
@@ -82,7 +83,8 @@ void AudioEngine::shutdown() {
 }
 
 void AudioEngine::registerSource(AudioSource* source) {
-    if (!source) return;
+    if (!source)
+        return;
 
     std::lock_guard<std::mutex> lock(m_sourcesMutex);
     auto it = std::find(m_sources.begin(), m_sources.end(), source);
@@ -92,7 +94,8 @@ void AudioEngine::registerSource(AudioSource* source) {
 }
 
 void AudioEngine::unregisterSource(AudioSource* source) {
-    if (!source) return;
+    if (!source)
+        return;
 
     std::lock_guard<std::mutex> lock(m_sourcesMutex);
     auto it = std::find(m_sources.begin(), m_sources.end(), source);
@@ -197,10 +200,10 @@ bool AudioClip::loadFromFile(const String& filepath) {
 
     // Read all samples
     m_samples.resize(static_cast<usize>(totalFrames * m_format.channels));
-    
+
     ma_uint64 framesRead;
     result = ma_decoder_read_pcm_frames(&decoder, m_samples.data(), totalFrames, &framesRead);
-    
+
     // Resize to actual size
     m_samples.resize(static_cast<usize>(framesRead * m_format.channels));
     m_samples.shrink_to_fit();
@@ -208,8 +211,8 @@ bool AudioClip::loadFromFile(const String& filepath) {
     ma_decoder_uninit(&decoder);
 
     m_filepath = filepath;
-    spdlog::debug("Loaded audio: {} ({} samples, {}Hz, {} channels)", 
-        filepath, m_samples.size(), m_format.sampleRate, m_format.channels);
+    spdlog::debug("Loaded audio: {} ({} samples, {}Hz, {} channels)", filepath, m_samples.size(),
+                  m_format.sampleRate, m_format.channels);
 
     return true;
 }
@@ -238,10 +241,10 @@ bool AudioClip::loadFromMemory(const void* data, usize size) {
 
     // Read all samples
     m_samples.resize(static_cast<usize>(totalFrames * m_format.channels));
-    
+
     ma_uint64 framesRead;
     result = ma_decoder_read_pcm_frames(&decoder, m_samples.data(), totalFrames, &framesRead);
-    
+
     m_samples.resize(static_cast<usize>(framesRead * m_format.channels));
     m_samples.shrink_to_fit();
 
@@ -256,23 +259,24 @@ void AudioClip::generateTestTone(f32 frequency, f32 duration, f32 amplitude) {
     m_format.channels = 2;
     m_format.bitsPerSample = 32;
 
-    const usize totalSamples = static_cast<usize>(duration * static_cast<f32>(m_format.sampleRate) * m_format.channels);
+    const usize totalSamples =
+        static_cast<usize>(duration * static_cast<f32>(m_format.sampleRate) * m_format.channels);
     m_samples.resize(totalSamples);
 
     const f32 twoPi = 6.28318530718f;
-    
+
     for (usize i = 0; i < totalSamples / m_format.channels; ++i) {
         f32 t = static_cast<f32>(i) / static_cast<f32>(m_format.sampleRate);
         f32 sample = amplitude * std::sin(twoPi * frequency * t);
-        
+
         // Apply fade in/out to avoid clicks
-        f32 fadeTime = 0.01f; // 10ms fade
+        f32 fadeTime = 0.01f;  // 10ms fade
         if (t < fadeTime) {
             sample *= t / fadeTime;
         } else if (t > duration - fadeTime) {
             sample *= (duration - t) / fadeTime;
         }
-        
+
         // Write to both channels (stereo)
         m_samples[i * 2] = sample;
         m_samples[i * 2 + 1] = sample;
@@ -286,7 +290,7 @@ f32 AudioClip::getDuration() const {
     if (m_samples.empty() || m_format.sampleRate == 0 || m_format.channels == 0) {
         return 0.0f;
     }
-    return static_cast<f32>(m_samples.size()) / 
+    return static_cast<f32>(m_samples.size()) /
            static_cast<f32>(m_format.sampleRate * m_format.channels);
 }
 
@@ -333,7 +337,7 @@ f32 AudioSource::getPlaybackPosition() const {
         return 0.0f;
     }
     const auto& format = m_clip->getFormat();
-    return static_cast<f32>(m_samplePosition) / 
+    return static_cast<f32>(m_samplePosition) /
            static_cast<f32>(format.sampleRate * format.channels);
 }
 
@@ -342,8 +346,8 @@ void AudioSource::setPlaybackPosition(f32 position) {
         return;
     }
     const auto& format = m_clip->getFormat();
-    m_samplePosition = static_cast<usize>(position * 
-                       static_cast<f32>(format.sampleRate * format.channels));
+    m_samplePosition =
+        static_cast<usize>(position * static_cast<f32>(format.sampleRate * format.channels));
     m_samplePosition = std::min(m_samplePosition, m_clip->getSampleCount());
 }
 
@@ -351,4 +355,4 @@ void AudioSource::advanceSamplePosition(usize samples) {
     m_samplePosition += samples;
 }
 
-} // namespace limbo
+}  // namespace limbo

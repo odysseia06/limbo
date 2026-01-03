@@ -22,7 +22,7 @@ namespace limbo {
  *   watcher.watch("assets/texture.png", [](const auto& path) {
  *       // Reload texture
  *   });
- *   
+ *
  *   // In update loop:
  *   watcher.poll();
  */
@@ -67,9 +67,7 @@ public:
      * Set the minimum interval between checks for the same file
      * Default is 500ms to avoid excessive disk access
      */
-    void setPollInterval(std::chrono::milliseconds interval) {
-        m_pollInterval = interval;
-    }
+    void setPollInterval(std::chrono::milliseconds interval) { m_pollInterval = interval; }
 
     /**
      * Get the number of files being watched
@@ -93,4 +91,4 @@ private:
     std::chrono::milliseconds m_pollInterval{500};
 };
 
-} // namespace limbo
+}  // namespace limbo

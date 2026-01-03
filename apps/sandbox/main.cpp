@@ -20,10 +20,10 @@ public:
     void update(limbo::World& world, limbo::f32 deltaTime) override {
         // Iterate over all entities with Transform and Velocity components
         world.each<limbo::TransformComponent, VelocityComponent>(
-            [deltaTime](limbo::World::EntityId, limbo::TransformComponent& transform, VelocityComponent& velocity) {
+            [deltaTime](limbo::World::EntityId, limbo::TransformComponent& transform,
+                        VelocityComponent& velocity) {
                 transform.position += velocity.velocity * deltaTime;
-            }
-        );
+            });
     }
 };
 
@@ -37,7 +37,8 @@ public:
 
     void update(limbo::World& world, limbo::f32 /*deltaTime*/) override {
         world.each<limbo::TransformComponent, VelocityComponent>(
-            [](limbo::World::EntityId, limbo::TransformComponent& transform, VelocityComponent& velocity) {
+            [](limbo::World::EntityId, limbo::TransformComponent& transform,
+               VelocityComponent& velocity) {
                 // Bounce off horizontal boundaries
                 if (transform.position.x > 1.5f || transform.position.x < -1.5f) {
                     velocity.velocity.x = -velocity.velocity.x;
@@ -48,8 +49,7 @@ public:
                     velocity.velocity.y = -velocity.velocity.y;
                     transform.position.y = glm::clamp(transform.position.y, -1.0f, 1.0f);
                 }
-            }
-        );
+            });
     }
 };
 
@@ -59,12 +59,12 @@ public:
     void update(limbo::World& world, limbo::f32 deltaTime) override {
         // Only rotate entities that don't have physics (physics bodies handle their own rotation)
         world.each<limbo::TransformComponent, limbo::SpriteRendererComponent>(
-            [&world, deltaTime](limbo::World::EntityId entity, limbo::TransformComponent& transform, limbo::SpriteRendererComponent&) {
+            [&world, deltaTime](limbo::World::EntityId entity, limbo::TransformComponent& transform,
+                                limbo::SpriteRendererComponent&) {
                 if (!world.hasComponent<limbo::Rigidbody2DComponent>(entity)) {
                     transform.rotation.z += deltaTime * 2.0f;
                 }
-            }
-        );
+            });
     }
 };
 
@@ -93,7 +93,8 @@ protected:
         }
 
         // Initialize camera
-        float aspect = static_cast<float>(getWindow().getWidth()) / static_cast<float>(getWindow().getHeight());
+        float aspect = static_cast<float>(getWindow().getWidth()) /
+                       static_cast<float>(getWindow().getHeight());
         m_camera = limbo::OrthographicCamera(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
         // Initialize physics
@@ -136,7 +137,7 @@ protected:
         // Try to find the assets folder relative to the executable
         std::filesystem::path exePath = std::filesystem::current_path();
         std::filesystem::path assetsPath = exePath / "apps" / "sandbox" / "assets";
-        
+
         // Fallback paths for different build configurations
         if (!std::filesystem::exists(assetsPath)) {
             assetsPath = exePath / "assets";
@@ -166,10 +167,12 @@ protected:
             }
 
             // Load texture asset
-            m_checkerboardTexture = m_assetManager.load<limbo::TextureAsset>("textures/checkerboard.png");
-            if (m_checkerboardTexture && m_checkerboardTexture->getState() == limbo::AssetState::Loaded) {
+            m_checkerboardTexture =
+                m_assetManager.load<limbo::TextureAsset>("textures/checkerboard.png");
+            if (m_checkerboardTexture &&
+                m_checkerboardTexture->getState() == limbo::AssetState::Loaded) {
                 spdlog::info("Loaded texture asset: textures/checkerboard.png ({}x{})",
-                    m_checkerboardTexture->getWidth(), m_checkerboardTexture->getHeight());
+                             m_checkerboardTexture->getWidth(), m_checkerboardTexture->getHeight());
             } else {
                 spdlog::warn("Failed to load texture asset");
             }
@@ -209,10 +212,8 @@ protected:
         // UI system - renders in-game UI
         m_uiSystem = getSystems().addSystem<limbo::UISystem>();
         m_uiSystem->setPriority(200);  // Render after everything else
-        m_uiSystem->setScreenSize(glm::vec2(
-            static_cast<float>(getWindow().getWidth()),
-            static_cast<float>(getWindow().getHeight())
-        ));
+        m_uiSystem->setScreenSize(glm::vec2(static_cast<float>(getWindow().getWidth()),
+                                            static_cast<float>(getWindow().getHeight())));
 
         // Note: SpriteRenderSystem is NOT added here because rendering
         // needs to happen in onRender() after the screen is cleared
@@ -227,29 +228,28 @@ protected:
 
             // Add transform with random-ish starting position
             auto& transform = entity.addComponent<limbo::TransformComponent>();
-            transform.position = glm::vec3(
-                (static_cast<float>(i % 5) - 2.0f) * 0.6f,
-                (static_cast<float>(i / 5) - 2.0f) * 0.4f,
-                0.0f
-            );
+            transform.position = glm::vec3((static_cast<float>(i % 5) - 2.0f) * 0.6f,
+                                           (static_cast<float>(i / 5) - 2.0f) * 0.4f, 0.0f);
             transform.scale = glm::vec3(0.15f);
 
             // Add velocity for movement
             float speedX = 0.2f + static_cast<float>(i % 7) * 0.05f;
             float speedY = 0.15f + static_cast<float>(i % 5) * 0.05f;
-            if (i % 2 == 0) speedX = -speedX;
-            if (i % 3 == 0) speedY = -speedY;
+            if (i % 2 == 0)
+                speedX = -speedX;
+            if (i % 3 == 0)
+                speedY = -speedY;
             entity.addComponent<VelocityComponent>(glm::vec3(speedX, speedY, 0.0f));
 
             // Add sprite renderer with different colors
             glm::vec4 colors[] = {
-                {1.0f, 0.3f, 0.3f, 1.0f}, // Red
-                {0.3f, 1.0f, 0.3f, 1.0f}, // Green
-                {0.3f, 0.3f, 1.0f, 1.0f}, // Blue
-                {1.0f, 1.0f, 0.3f, 1.0f}, // Yellow
-                {1.0f, 0.3f, 1.0f, 1.0f}, // Magenta
-                {0.3f, 1.0f, 1.0f, 1.0f}, // Cyan
-                {1.0f, 0.6f, 0.2f, 1.0f}  // Orange
+                {1.0f, 0.3f, 0.3f, 1.0f},  // Red
+                {0.3f, 1.0f, 0.3f, 1.0f},  // Green
+                {0.3f, 0.3f, 1.0f, 1.0f},  // Blue
+                {1.0f, 1.0f, 0.3f, 1.0f},  // Yellow
+                {1.0f, 0.3f, 1.0f, 1.0f},  // Magenta
+                {0.3f, 1.0f, 1.0f, 1.0f},  // Cyan
+                {1.0f, 0.6f, 0.2f, 1.0f}   // Orange
             };
             entity.addComponent<limbo::SpriteRendererComponent>(colors[i % 7]);
         }
@@ -259,7 +259,8 @@ protected:
         auto& staticTransform = staticEntity.addComponent<limbo::TransformComponent>();
         staticTransform.position = glm::vec3(0.0f, 0.0f, 0.0f);
         staticTransform.scale = glm::vec3(0.3f);
-        staticEntity.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+        staticEntity.addComponent<limbo::SpriteRendererComponent>(
+            glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 
         // Create physics demo entities if physics mode is enabled
         if (m_physicsEnabled) {
@@ -333,8 +334,8 @@ protected:
         tilemapComp.tilemap = m_tilemap;
         tilemapComp.tileset = m_tileset;
 
-        spdlog::info("Created tilemap: {}x{} tiles, {} layers",
-                     m_tilemap->getWidth(), m_tilemap->getHeight(), m_tilemap->getLayerCount());
+        spdlog::info("Created tilemap: {}x{} tiles, {} layers", m_tilemap->getWidth(),
+                     m_tilemap->getHeight(), m_tilemap->getLayerCount());
     }
 
     void createUIDemo() {
@@ -427,7 +428,8 @@ protected:
         std::vector<uint8_t> pixels(texWidth * texHeight * 4);
 
         // Helper to set pixel color
-        auto setPixel = [&](uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
+        auto setPixel = [&](uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b,
+                            uint8_t a = 255) {
             uint32_t idx = (y * texWidth + x) * 4;
             pixels[idx + 0] = r;
             pixels[idx + 1] = g;
@@ -449,44 +451,44 @@ protected:
 
                         // Different tile types
                         switch (tileIdx) {
-                            case 0: // Grass - green with variation
-                            {
-                                uint8_t g = static_cast<uint8_t>(100 + (x * y) % 50);
-                                setPixel(px, py, 40, g, 30);
-                                break;
+                        case 0:  // Grass - green with variation
+                        {
+                            uint8_t g = static_cast<uint8_t>(100 + (x * y) % 50);
+                            setPixel(px, py, 40, g, 30);
+                            break;
+                        }
+                        case 1:  // Dirt - brown
+                        {
+                            uint8_t r = static_cast<uint8_t>(120 + (x + y) % 30);
+                            setPixel(px, py, r, 80, 40);
+                            break;
+                        }
+                        case 2:  // Stone - gray
+                        {
+                            uint8_t v = static_cast<uint8_t>(100 + (x * 3 + y * 7) % 40);
+                            setPixel(px, py, v, v, static_cast<uint8_t>(v + 10));
+                            break;
+                        }
+                        case 3:  // Water - blue
+                        {
+                            uint8_t b = static_cast<uint8_t>(150 + (x + y * 2) % 50);
+                            setPixel(px, py, 30, 80, b);
+                            break;
+                        }
+                        case 4:  // Flowers - green with colored dots
+                        {
+                            setPixel(px, py, 40, 120, 30);
+                            if ((x == 4 || x == 11) && (y == 4 || y == 11)) {
+                                setPixel(px, py, 255, 100, 150);  // Pink flower
                             }
-                            case 1: // Dirt - brown
-                            {
-                                uint8_t r = static_cast<uint8_t>(120 + (x + y) % 30);
-                                setPixel(px, py, r, 80, 40);
-                                break;
+                            if ((x == 7) && (y == 7)) {
+                                setPixel(px, py, 255, 255, 100);  // Yellow flower
                             }
-                            case 2: // Stone - gray
-                            {
-                                uint8_t v = static_cast<uint8_t>(100 + (x * 3 + y * 7) % 40);
-                                setPixel(px, py, v, v, static_cast<uint8_t>(v + 10));
-                                break;
-                            }
-                            case 3: // Water - blue
-                            {
-                                uint8_t b = static_cast<uint8_t>(150 + (x + y * 2) % 50);
-                                setPixel(px, py, 30, 80, b);
-                                break;
-                            }
-                            case 4: // Flowers - green with colored dots
-                            {
-                                setPixel(px, py, 40, 120, 30);
-                                if ((x == 4 || x == 11) && (y == 4 || y == 11)) {
-                                    setPixel(px, py, 255, 100, 150); // Pink flower
-                                }
-                                if ((x == 7) && (y == 7)) {
-                                    setPixel(px, py, 255, 255, 100); // Yellow flower
-                                }
-                                break;
-                            }
-                            default: // Empty/transparent
-                                setPixel(px, py, 0, 0, 0, 0);
-                                break;
+                            break;
+                        }
+                        default:  // Empty/transparent
+                            setPixel(px, py, 0, 0, 0, 0);
+                            break;
                         }
                     }
                 }
@@ -546,7 +548,7 @@ protected:
             particleEmitter.props.velocity = glm::vec3(0.0f, 0.0f, 0.0f);
             particleEmitter.props.velocityVariance = glm::vec3(1.5f, 1.5f, 0.0f);
             particleEmitter.props.colorStart = glm::vec4(0.3f, 0.7f, 1.0f, 1.0f);  // Cyan
-            particleEmitter.props.colorEnd = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);    // White, fade out
+            particleEmitter.props.colorEnd = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);  // White, fade out
             particleEmitter.props.sizeStart = 0.05f;
             particleEmitter.props.sizeEnd = 0.0f;
             particleEmitter.props.lifetime = 0.8f;
@@ -567,7 +569,7 @@ protected:
             particleEmitter.props.velocity = glm::vec3(0.0f, -0.5f, 0.0f);
             particleEmitter.props.velocityVariance = glm::vec3(0.3f, 0.2f, 0.0f);
             particleEmitter.props.colorStart = glm::vec4(1.0f, 1.0f, 1.0f, 0.9f);  // White
-            particleEmitter.props.colorEnd = glm::vec4(0.8f, 0.9f, 1.0f, 0.0f);    // Light blue, fade
+            particleEmitter.props.colorEnd = glm::vec4(0.8f, 0.9f, 1.0f, 0.0f);  // Light blue, fade
             particleEmitter.props.sizeStart = 0.03f;
             particleEmitter.props.sizeEnd = 0.02f;
             particleEmitter.props.sizeVariance = 0.01f;
@@ -584,7 +586,7 @@ protected:
 
         // Find script path
         std::filesystem::path scriptPath = m_assetManager.getAssetRoot() / "scripts" / "player.lua";
-        
+
         if (!std::filesystem::exists(scriptPath)) {
             spdlog::warn("Script not found: {}", scriptPath.string());
             spdlog::info("Create apps/sandbox/assets/scripts/player.lua to enable scripting demo");
@@ -596,10 +598,11 @@ protected:
         auto& transform = scriptedEntity.addComponent<limbo::TransformComponent>();
         transform.position = glm::vec3(0.0f, -0.3f, 0.0f);
         transform.scale = glm::vec3(0.2f);
-        
+
         // Bright green to distinguish from other sprites
-        scriptedEntity.addComponent<limbo::SpriteRendererComponent>(glm::vec4(0.2f, 1.0f, 0.4f, 1.0f));
-        
+        scriptedEntity.addComponent<limbo::SpriteRendererComponent>(
+            glm::vec4(0.2f, 1.0f, 0.4f, 1.0f));
+
         // Add script component
         auto& script = scriptedEntity.addComponent<limbo::ScriptComponent>();
         script.scriptPath = scriptPath;
@@ -621,16 +624,16 @@ protected:
         transform.scale = glm::vec3(0.25f);
 
         auto& sprite = animEntity.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f));
-        
+
         // Setup animator with our sprite sheet
         auto& animator = animEntity.addComponent<limbo::AnimatorComponent>();
-        
+
         // Create animation clip
         auto clip = std::make_shared<limbo::AnimationClip>("pulse");
         clip->setSpriteSheet(&m_animSpriteSheet);
         clip->addFrameRange(0, 7, 0.1f);  // 8 frames at 0.1s each
         clip->setPlayMode(limbo::AnimationPlayMode::Loop);
-        
+
         animator.addClip("pulse", clip);
         animator.defaultClip = "pulse";
         animator.playOnStart = true;
@@ -642,15 +645,15 @@ protected:
         transform2.scale = glm::vec3(0.25f);
 
         animEntity2.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f));
-        
+
         auto& animator2 = animEntity2.addComponent<limbo::AnimatorComponent>();
-        
+
         auto clip2 = std::make_shared<limbo::AnimationClip>("bounce");
         clip2->setSpriteSheet(&m_animSpriteSheet);
         clip2->addFrameRange(0, 7, 0.15f);
         clip2->setPlayMode(limbo::AnimationPlayMode::PingPong);
         clip2->setSpeed(1.5f);
-        
+
         animator2.addClip("bounce", clip2);
         animator2.defaultClip = "bounce";
         animator2.playOnStart = true;
@@ -673,11 +676,11 @@ protected:
         for (uint32_t frame = 0; frame < cols * rows; ++frame) {
             uint32_t frameCol = frame % cols;
             uint32_t frameRow = frame / cols;
-            
+
             // Calculate color based on frame (pulsing effect)
             float t = static_cast<float>(frame) / static_cast<float>(cols * rows - 1);
             float intensity = 0.3f + 0.7f * (0.5f + 0.5f * std::sin(t * 6.28318f));
-            
+
             uint8_t r = static_cast<uint8_t>(255 * intensity);
             uint8_t g = static_cast<uint8_t>(128 * (1.0f - t) + 255 * t * intensity);
             uint8_t b = static_cast<uint8_t>(255 * (1.0f - intensity * 0.5f));
@@ -693,7 +696,7 @@ protected:
                     float dy = static_cast<float>(y) - frameHeight * 0.5f;
                     float dist = std::sqrt(dx * dx + dy * dy);
                     float radius = frameWidth * 0.4f;
-                    
+
                     if (dist < radius) {
                         pixels[idx + 0] = r;
                         pixels[idx + 1] = g;
@@ -724,8 +727,8 @@ protected:
         m_animSpriteSheet.setTexture(m_animTexture.get());
         m_animSpriteSheet.createFromGrid(frameWidth, frameHeight);
 
-        spdlog::info("Created animation sprite sheet ({}x{}, {} frames)", 
-            texWidth, texHeight, m_animSpriteSheet.getFrameCount());
+        spdlog::info("Created animation sprite sheet ({}x{}, {} frames)", texWidth, texHeight,
+                     m_animSpriteSheet.getFrameCount());
     }
 
     void createPhysicsEntities() {
@@ -744,27 +747,23 @@ protected:
 
         // Create some falling boxes
         for (int i = 0; i < 5; ++i) {
-            limbo::Entity box = world.createEntity(limbo::String("PhysicsBox_") + std::to_string(i));
+            limbo::Entity box =
+                world.createEntity(limbo::String("PhysicsBox_") + std::to_string(i));
             auto& transform = box.addComponent<limbo::TransformComponent>();
-            transform.position = glm::vec3(
-                -0.4f + static_cast<float>(i) * 0.2f,
-                0.5f + static_cast<float>(i) * 0.3f,
-                0.0f
-            );
+            transform.position = glm::vec3(-0.4f + static_cast<float>(i) * 0.2f,
+                                           0.5f + static_cast<float>(i) * 0.3f, 0.0f);
             transform.scale = glm::vec3(0.1f);
-            
+
             // Different colors for physics objects
-            glm::vec4 physicsColors[] = {
-                {0.9f, 0.2f, 0.2f, 1.0f},
-                {0.2f, 0.9f, 0.2f, 1.0f},
-                {0.2f, 0.2f, 0.9f, 1.0f},
-                {0.9f, 0.9f, 0.2f, 1.0f},
-                {0.9f, 0.2f, 0.9f, 1.0f}
-            };
+            glm::vec4 physicsColors[] = {{0.9f, 0.2f, 0.2f, 1.0f},
+                                         {0.2f, 0.9f, 0.2f, 1.0f},
+                                         {0.2f, 0.2f, 0.9f, 1.0f},
+                                         {0.9f, 0.9f, 0.2f, 1.0f},
+                                         {0.9f, 0.2f, 0.9f, 1.0f}};
             box.addComponent<limbo::SpriteRendererComponent>(physicsColors[i]);
-            
+
             box.addComponent<limbo::Rigidbody2DComponent>(limbo::BodyType::Dynamic);
-            
+
             auto& collider = box.addComponent<limbo::BoxCollider2DComponent>(glm::vec2(0.5f, 0.5f));
             collider.restitution = 0.3f;
         }
@@ -776,9 +775,9 @@ protected:
             transform.position = glm::vec3(0.3f, 1.0f, 0.0f);
             transform.scale = glm::vec3(0.15f);
             circle.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f, 0.5f, 0.0f, 1.0f));
-            
+
             circle.addComponent<limbo::Rigidbody2DComponent>(limbo::BodyType::Dynamic);
-            
+
             auto& collider = circle.addComponent<limbo::CircleCollider2DComponent>(0.5f);
             collider.restitution = 0.5f;
         }
@@ -867,7 +866,8 @@ protected:
             m_zoom -= scroll * 0.1f;
             m_zoom = glm::clamp(m_zoom, 0.1f, 10.0f);
 
-            float aspect = static_cast<float>(getWindow().getWidth()) / static_cast<float>(getWindow().getHeight());
+            float aspect = static_cast<float>(getWindow().getWidth()) /
+                           static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
         }
 
@@ -877,7 +877,8 @@ protected:
             m_camera.setRotation(0.0f);
             m_zoom = 1.0f;
 
-            float aspect = static_cast<float>(getWindow().getWidth()) / static_cast<float>(getWindow().getHeight());
+            float aspect = static_cast<float>(getWindow().getWidth()) /
+                           static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
             spdlog::info("Camera reset");
@@ -934,11 +935,12 @@ protected:
         ImGui::InputText("Filename", saveFilename, sizeof(saveFilename));
 
         if (ImGui::Button("Save Scene")) {
-            std::filesystem::path savePath = m_assetManager.getAssetRoot() / "scenes" / saveFilename;
-            
+            std::filesystem::path savePath =
+                m_assetManager.getAssetRoot() / "scenes" / saveFilename;
+
             // Create scenes directory if needed
             std::filesystem::create_directories(savePath.parent_path());
-            
+
             limbo::SceneSerializer serializer(getWorld());
             if (serializer.saveToFile(savePath)) {
                 m_statusMessage = "Scene saved: " + savePath.string();
@@ -953,8 +955,9 @@ protected:
         ImGui::SameLine();
 
         if (ImGui::Button("Load Scene")) {
-            std::filesystem::path loadPath = m_assetManager.getAssetRoot() / "scenes" / saveFilename;
-            
+            std::filesystem::path loadPath =
+                m_assetManager.getAssetRoot() / "scenes" / saveFilename;
+
             limbo::SceneSerializer serializer(getWorld());
             if (serializer.loadFromFile(loadPath)) {
                 m_statusMessage = "Scene loaded: " + loadPath.string();
@@ -1073,8 +1076,8 @@ protected:
                 auto* clip = animator.currentState.getClip();
                 if (clip && clip->getSpriteSheet() && clip->getSpriteSheet()->getTexture()) {
                     limbo::Renderer2D::drawQuad(transform.getMatrix(),
-                        *clip->getSpriteSheet()->getTexture(),
-                        sprite.uvMin, sprite.uvMax, sprite.color);
+                                                *clip->getSpriteSheet()->getTexture(), sprite.uvMin,
+                                                sprite.uvMax, sprite.color);
                     continue;
                 }
             }
@@ -1082,8 +1085,9 @@ protected:
             // Regular sprite rendering
             if (m_checkerboardTexture && m_checkerboardTexture->isLoaded()) {
                 // Use texture with tint color
-                limbo::Renderer2D::drawQuad(transform.getMatrix(), 
-                    *m_checkerboardTexture->getTexture(), 1.0f, sprite.color);
+                limbo::Renderer2D::drawQuad(transform.getMatrix(),
+                                            *m_checkerboardTexture->getTexture(), 1.0f,
+                                            sprite.color);
             } else {
                 limbo::Renderer2D::drawQuad(transform.getMatrix(), sprite.color);
             }

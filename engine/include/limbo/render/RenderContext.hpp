@@ -30,4 +30,4 @@ public:
     [[nodiscard]] static Unique<RenderContext> create();
 };
 
-} // namespace limbo
+}  // namespace limbo

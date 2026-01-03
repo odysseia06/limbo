@@ -8,4 +8,4 @@ namespace limbo::debug {
 LIMBO_API void init();
 LIMBO_API void shutdown();
 
-} // namespace limbo::debug
+}  // namespace limbo::debug

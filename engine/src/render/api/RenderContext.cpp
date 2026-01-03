@@ -2,7 +2,7 @@
 
 // Forward declaration of OpenGL context creation
 namespace limbo {
-    Unique<RenderContext> createOpenGLContext();
+Unique<RenderContext> createOpenGLContext();
 }
 
 namespace limbo {
@@ -12,4 +12,4 @@ Unique<RenderContext> RenderContext::create() {
     return createOpenGLContext();
 }
 
-} // namespace limbo
+}  // namespace limbo

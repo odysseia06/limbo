@@ -49,4 +49,4 @@ private:
     Unique<Texture2D> m_texture;
 };
 
-} // namespace limbo
+}  // namespace limbo

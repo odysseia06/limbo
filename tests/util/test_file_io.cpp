@@ -10,7 +10,8 @@ namespace fs = std::filesystem;
 class TempDirectory {
 public:
     TempDirectory() {
-        m_path = fs::temp_directory_path() / "limbo_test" / std::to_string(reinterpret_cast<uintptr_t>(this));
+        m_path = fs::temp_directory_path() / "limbo_test" /
+                 std::to_string(reinterpret_cast<uintptr_t>(this));
         fs::create_directories(m_path);
     }
 
@@ -134,7 +135,7 @@ TEST_CASE("File utility functions", "[util][fileio]") {
 
     SECTION("getFileSize") {
         auto file = tempDir.path() / "sized.txt";
-        limbo::String content = "12345"; // 5 bytes
+        limbo::String content = "12345";  // 5 bytes
         limbo::util::writeFileText(file, content);
 
         REQUIRE(limbo::util::getFileSize(file) == 5);

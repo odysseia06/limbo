@@ -15,9 +15,7 @@ VertexBuffer::~VertexBuffer() {
 }
 
 VertexBuffer::VertexBuffer(VertexBuffer&& other) noexcept
-    : m_bufferId(other.m_bufferId)
-    , m_layout(std::move(other.m_layout))
-{
+    : m_bufferId(other.m_bufferId), m_layout(std::move(other.m_layout)) {
     other.m_bufferId = 0;
 }
 
@@ -80,9 +78,7 @@ IndexBuffer::~IndexBuffer() {
 }
 
 IndexBuffer::IndexBuffer(IndexBuffer&& other) noexcept
-    : m_bufferId(other.m_bufferId)
-    , m_count(other.m_count)
-{
+    : m_bufferId(other.m_bufferId), m_count(other.m_count) {
     other.m_bufferId = 0;
     other.m_count = 0;
 }
@@ -131,40 +127,38 @@ void IndexBuffer::destroy() {
 // ============================================================================
 
 namespace {
-    GLenum shaderDataTypeToOpenGLType(ShaderDataType type) {
-        switch (type) {
-            case ShaderDataType::Float:
-            case ShaderDataType::Float2:
-            case ShaderDataType::Float3:
-            case ShaderDataType::Float4:
-            case ShaderDataType::Mat3:
-            case ShaderDataType::Mat4:
-                return GL_FLOAT;
-            case ShaderDataType::Int:
-            case ShaderDataType::Int2:
-            case ShaderDataType::Int3:
-            case ShaderDataType::Int4:
-                return GL_INT;
-            case ShaderDataType::Bool:
-                return GL_BOOL;
-            case ShaderDataType::None:
-                break;
-        }
-        LIMBO_ASSERT(false, "Unknown ShaderDataType");
-        return 0;
+GLenum shaderDataTypeToOpenGLType(ShaderDataType type) {
+    switch (type) {
+    case ShaderDataType::Float:
+    case ShaderDataType::Float2:
+    case ShaderDataType::Float3:
+    case ShaderDataType::Float4:
+    case ShaderDataType::Mat3:
+    case ShaderDataType::Mat4:
+        return GL_FLOAT;
+    case ShaderDataType::Int:
+    case ShaderDataType::Int2:
+    case ShaderDataType::Int3:
+    case ShaderDataType::Int4:
+        return GL_INT;
+    case ShaderDataType::Bool:
+        return GL_BOOL;
+    case ShaderDataType::None:
+        break;
     }
+    LIMBO_ASSERT(false, "Unknown ShaderDataType");
+    return 0;
 }
+}  // namespace
 
 VertexArray::~VertexArray() {
     destroy();
 }
 
 VertexArray::VertexArray(VertexArray&& other) noexcept
-    : m_arrayId(other.m_arrayId)
-    , m_vertexBufferIndex(other.m_vertexBufferIndex)
-    , m_vertexBuffers(std::move(other.m_vertexBuffers))
-    , m_indexBuffer(std::move(other.m_indexBuffer))
-{
+    : m_arrayId(other.m_arrayId), m_vertexBufferIndex(other.m_vertexBufferIndex),
+      m_vertexBuffers(std::move(other.m_vertexBuffers)),
+      m_indexBuffer(std::move(other.m_indexBuffer)) {
     other.m_arrayId = 0;
     other.m_vertexBufferIndex = 0;
 }
@@ -207,60 +201,52 @@ void VertexArray::addVertexBuffer(VertexBuffer&& buffer) {
     const auto& layout = buffer.getLayout();
     for (const auto& element : layout) {
         switch (element.type) {
-            case ShaderDataType::Float:
-            case ShaderDataType::Float2:
-            case ShaderDataType::Float3:
-            case ShaderDataType::Float4: {
+        case ShaderDataType::Float:
+        case ShaderDataType::Float2:
+        case ShaderDataType::Float3:
+        case ShaderDataType::Float4: {
+            glEnableVertexAttribArray(m_vertexBufferIndex);
+            glVertexAttribPointer(
+                m_vertexBufferIndex, static_cast<GLint>(element.getComponentCount()),
+                shaderDataTypeToOpenGLType(element.type), element.normalized ? GL_TRUE : GL_FALSE,
+                static_cast<GLsizei>(layout.getStride()),
+                reinterpret_cast<const void*>(static_cast<uintptr_t>(element.offset)));
+            m_vertexBufferIndex++;
+            break;
+        }
+        case ShaderDataType::Int:
+        case ShaderDataType::Int2:
+        case ShaderDataType::Int3:
+        case ShaderDataType::Int4:
+        case ShaderDataType::Bool: {
+            glEnableVertexAttribArray(m_vertexBufferIndex);
+            glVertexAttribIPointer(
+                m_vertexBufferIndex, static_cast<GLint>(element.getComponentCount()),
+                shaderDataTypeToOpenGLType(element.type), static_cast<GLsizei>(layout.getStride()),
+                reinterpret_cast<const void*>(static_cast<uintptr_t>(element.offset)));
+            m_vertexBufferIndex++;
+            break;
+        }
+        case ShaderDataType::Mat3:
+        case ShaderDataType::Mat4: {
+            u32 count = element.getComponentCount();
+            u32 colCount = (element.type == ShaderDataType::Mat3) ? 3 : 4;
+            for (u32 i = 0; i < colCount; i++) {
                 glEnableVertexAttribArray(m_vertexBufferIndex);
-                glVertexAttribPointer(
-                    m_vertexBufferIndex,
-                    static_cast<GLint>(element.getComponentCount()),
-                    shaderDataTypeToOpenGLType(element.type),
-                    element.normalized ? GL_TRUE : GL_FALSE,
-                    static_cast<GLsizei>(layout.getStride()),
-                    reinterpret_cast<const void*>(static_cast<uintptr_t>(element.offset))
-                );
+                glVertexAttribPointer(m_vertexBufferIndex, static_cast<GLint>(count / colCount),
+                                      shaderDataTypeToOpenGLType(element.type),
+                                      element.normalized ? GL_TRUE : GL_FALSE,
+                                      static_cast<GLsizei>(layout.getStride()),
+                                      reinterpret_cast<const void*>(
+                                          element.offset + sizeof(f32) * count / colCount * i));
+                glVertexAttribDivisor(m_vertexBufferIndex, 1);
                 m_vertexBufferIndex++;
-                break;
             }
-            case ShaderDataType::Int:
-            case ShaderDataType::Int2:
-            case ShaderDataType::Int3:
-            case ShaderDataType::Int4:
-            case ShaderDataType::Bool: {
-                glEnableVertexAttribArray(m_vertexBufferIndex);
-                glVertexAttribIPointer(
-                    m_vertexBufferIndex,
-                    static_cast<GLint>(element.getComponentCount()),
-                    shaderDataTypeToOpenGLType(element.type),
-                    static_cast<GLsizei>(layout.getStride()),
-                    reinterpret_cast<const void*>(static_cast<uintptr_t>(element.offset))
-                );
-                m_vertexBufferIndex++;
-                break;
-            }
-            case ShaderDataType::Mat3:
-            case ShaderDataType::Mat4: {
-                u32 count = element.getComponentCount();
-                u32 colCount = (element.type == ShaderDataType::Mat3) ? 3 : 4;
-                for (u32 i = 0; i < colCount; i++) {
-                    glEnableVertexAttribArray(m_vertexBufferIndex);
-                    glVertexAttribPointer(
-                        m_vertexBufferIndex,
-                        static_cast<GLint>(count / colCount),
-                        shaderDataTypeToOpenGLType(element.type),
-                        element.normalized ? GL_TRUE : GL_FALSE,
-                        static_cast<GLsizei>(layout.getStride()),
-                        reinterpret_cast<const void*>(element.offset + sizeof(f32) * count / colCount * i)
-                    );
-                    glVertexAttribDivisor(m_vertexBufferIndex, 1);
-                    m_vertexBufferIndex++;
-                }
-                break;
-            }
-            case ShaderDataType::None:
-                LIMBO_ASSERT(false, "Unknown ShaderDataType");
-                break;
+            break;
+        }
+        case ShaderDataType::None:
+            LIMBO_ASSERT(false, "Unknown ShaderDataType");
+            break;
         }
     }
 
@@ -287,4 +273,4 @@ void VertexArray::destroy() {
     m_indexBuffer = IndexBuffer{};
 }
 
-} // namespace limbo
+}  // namespace limbo

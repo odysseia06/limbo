@@ -68,11 +68,11 @@ TEST_CASE("AssetId can be used in unordered containers", "[assets][assetid]") {
 
     limbo::AssetId id1("texture1.png");
     limbo::AssetId id2("texture2.png");
-    limbo::AssetId id3("texture1.png"); // Same as id1
+    limbo::AssetId id3("texture1.png");  // Same as id1
 
     ids.insert(id1);
     ids.insert(id2);
-    ids.insert(id3); // Should not insert (duplicate)
+    ids.insert(id3);  // Should not insert (duplicate)
 
     REQUIRE(ids.size() == 2);
     REQUIRE(ids.count(id1) == 1);

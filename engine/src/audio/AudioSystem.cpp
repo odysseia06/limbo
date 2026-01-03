@@ -5,9 +5,7 @@
 
 namespace limbo {
 
-AudioSystem::AudioSystem(AudioEngine& engine)
-    : m_engine(engine) {
-}
+AudioSystem::AudioSystem(AudioEngine& engine) : m_engine(engine) {}
 
 void AudioSystem::onAttach(World& /*world*/) {
     spdlog::debug("AudioSystem initialized");
@@ -31,8 +29,7 @@ void AudioSystem::update(World& world, f32 /*deltaTime*/) {
             if (audio.runtimeSource) {
                 syncSourceProperties(world, entity);
             }
-        }
-    );
+        });
 }
 
 void AudioSystem::onDetach(World& world) {
@@ -42,8 +39,7 @@ void AudioSystem::onDetach(World& world) {
             if (audio.runtimeSource) {
                 destroySource(world, entity);
             }
-        }
-    );
+        });
 
     m_sources.clear();
     spdlog::debug("AudioSystem shutdown");
@@ -55,7 +51,7 @@ void AudioSystem::play(World& world, World::EntityId entity) {
     }
 
     auto& audio = world.getComponent<AudioSourceComponent>(entity);
-    
+
     // Create source if needed
     if (!audio.runtimeSource && audio.audioAsset && audio.audioAsset->isLoaded()) {
         createSource(world, entity);
@@ -94,9 +90,9 @@ void AudioSystem::createSource(World& world, World::EntityId entity) {
     }
 
     auto& audio = world.getComponent<AudioSourceComponent>(entity);
-    
+
     if (audio.runtimeSource) {
-        return; // Already has a source
+        return;  // Already has a source
     }
 
     if (!audio.audioAsset || !audio.audioAsset->isLoaded()) {
@@ -126,7 +122,7 @@ void AudioSystem::destroySource(World& world, World::EntityId entity) {
     }
 
     auto& audio = world.getComponent<AudioSourceComponent>(entity);
-    
+
     if (!audio.runtimeSource) {
         return;
     }
@@ -135,8 +131,8 @@ void AudioSystem::destroySource(World& world, World::EntityId entity) {
     m_engine.unregisterSource(audio.runtimeSource);
 
     // Find and remove from our storage
-    auto it = std::find_if(m_sources.begin(), m_sources.end(),
-        [&audio](const Unique<AudioSource>& src) {
+    auto it =
+        std::find_if(m_sources.begin(), m_sources.end(), [&audio](const Unique<AudioSource>& src) {
             return src.get() == audio.runtimeSource;
         });
 
@@ -153,7 +149,7 @@ void AudioSystem::syncSourceProperties(World& world, World::EntityId entity) {
     }
 
     auto& audio = world.getComponent<AudioSourceComponent>(entity);
-    
+
     if (!audio.runtimeSource) {
         return;
     }
@@ -164,4 +160,4 @@ void AudioSystem::syncSourceProperties(World& world, World::EntityId entity) {
     audio.runtimeSource->setLooping(audio.loop);
 }
 
-} // namespace limbo
+}  // namespace limbo

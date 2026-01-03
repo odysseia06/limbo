@@ -41,9 +41,9 @@ void SpriteRenderSystem::update(World& world, f32 /*deltaTime*/) {
 
     // Sort by sorting order (lower values render first / behind)
     std::sort(renderables.begin(), renderables.end(),
-        [](const RenderableEntity& a, const RenderableEntity& b) {
-            return a.sprite->sortingOrder < b.sprite->sortingOrder;
-        });
+              [](const RenderableEntity& a, const RenderableEntity& b) {
+                  return a.sprite->sortingOrder < b.sprite->sortingOrder;
+              });
 
     // Begin rendering
     Renderer2D::beginScene(*m_camera);
@@ -64,4 +64,4 @@ void SpriteRenderSystem::update(World& world, f32 /*deltaTime*/) {
     Renderer2D::endScene();
 }
 
-} // namespace limbo
+}  // namespace limbo

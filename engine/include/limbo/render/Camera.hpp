@@ -16,14 +16,16 @@ public:
     void setProjection(f32 left, f32 right, f32 bottom, f32 top);
 
     void setPosition(const glm::vec3& position);
-    void setRotation(f32 rotation); // Z-axis rotation in radians
+    void setRotation(f32 rotation);  // Z-axis rotation in radians
 
     [[nodiscard]] const glm::vec3& getPosition() const { return m_position; }
     [[nodiscard]] f32 getRotation() const { return m_rotation; }
 
     [[nodiscard]] const glm::mat4& getProjectionMatrix() const { return m_projectionMatrix; }
     [[nodiscard]] const glm::mat4& getViewMatrix() const { return m_viewMatrix; }
-    [[nodiscard]] const glm::mat4& getViewProjectionMatrix() const { return m_viewProjectionMatrix; }
+    [[nodiscard]] const glm::mat4& getViewProjectionMatrix() const {
+        return m_viewProjectionMatrix;
+    }
 
     [[nodiscard]] f32 getLeft() const { return m_left; }
     [[nodiscard]] f32 getRight() const { return m_right; }
@@ -39,7 +41,7 @@ private:
 
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
     f32 m_rotation = 0.0f;
-    
+
     f32 m_left = -1.0f;
     f32 m_right = 1.0f;
     f32 m_bottom = -1.0f;
@@ -55,7 +57,7 @@ public:
     void setProjection(f32 fovY, f32 aspectRatio, f32 nearClip, f32 farClip);
 
     void setPosition(const glm::vec3& position);
-    void setRotation(const glm::vec3& rotation); // Euler angles (pitch, yaw, roll) in radians
+    void setRotation(const glm::vec3& rotation);  // Euler angles (pitch, yaw, roll) in radians
 
     // Look at a target point
     void lookAt(const glm::vec3& target, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f));
@@ -69,7 +71,9 @@ public:
 
     [[nodiscard]] const glm::mat4& getProjectionMatrix() const { return m_projectionMatrix; }
     [[nodiscard]] const glm::mat4& getViewMatrix() const { return m_viewMatrix; }
-    [[nodiscard]] const glm::mat4& getViewProjectionMatrix() const { return m_viewProjectionMatrix; }
+    [[nodiscard]] const glm::mat4& getViewProjectionMatrix() const {
+        return m_viewProjectionMatrix;
+    }
 
     [[nodiscard]] f32 getFovY() const { return m_fovY; }
     [[nodiscard]] f32 getAspectRatio() const { return m_aspectRatio; }
@@ -84,7 +88,7 @@ private:
     glm::mat4 m_viewProjectionMatrix{1.0f};
 
     glm::vec3 m_position{0.0f, 0.0f, 0.0f};
-    glm::vec3 m_rotation{0.0f, 0.0f, 0.0f}; // pitch, yaw, roll
+    glm::vec3 m_rotation{0.0f, 0.0f, 0.0f};  // pitch, yaw, roll
 
     f32 m_fovY = glm::radians(45.0f);
     f32 m_aspectRatio = 16.0f / 9.0f;
@@ -92,4 +96,4 @@ private:
     f32 m_farClip = 1000.0f;
 };
 
-} // namespace limbo
+}  // namespace limbo

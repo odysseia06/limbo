@@ -6,9 +6,7 @@
 
 namespace limbo {
 
-ScriptSystem::ScriptSystem(ScriptEngine& engine)
-    : m_engine(engine) {
-}
+ScriptSystem::ScriptSystem(ScriptEngine& engine) : m_engine(engine) {}
 
 void ScriptSystem::onAttach(World& world) {
     // Bind the world to the script engine for entity access
@@ -51,23 +49,20 @@ void ScriptSystem::update(World& world, f32 deltaTime) {
             if (script.initialized && script.started) {
                 updateScript(world, entity, deltaTime);
             }
-        }
-    );
+        });
 }
 
 void ScriptSystem::onDetach(World& world) {
     // Call onDestroy for all scripts
-    world.each<ScriptComponent>(
-        [](World::EntityId, ScriptComponent& script) {
-            if (script.initialized && script.onDestroy.valid()) {
-                auto result = script.onDestroy();
-                if (!result.valid()) {
-                    sol::error err = result;
-                    spdlog::error("Script onDestroy error: {}", err.what());
-                }
+    world.each<ScriptComponent>([](World::EntityId, ScriptComponent& script) {
+        if (script.initialized && script.onDestroy.valid()) {
+            auto result = script.onDestroy();
+            if (!result.valid()) {
+                sol::error err = result;
+                spdlog::error("Script onDestroy error: {}", err.what());
             }
         }
-    );
+    });
 
     spdlog::debug("ScriptSystem shutdown");
 }
@@ -97,11 +92,8 @@ void ScriptSystem::initializeScript(World& world, World::EntityId entityId) {
         script.environment["self"] = entity;
 
         // Load and execute the script in the environment
-        auto result = lua.safe_script_file(
-            script.scriptPath.string(),
-            script.environment,
-            sol::script_pass_on_error
-        );
+        auto result = lua.safe_script_file(script.scriptPath.string(), script.environment,
+                                           sol::script_pass_on_error);
 
         if (!result.valid()) {
             sol::error err = result;
@@ -142,4 +134,4 @@ void ScriptSystem::updateScript(World& world, World::EntityId entityId, f32 delt
     }
 }
 
-} // namespace limbo
+}  // namespace limbo

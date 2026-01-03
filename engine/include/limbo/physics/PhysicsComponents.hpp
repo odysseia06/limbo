@@ -12,9 +12,9 @@ namespace limbo {
  * Rigidbody2D types
  */
 enum class BodyType : u8 {
-    Static = 0,     // Does not move, infinite mass
-    Kinematic,      // Moves via velocity, not affected by forces
-    Dynamic         // Fully simulated, affected by forces and collisions
+    Static = 0,  // Does not move, infinite mass
+    Kinematic,   // Moves via velocity, not affected by forces
+    Dynamic      // Fully simulated, affected by forces and collisions
 };
 
 /**
@@ -25,19 +25,19 @@ enum class BodyType : u8 {
  */
 struct LIMBO_API Rigidbody2DComponent {
     BodyType type = BodyType::Dynamic;
-    
+
     // Physical properties
     f32 gravityScale = 1.0f;
     bool fixedRotation = false;
-    
+
     // Initial velocity (applied when body is created)
     glm::vec2 linearVelocity{0.0f};
     f32 angularVelocity = 0.0f;
-    
+
     // Linear and angular damping (0 = no damping)
     f32 linearDamping = 0.0f;
     f32 angularDamping = 0.01f;
-    
+
     // Runtime data (managed by PhysicsSystem)
     b2Body* runtimeBody = nullptr;
 
@@ -48,10 +48,7 @@ struct LIMBO_API Rigidbody2DComponent {
 /**
  * Collider2D shape types
  */
-enum class ColliderShape : u8 {
-    Box = 0,
-    Circle
-};
+enum class ColliderShape : u8 { Box = 0, Circle };
 
 /**
  * BoxCollider2DComponent - Box-shaped collider
@@ -59,19 +56,19 @@ enum class ColliderShape : u8 {
 struct LIMBO_API BoxCollider2DComponent {
     // Half-extents of the box (size/2)
     glm::vec2 size{0.5f, 0.5f};
-    
+
     // Offset from entity center
     glm::vec2 offset{0.0f, 0.0f};
-    
+
     // Physical material properties
     f32 density = 1.0f;
     f32 friction = 0.3f;
-    f32 restitution = 0.0f;      // Bounciness (0 = no bounce, 1 = perfect bounce)
+    f32 restitution = 0.0f;  // Bounciness (0 = no bounce, 1 = perfect bounce)
     f32 restitutionThreshold = 0.5f;
-    
+
     // Is this a trigger (no physical collision, just detection)?
     bool isTrigger = false;
-    
+
     // Runtime data
     b2Fixture* runtimeFixture = nullptr;
 
@@ -85,19 +82,19 @@ struct LIMBO_API BoxCollider2DComponent {
 struct LIMBO_API CircleCollider2DComponent {
     // Radius of the circle
     f32 radius = 0.5f;
-    
+
     // Offset from entity center
     glm::vec2 offset{0.0f, 0.0f};
-    
+
     // Physical material properties
     f32 density = 1.0f;
     f32 friction = 0.3f;
     f32 restitution = 0.0f;
     f32 restitutionThreshold = 0.5f;
-    
+
     // Is this a trigger?
     bool isTrigger = false;
-    
+
     // Runtime data
     b2Fixture* runtimeFixture = nullptr;
 
@@ -105,4 +102,4 @@ struct LIMBO_API CircleCollider2DComponent {
     explicit CircleCollider2DComponent(f32 r) : radius(r) {}
 };
 
-} // namespace limbo
+}  // namespace limbo
