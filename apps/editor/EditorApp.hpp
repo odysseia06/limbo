@@ -1,0 +1,103 @@
+#pragma once
+
+#include <limbo/Limbo.hpp>
+#include "panels/SceneHierarchyPanel.hpp"
+#include "panels/InspectorPanel.hpp"
+#include "panels/ViewportPanel.hpp"
+#include "panels/AssetBrowserPanel.hpp"
+
+#include <filesystem>
+
+namespace limbo::editor {
+
+/**
+ * Editor play state
+ */
+enum class EditorState {
+    Edit,       // Editing mode - scene is not running
+    Play,       // Play mode - scene is simulating
+    Pause       // Paused - simulation paused
+};
+
+/**
+ * EditorApp - The main Limbo Editor application
+ * 
+ * Provides a full-featured level editor with:
+ * - Scene hierarchy view
+ * - Entity inspector/properties
+ * - Viewport with camera controls and gizmos
+ * - Asset browser
+ * - Play/Pause/Stop controls
+ */
+class EditorApp : public Application {
+public:
+    EditorApp();
+    ~EditorApp() override = default;
+
+protected:
+    void onInit() override;
+    void onUpdate(f32 deltaTime) override;
+    void onRender() override;
+    void onShutdown() override;
+
+private:
+    // UI rendering
+    void renderMenuBar();
+    void renderToolbar();
+    void renderDockspace();
+    void renderStatusBar();
+
+    // File operations
+    void newScene();
+    void openScene();
+    void saveScene();
+    void saveSceneAs();
+
+    // Play controls
+    void onPlay();
+    void onPause();
+    void onStop();
+
+public:
+    // Selection (public for panels)
+    void selectEntity(Entity entity);
+    void deselectAll();
+    [[nodiscard]] Entity getSelectedEntity() const { return m_selectedEntity; }
+
+private:
+    // Rendering
+    Unique<RenderContext> m_renderContext;
+    OrthographicCamera m_editorCamera;
+    f32 m_cameraZoom = 1.0f;
+
+    // ImGui
+    ImGuiLayer m_imguiLayer;
+
+    // Panels
+    SceneHierarchyPanel m_hierarchyPanel;
+    InspectorPanel m_inspectorPanel;
+    ViewportPanel m_viewportPanel;
+    AssetBrowserPanel m_assetBrowserPanel;
+
+    // Assets
+    AssetManager m_assetManager;
+
+    // Physics (for play mode)
+    Physics2D m_physics;
+
+    // Editor state
+    EditorState m_editorState = EditorState::Edit;
+    std::filesystem::path m_currentScenePath;
+    bool m_sceneModified = false;
+
+    // Selection
+    Entity m_selectedEntity;
+
+    // Timing
+    f32 m_deltaTime = 0.0f;
+
+    // UI state
+    bool m_showDemoWindow = false;
+};
+
+} // namespace limbo::editor

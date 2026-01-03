@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            preset: windows-msvc
+            triplet: x64-windows
+          - os: ubuntu-latest
+            preset: linux-gcc
+            triplet: x64-linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export GitHub Actions cache environment variables
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: c82f74667287d3dc386bce81e44964370c91a289
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libxinerama-dev \
+            libxcursor-dev \
+            xorg-dev \
+            libglu1-mesa-dev \
+            libxrandr-dev \
+            libxi-dev
+
+      - name: Configure CMake (Debug)
+        run: |
+          cmake -B build-debug -S . \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
+            -DLIMBO_BUILD_TESTS=ON
+
+      - name: Build (Debug)
+        run: cmake --build build-debug --config Debug --parallel
+
+      - name: Run Tests (Debug)
+        run: ctest --test-dir build-debug --build-config Debug --output-on-failure
+
+      - name: Configure CMake (Release)
+        run: |
+          cmake -B build-release -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
+            -DLIMBO_BUILD_TESTS=ON
+
+      - name: Build (Release)
+        run: cmake --build build-release --config Release --parallel
+
+      - name: Run Tests (Release)
+        run: ctest --test-dir build-release --build-config Release --output-on-failure
+
+  format-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format-15
+
+      - name: Check formatting
+        run: |
+          find engine apps tests -name "*.cpp" -o -name "*.hpp" | \
+            xargs clang-format-15 --dry-run --Werror
