@@ -1,4 +1,4 @@
-# Limbo Engine - PowerShell build script
+# Limbo Engine - PowerShell build script (Clang + Ninja)
 
 param(
     [switch]$Debug,
@@ -30,38 +30,27 @@ $BuildType = if ($Debug) { "Debug" } else { "Release" }
 Write-Host "========================================"
 Write-Host "  Limbo Engine Build"
 Write-Host "  Config: $BuildType"
+Write-Host "  Compiler: Clang + Ninja"
 Write-Host "========================================"
 
-# Find Visual Studio installation
-$vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-if (-not (Test-Path $vsWhere)) {
-    Write-Host "Error: Could not find vswhere.exe. Is Visual Studio installed?" -ForegroundColor Red
+# Check for required tools
+$clang = Get-Command clang -ErrorAction SilentlyContinue
+$ninja = Get-Command ninja -ErrorAction SilentlyContinue
+
+if (-not $clang) {
+    Write-Host "Error: clang not found in PATH" -ForegroundColor Red
+    Write-Host "Install LLVM/Clang or add it to PATH" -ForegroundColor Yellow
     exit 1
 }
 
-$vsPath = & $vsWhere -latest -property installationPath
-if (-not $vsPath) {
-    Write-Host "Error: Could not find Visual Studio installation." -ForegroundColor Red
+if (-not $ninja) {
+    Write-Host "Error: ninja not found in PATH" -ForegroundColor Red
+    Write-Host "Install Ninja or add it to PATH" -ForegroundColor Yellow
     exit 1
 }
 
-# Import Visual Studio environment
-$vcvarsPath = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
-if (-not (Test-Path $vcvarsPath)) {
-    Write-Host "Error: Could not find vcvars64.bat at $vcvarsPath" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host "Using Visual Studio: $vsPath"
-
-# Run vcvars64.bat and capture environment
-$envCmd = "`"$vcvarsPath`" && set"
-$envOutput = cmd /c $envCmd 2>&1
-foreach ($line in $envOutput) {
-    if ($line -match "^([^=]+)=(.*)$") {
-        [System.Environment]::SetEnvironmentVariable($matches[1], $matches[2], "Process")
-    }
-}
+Write-Host "Using Clang: $($clang.Source)"
+Write-Host "Using Ninja: $($ninja.Source)"
 
 # Clean if requested
 if ($Clean) {
@@ -74,7 +63,11 @@ if ($Clean) {
 # Configure
 if (-not (Test-Path "$BuildDir\CMakeCache.txt")) {
     Write-Host "[1/3] Configuring CMake..."
-    & cmake -B $BuildDir -S . -DLIMBO_BUILD_TESTS=ON
+    & cmake -B $BuildDir -S . -G Ninja `
+        -DCMAKE_BUILD_TYPE=$BuildType `
+        -DCMAKE_C_COMPILER=clang `
+        -DCMAKE_CXX_COMPILER=clang++ `
+        -DLIMBO_BUILD_TESTS=ON
     if ($LASTEXITCODE -ne 0) {
         Write-Host "CMake configuration failed!" -ForegroundColor Red
         exit 1
@@ -85,7 +78,7 @@ if (-not (Test-Path "$BuildDir\CMakeCache.txt")) {
 
 # Build
 Write-Host "[2/3] Building..."
-& cmake --build $BuildDir --config $BuildType --parallel
+& cmake --build $BuildDir --parallel
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Build failed!" -ForegroundColor Red
     exit 1
@@ -94,7 +87,7 @@ if ($LASTEXITCODE -ne 0) {
 # Test
 if ($Test) {
     Write-Host "[3/3] Running tests..."
-    & ctest --test-dir $BuildDir --build-config $BuildType --output-on-failure
+    & ctest --test-dir $BuildDir --output-on-failure
 } else {
     Write-Host "[3/3] Skipping tests (use -Test to run)"
 }
@@ -102,5 +95,5 @@ if ($Test) {
 Write-Host ""
 Write-Host "========================================"
 Write-Host "  Build complete!"
-Write-Host "  Binaries: $BuildDir\bin\$BuildType\"
+Write-Host "  Binaries: $BuildDir\bin\"
 Write-Host "========================================"

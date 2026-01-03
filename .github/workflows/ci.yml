@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main, develop]
 
-env:
-  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
-
 jobs:
   build:
     strategy:
@@ -16,35 +13,36 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            preset: windows-msvc
-            triplet: x64-windows
+            name: Windows
           - os: ubuntu-latest
-            preset: linux-gcc
-            triplet: x64-linux
+            name: Linux
 
     runs-on: ${{ matrix.os }}
+    name: Build (${{ matrix.name }})
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Export GitHub Actions cache environment variables
-        uses: actions/github-script@v7
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          script: |
-            core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+          python-version: "3.11"
 
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: c82f74667287d3dc386bce81e44964370c91a289
+      - name: Install Python dependencies for GLAD
+        run: pip install jinja2
 
-      - name: Install Linux dependencies
+      - name: Install LLVM/Clang (Windows)
+        if: runner.os == 'Windows'
+        run: choco install llvm ninja -y
+
+      - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            clang \
+            ninja-build \
             libxinerama-dev \
             libxcursor-dev \
             xorg-dev \
@@ -56,31 +54,23 @@ jobs:
             wayland-protocols \
             extra-cmake-modules
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Python dependencies for GLAD
-        run: pip install jinja2
-
       - name: Configure CMake (Debug)
-        run: cmake -B build-debug -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DLIMBO_BUILD_TESTS=ON
+        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
 
       - name: Build (Debug)
-        run: cmake --build build-debug --config Debug --parallel
+        run: cmake --build build-debug --parallel
 
       - name: Run Tests (Debug)
-        run: ctest --test-dir build-debug --build-config Debug --output-on-failure
+        run: ctest --test-dir build-debug --output-on-failure
 
       - name: Configure CMake (Release)
-        run: cmake -B build-release -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} -DLIMBO_BUILD_TESTS=ON
+        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
 
       - name: Build (Release)
-        run: cmake --build build-release --config Release --parallel
+        run: cmake --build build-release --parallel
 
       - name: Run Tests (Release)
-        run: ctest --test-dir build-release --build-config Release --output-on-failure
+        run: ctest --test-dir build-release --output-on-failure
 
   format-check:
     runs-on: ubuntu-latest
