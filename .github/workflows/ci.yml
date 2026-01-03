@@ -24,17 +24,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install Python dependencies for GLAD
-        run: pip install jinja2
-
-      - name: Install LLVM/Clang (Windows)
+      - name: Install LLVM/Clang and dependencies (Windows)
         if: runner.os == 'Windows'
-        run: choco install llvm ninja -y
+        run: |
+          choco install llvm ninja -y
+          pip install jinja2
+          python3 -m pip install jinja2
 
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
@@ -53,10 +48,10 @@ jobs:
             libxkbcommon-dev \
             wayland-protocols \
             extra-cmake-modules
+          pip install jinja2
 
       - name: Configure CMake (Debug)
-        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="$(which python)"
-        shell: bash
+        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
 
       - name: Build (Debug)
         run: cmake --build build-debug --parallel
@@ -65,8 +60,7 @@ jobs:
         run: ctest --test-dir build-debug --output-on-failure
 
       - name: Configure CMake (Release)
-        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON -DPython3_EXECUTABLE="$(which python)"
-        shell: bash
+        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
 
       - name: Build (Release)
         run: cmake --build build-release --parallel
