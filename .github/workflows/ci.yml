@@ -50,7 +50,11 @@ jobs:
             xorg-dev \
             libglu1-mesa-dev \
             libxrandr-dev \
-            libxi-dev
+            libxi-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            wayland-protocols \
+            extra-cmake-modules
 
       - name: Configure CMake (Debug)
         run: |
