@@ -189,7 +189,7 @@ protected:
         getSystems().addSystem<RotationSystem>();
 
         // Physics system - runs after other systems
-        getSystems().addSystem<limbo::PhysicsSystem>(m_physics)->setPriority(100);
+        getSystems().addSystem<limbo::PhysicsSystem2D>(m_physics)->setPriority(100);
 
         // Audio system
         getSystems().addSystem<limbo::AudioSystem>(m_audioEngine)->setPriority(50);
