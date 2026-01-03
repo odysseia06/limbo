@@ -112,8 +112,8 @@ public:
     ~LightingSystem() override = default;
 
     void onAttach(World& world) override;
-    void onDetach() override;
-    void update(float deltaTime) override;
+    void onDetach(World& world) override;
+    void update(World& world, f32 deltaTime) override;
 
     /// Set ambient light
     void setAmbientLight(const glm::vec3& color, float intensity = 1.0f);

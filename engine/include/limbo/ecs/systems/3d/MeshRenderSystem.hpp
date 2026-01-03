@@ -17,8 +17,8 @@ public:
     ~MeshRenderSystem() override = default;
 
     void onAttach(World& world) override;
-    void onDetach() override;
-    void update(float deltaTime) override;
+    void onDetach(World& world) override;
+    void update(World& world, f32 deltaTime) override;
 
     /// Render all meshes using the provided camera
     void render(const PerspectiveCamera& camera);

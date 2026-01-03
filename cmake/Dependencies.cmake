@@ -59,19 +59,20 @@ FetchContent_Declare(
 FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG        10.2.1
+    GIT_TAG        11.1.4
     GIT_SHALLOW    TRUE
 )
 
 # ============================================================================
 # spdlog - Logging library (uses fmt)
 # ============================================================================
-set(SPDLOG_FMT_EXTERNAL ON CACHE BOOL "" FORCE)
+# Use std::format instead of fmt to avoid compatibility issues with Clang 21
+set(SPDLOG_USE_STD_FORMAT ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG        v1.14.1
+    GIT_TAG        v1.15.0
     GIT_SHALLOW    TRUE
 )
 
@@ -121,10 +122,11 @@ FetchContent_Declare(
 # ============================================================================
 # sol2 - C++ Lua binding library
 # ============================================================================
+# Use develop branch for Clang 21 compatibility
 FetchContent_Declare(
     sol2
     GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-    GIT_TAG        v3.3.0
+    GIT_TAG        develop
     GIT_SHALLOW    TRUE
 )
 

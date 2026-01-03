@@ -6,7 +6,6 @@
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
-#include <fmt/core.h>
 
 namespace limbo {
 
@@ -143,19 +142,19 @@ private:
 
         switch (severity) {
         case GL_DEBUG_SEVERITY_HIGH:
-            spdlog::error(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            spdlog::error("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         case GL_DEBUG_SEVERITY_MEDIUM:
-            spdlog::warn(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            spdlog::warn("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         case GL_DEBUG_SEVERITY_LOW:
-            spdlog::info(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            spdlog::info("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            spdlog::debug(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            spdlog::debug("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         default:
-            spdlog::debug(fmt::runtime("GL {} [{}] ({}): {}"), typeStr, sourceStr, id, message);
+            spdlog::debug("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         }
     }

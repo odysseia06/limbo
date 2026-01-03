@@ -1,5 +1,4 @@
 #include <spdlog/spdlog.h>
-#include <fmt/core.h>
 
 #include <cstdlib>
 
@@ -16,8 +15,8 @@ int main(int argc, char* argv[]) {
     const char* inputDir = argv[1];
     const char* outputDir = argc > 2 ? argv[2] : "cooked";
 
-    spdlog::info(fmt::runtime("Input:  {}"), inputDir);
-    spdlog::info(fmt::runtime("Output: {}"), outputDir);
+    spdlog::info("Input:  {}", inputDir);
+    spdlog::info("Output: {}", outputDir);
 
     // TODO: Implement asset cooking pipeline
     // - Texture cooking (PNG -> engine format)

@@ -2,7 +2,6 @@
 #include "limbo/platform/Input.hpp"
 
 #include <spdlog/spdlog.h>
-#include <fmt/core.h>
 
 namespace limbo {
 
@@ -20,7 +19,7 @@ Result<void> Application::init(const ApplicationConfig& config) {
     }
     s_instance = this;
 
-    spdlog::info(fmt::runtime("Initializing application: {}"), config.appName);
+    spdlog::info("Initializing application: {}", config.appName);
 
     // Initialize platform
     if (!platform::init()) {

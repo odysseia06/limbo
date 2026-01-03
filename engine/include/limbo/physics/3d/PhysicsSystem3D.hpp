@@ -19,9 +19,9 @@ public:
     ~PhysicsSystem3D() override = default;
 
     void onAttach(World& world) override;
-    void onDetach() override;
-    void update(float deltaTime) override;
-    void fixedUpdate(float fixedDeltaTime) override;
+    void onDetach(World& world) override;
+    void update(World& world, f32 deltaTime) override;
+    void fixedUpdate(World& world, f32 fixedDeltaTime) override;
 
 private:
     World* m_world = nullptr;

@@ -8,16 +8,8 @@
 
 namespace limbo {
 
-/**
- * @brief Component for rendering 3D meshes
- */
-struct MeshRendererComponent {
-    AssetId meshId;
-    AssetId materialId;
-    bool castShadows = true;
-    bool receiveShadows = true;
-    bool visible = true;
-};
+// Note: MeshRendererComponent is defined in limbo/ecs/Components.hpp
+// This file provides additional 3D-specific components
 
 /**
  * @brief Component for mesh filtering (submesh selection)

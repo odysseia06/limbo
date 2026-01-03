@@ -2,7 +2,6 @@
 
 #include <GLFW/glfw3.h>
 #include <spdlog/spdlog.h>
-#include <fmt/core.h>
 
 namespace limbo {
 
@@ -70,8 +69,7 @@ Result<Window> Window::create(const WindowConfig& config) {
         spdlog::debug("Window resized to {}x{}", width, height);
     });
 
-    spdlog::info(fmt::runtime("Window created: {} ({}x{})"), config.title, config.width,
-                 config.height);
+    spdlog::info("Window created: {} ({}x{})", config.title, config.width, config.height);
 
     return Window(window, config.width, config.height);
 }
@@ -99,7 +97,7 @@ namespace platform {
 static bool s_initialized = false;
 
 static void glfwErrorCallback(int error, const char* description) {
-    spdlog::error(fmt::runtime("GLFW Error ({}): {}"), error, description);
+    spdlog::error("GLFW Error ({}): {}", error, description);
 }
 
 bool init() {
@@ -114,7 +112,7 @@ bool init() {
         return false;
     }
 
-    spdlog::info(fmt::runtime("GLFW initialized: {}"), glfwGetVersionString());
+    spdlog::info("GLFW initialized: {}", glfwGetVersionString());
     s_initialized = true;
     return true;
 }
