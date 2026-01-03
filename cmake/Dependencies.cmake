@@ -23,15 +23,9 @@ FetchContent_Declare(
 )
 
 # ============================================================================
-# GLAD2 - OpenGL loader
+# GLAD - OpenGL loader (pre-generated sources in extern/glad)
 # ============================================================================
-FetchContent_Declare(
-    glad
-    GIT_REPOSITORY https://github.com/Dav1dde/glad.git
-    GIT_TAG        v2.0.6
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  cmake
-)
+# We use pre-generated GLAD sources to avoid Python/jinja2 dependency at build time
 
 # ============================================================================
 # GLM - Math library
@@ -197,9 +191,13 @@ add_library(lua::lua ALIAS lua_static)
 # sol2
 FetchContent_MakeAvailable(sol2)
 
-# GLAD2 - generates OpenGL loader
-FetchContent_MakeAvailable(glad)
-glad_add_library(glad REPRODUCIBLE API gl:core=4.6)
+# GLAD - use pre-generated sources from extern/glad
+add_library(glad STATIC
+    ${CMAKE_SOURCE_DIR}/extern/glad/src/gl.c
+)
+target_include_directories(glad PUBLIC
+    ${CMAKE_SOURCE_DIR}/extern/glad/include
+)
 
 # ImGui needs manual setup (no CMakeLists.txt in repo)
 FetchContent_MakeAvailable(imgui)

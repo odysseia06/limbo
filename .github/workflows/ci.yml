@@ -24,20 +24,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install LLVM/Clang and dependencies (Windows)
+      - name: Install LLVM/Clang (Windows)
         if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install llvm ninja -y
-          # Install jinja2 to all Python installations found in hostedtoolcache
-          Get-ChildItem -Path "C:\hostedtoolcache\windows\Python" -Recurse -Filter "python*.exe" |
-            Where-Object { $_.Name -match "^python\d*\.exe$" } |
-            ForEach-Object {
-              Write-Host "Installing jinja2 for $($_.FullName)"
-              & $_.FullName -m pip install jinja2 --quiet
-            }
-          # Also install for default python
-          pip install jinja2
+        run: choco install llvm ninja -y
 
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
@@ -56,7 +45,6 @@ jobs:
             libxkbcommon-dev \
             wayland-protocols \
             extra-cmake-modules
-          pip install jinja2
 
       - name: Configure CMake (Debug)
         run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
