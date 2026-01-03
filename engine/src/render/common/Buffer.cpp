@@ -1,4 +1,4 @@
-#include "limbo/render/Buffer.hpp"
+#include "limbo/render/common/Buffer.hpp"
 #include "limbo/core/Assert.hpp"
 
 #include <glad/gl.h>

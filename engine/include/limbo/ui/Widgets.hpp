@@ -2,7 +2,7 @@
 
 #include "limbo/ui/Widget.hpp"
 #include "limbo/core/Types.hpp"
-#include "limbo/render/Texture.hpp"
+#include "limbo/render/common/Texture.hpp"
 
 #include <functional>
 

@@ -4,12 +4,12 @@
 #include "limbo/core/Types.hpp"
 #include "limbo/ecs/System.hpp"
 #include "limbo/ecs/World.hpp"
-#include "limbo/physics/Physics2D.hpp"
+#include "limbo/physics/2d/Physics2D.hpp"
 
 namespace limbo {
 
 /**
- * PhysicsSystem - Manages physics simulation for entities
+ * PhysicsSystem2D - Manages 2D physics simulation for entities
  *
  * Handles:
  * - Creating Box2D bodies for entities with Rigidbody2DComponent
@@ -18,12 +18,12 @@ namespace limbo {
  * - Syncing transform positions with physics bodies
  *
  * Usage:
- *   getSystems().addSystem<PhysicsSystem>(physics2D);
+ *   getSystems().addSystem<PhysicsSystem2D>(physics2D);
  */
-class LIMBO_API PhysicsSystem : public System {
+class LIMBO_API PhysicsSystem2D : public System {
 public:
-    explicit PhysicsSystem(Physics2D& physics);
-    ~PhysicsSystem() override = default;
+    explicit PhysicsSystem2D(Physics2D& physics);
+    ~PhysicsSystem2D() override = default;
 
     void onAttach(World& world) override;
     void update(World& world, f32 deltaTime) override;

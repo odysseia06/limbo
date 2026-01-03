@@ -22,16 +22,16 @@ set(LIMBO_ENGINE_SOURCES
     # Runtime module
     src/runtime/Application.cpp
 
-    # Render API module
-    src/render/api/RenderContext.cpp
-    src/render/Shader.cpp
-    src/render/Buffer.cpp
-    src/render/Texture.cpp
-    src/render/Camera.cpp
-    src/render/Renderer2D.cpp
+    # Render common module
+    src/render/common/api/RenderContext.cpp
+    src/render/common/opengl/OpenGLContext.cpp
+    src/render/common/Shader.cpp
+    src/render/common/Buffer.cpp
+    src/render/common/Texture.cpp
+    src/render/common/Camera.cpp
 
-    # Render OpenGL module
-    src/render/opengl/OpenGLContext.cpp
+    # Render 2D module
+    src/render/2d/Renderer2D.cpp
 
     # Assets module
     src/assets/AssetId.cpp
@@ -48,14 +48,14 @@ set(LIMBO_ENGINE_SOURCES
     # ECS module
     src/ecs/World.cpp
     src/ecs/System.cpp
-    src/ecs/systems/SpriteRenderSystem.cpp
+    src/ecs/systems/2d/SpriteRenderSystem.cpp
 
     # Debug module
     src/debug/Debug.cpp
 
-    # Physics module
-    src/physics/Physics2D.cpp
-    src/physics/PhysicsSystem.cpp
+    # Physics 2D module
+    src/physics/2d/Physics2D.cpp
+    src/physics/2d/PhysicsSystem2D.cpp
 
     # Audio module
     src/audio/AudioEngine.cpp
@@ -106,13 +106,23 @@ set(LIMBO_ENGINE_HEADERS
     # Runtime headers
     include/limbo/runtime/Application.hpp
 
-    # Render headers
-    include/limbo/render/RenderContext.hpp
-    include/limbo/render/Shader.hpp
-    include/limbo/render/Buffer.hpp
-    include/limbo/render/Texture.hpp
-    include/limbo/render/Camera.hpp
-    include/limbo/render/Renderer2D.hpp
+    # Render common headers
+    include/limbo/render/common/RenderContext.hpp
+    include/limbo/render/common/Shader.hpp
+    include/limbo/render/common/Buffer.hpp
+    include/limbo/render/common/Texture.hpp
+    include/limbo/render/common/Camera.hpp
+
+    # Render 2D headers
+    include/limbo/render/2d/Renderer2D.hpp
+
+    # Render 3D headers (skeleton)
+    include/limbo/render/3d/Renderer3D.hpp
+    include/limbo/render/3d/Mesh.hpp
+    include/limbo/render/3d/Material.hpp
+    include/limbo/render/3d/Model.hpp
+    include/limbo/render/3d/Lighting.hpp
+    include/limbo/render/3d/Components3D.hpp
 
     # Assets headers
     include/limbo/assets/AssetId.hpp
@@ -132,15 +142,21 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/ecs/World.hpp
     include/limbo/ecs/Entity.hpp
     include/limbo/ecs/System.hpp
-    include/limbo/ecs/systems/SpriteRenderSystem.hpp
+    include/limbo/ecs/systems/2d/SpriteRenderSystem.hpp
+    include/limbo/ecs/systems/3d/MeshRenderSystem.hpp
 
     # Debug headers
     include/limbo/debug/Debug.hpp
 
-    # Physics headers
-    include/limbo/physics/Physics2D.hpp
-    include/limbo/physics/PhysicsComponents.hpp
-    include/limbo/physics/PhysicsSystem.hpp
+    # Physics 2D headers
+    include/limbo/physics/2d/Physics2D.hpp
+    include/limbo/physics/2d/PhysicsComponents2D.hpp
+    include/limbo/physics/2d/PhysicsSystem2D.hpp
+
+    # Physics 3D headers (skeleton)
+    include/limbo/physics/3d/Physics3D.hpp
+    include/limbo/physics/3d/PhysicsComponents3D.hpp
+    include/limbo/physics/3d/PhysicsSystem3D.hpp
 
     # Audio headers
     include/limbo/audio/AudioEngine.hpp

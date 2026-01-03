@@ -1,7 +1,7 @@
 #pragma once
 
 #include "limbo/assets/Asset.hpp"
-#include "limbo/render/Texture.hpp"
+#include "limbo/render/common/Texture.hpp"
 
 namespace limbo {
 

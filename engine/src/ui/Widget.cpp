@@ -1,5 +1,5 @@
 #include "limbo/ui/Widget.hpp"
-#include "limbo/render/Renderer2D.hpp"
+#include "limbo/render/2d/Renderer2D.hpp"
 
 #include <algorithm>
 

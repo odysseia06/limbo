@@ -1,5 +1,5 @@
-#include "limbo/render/RenderContext.hpp"
-#include "limbo/render/Buffer.hpp"
+#include "limbo/render/common/RenderContext.hpp"
+#include "limbo/render/common/Buffer.hpp"
 #include "limbo/platform/Platform.hpp"
 #include "limbo/core/Base.hpp"
 

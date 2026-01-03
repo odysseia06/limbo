@@ -1,5 +1,5 @@
-#include "limbo/physics/PhysicsSystem.hpp"
-#include "limbo/physics/PhysicsComponents.hpp"
+#include "limbo/physics/2d/PhysicsSystem2D.hpp"
+#include "limbo/physics/2d/PhysicsComponents2D.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
 
@@ -7,9 +7,9 @@
 
 namespace limbo {
 
-PhysicsSystem::PhysicsSystem(Physics2D& physics) : m_physics(physics) {}
+PhysicsSystem2D::PhysicsSystem2D(Physics2D& physics) : m_physics(physics) {}
 
-void PhysicsSystem::onAttach(World& world) {
+void PhysicsSystem2D::onAttach(World& world) {
     // Create bodies for all existing entities with physics components
     auto view = world.view<TransformComponent, Rigidbody2DComponent>();
     for (auto entity : view) {
@@ -19,7 +19,7 @@ void PhysicsSystem::onAttach(World& world) {
     spdlog::debug("PhysicsSystem initialized");
 }
 
-void PhysicsSystem::update(World& world, f32 deltaTime) {
+void PhysicsSystem2D::update(World& world, f32 deltaTime) {
     if (!m_physics.isInitialized()) {
         return;
     }
@@ -47,7 +47,7 @@ void PhysicsSystem::update(World& world, f32 deltaTime) {
     }
 }
 
-void PhysicsSystem::onDetach(World& world) {
+void PhysicsSystem2D::onDetach(World& world) {
     // Destroy all physics bodies
     auto view = world.view<Rigidbody2DComponent>();
     for (auto entity : view) {
@@ -57,7 +57,7 @@ void PhysicsSystem::onDetach(World& world) {
     spdlog::debug("PhysicsSystem shutdown");
 }
 
-void PhysicsSystem::createBody(World& world, World::EntityId entity) {
+void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
     if (!m_physics.isInitialized()) {
         return;
     }
@@ -139,7 +139,7 @@ void PhysicsSystem::createBody(World& world, World::EntityId entity) {
     }
 }
 
-void PhysicsSystem::destroyBody(World& world, World::EntityId entity) {
+void PhysicsSystem2D::destroyBody(World& world, World::EntityId entity) {
     if (!m_physics.isInitialized()) {
         return;
     }
@@ -159,7 +159,7 @@ void PhysicsSystem::destroyBody(World& world, World::EntityId entity) {
     }
 }
 
-void PhysicsSystem::syncTransformToBody(World& world, World::EntityId entity) {
+void PhysicsSystem2D::syncTransformToBody(World& world, World::EntityId entity) {
     auto& transform = world.getComponent<TransformComponent>(entity);
     auto& rb = world.getComponent<Rigidbody2DComponent>(entity);
 
@@ -169,7 +169,7 @@ void PhysicsSystem::syncTransformToBody(World& world, World::EntityId entity) {
     }
 }
 
-void PhysicsSystem::syncBodyToTransform(World& world, World::EntityId entity) {
+void PhysicsSystem2D::syncBodyToTransform(World& world, World::EntityId entity) {
     auto& transform = world.getComponent<TransformComponent>(entity);
     auto& rb = world.getComponent<Rigidbody2DComponent>(entity);
 

@@ -1,7 +1,7 @@
-#include "limbo/render/Renderer2D.hpp"
-#include "limbo/render/Shader.hpp"
-#include "limbo/render/Buffer.hpp"
-#include "limbo/render/Camera.hpp"
+#include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/render/common/Shader.hpp"
+#include "limbo/render/common/Buffer.hpp"
+#include "limbo/render/common/Camera.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>

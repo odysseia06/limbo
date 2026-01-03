@@ -1,4 +1,4 @@
-#include "limbo/render/Texture.hpp"
+#include "limbo/render/common/Texture.hpp"
 #include "limbo/core/Assert.hpp"
 
 #include <glad/gl.h>

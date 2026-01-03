@@ -2,7 +2,7 @@
 #include "limbo/particles/ParticleComponents.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
-#include "limbo/render/Renderer2D.hpp"
+#include "limbo/render/2d/Renderer2D.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <spdlog/spdlog.h>

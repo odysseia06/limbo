@@ -1,4 +1,4 @@
-#include "limbo/render/Shader.hpp"
+#include "limbo/render/common/Shader.hpp"
 #include "limbo/util/FileIO.hpp"
 #include "limbo/core/Assert.hpp"
 

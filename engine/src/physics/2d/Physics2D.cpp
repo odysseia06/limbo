@@ -1,4 +1,4 @@
-#include "limbo/physics/Physics2D.hpp"
+#include "limbo/physics/2d/Physics2D.hpp"
 
 #include <spdlog/spdlog.h>
 

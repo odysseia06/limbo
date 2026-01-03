@@ -1,4 +1,4 @@
-#include "limbo/render/RenderContext.hpp"
+#include "limbo/render/common/RenderContext.hpp"
 
 // Forward declaration of OpenGL context creation
 namespace limbo {

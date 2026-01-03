@@ -1,8 +1,8 @@
-#include "limbo/ecs/systems/SpriteRenderSystem.hpp"
+#include "limbo/ecs/systems/2d/SpriteRenderSystem.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
-#include "limbo/render/Renderer2D.hpp"
-#include "limbo/render/Camera.hpp"
+#include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/render/common/Camera.hpp"
 
 #include <algorithm>
 #include <vector>

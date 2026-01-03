@@ -1,7 +1,7 @@
 #pragma once
 
 #include "limbo/assets/Asset.hpp"
-#include "limbo/render/Shader.hpp"
+#include "limbo/render/common/Shader.hpp"
 
 namespace limbo {
 

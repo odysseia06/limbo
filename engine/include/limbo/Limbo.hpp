@@ -15,13 +15,23 @@
 // Runtime
 #include "limbo/runtime/Application.hpp"
 
-// Render
-#include "limbo/render/RenderContext.hpp"
-#include "limbo/render/Shader.hpp"
-#include "limbo/render/Buffer.hpp"
-#include "limbo/render/Texture.hpp"
-#include "limbo/render/Camera.hpp"
-#include "limbo/render/Renderer2D.hpp"
+// Render - Common
+#include "limbo/render/common/RenderContext.hpp"
+#include "limbo/render/common/Shader.hpp"
+#include "limbo/render/common/Buffer.hpp"
+#include "limbo/render/common/Texture.hpp"
+#include "limbo/render/common/Camera.hpp"
+
+// Render - 2D
+#include "limbo/render/2d/Renderer2D.hpp"
+
+// Render - 3D (skeleton)
+#include "limbo/render/3d/Renderer3D.hpp"
+#include "limbo/render/3d/Mesh.hpp"
+#include "limbo/render/3d/Material.hpp"
+#include "limbo/render/3d/Model.hpp"
+#include "limbo/render/3d/Lighting.hpp"
+#include "limbo/render/3d/Components3D.hpp"
 
 // Assets
 #include "limbo/assets/AssetId.hpp"
@@ -40,15 +50,21 @@
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Entity.hpp"
 #include "limbo/ecs/System.hpp"
-#include "limbo/ecs/systems/SpriteRenderSystem.hpp"
+#include "limbo/ecs/systems/2d/SpriteRenderSystem.hpp"
+#include "limbo/ecs/systems/3d/MeshRenderSystem.hpp"
 
 // Debug
 #include "limbo/debug/Debug.hpp"
 
-// Physics
-#include "limbo/physics/Physics2D.hpp"
-#include "limbo/physics/PhysicsComponents.hpp"
-#include "limbo/physics/PhysicsSystem.hpp"
+// Physics - 2D
+#include "limbo/physics/2d/Physics2D.hpp"
+#include "limbo/physics/2d/PhysicsComponents2D.hpp"
+#include "limbo/physics/2d/PhysicsSystem2D.hpp"
+
+// Physics - 3D (skeleton)
+#include "limbo/physics/3d/Physics3D.hpp"
+#include "limbo/physics/3d/PhysicsComponents3D.hpp"
+#include "limbo/physics/3d/PhysicsSystem3D.hpp"
 
 // Audio
 #include "limbo/audio/AudioEngine.hpp"

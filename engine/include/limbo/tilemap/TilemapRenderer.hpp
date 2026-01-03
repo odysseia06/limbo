@@ -4,7 +4,7 @@
 #include "limbo/core/Base.hpp"
 #include "limbo/ecs/System.hpp"
 #include "limbo/tilemap/Tilemap.hpp"
-#include "limbo/render/Camera.hpp"
+#include "limbo/render/common/Camera.hpp"
 
 #include <glm/glm.hpp>
 

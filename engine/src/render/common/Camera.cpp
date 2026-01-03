@@ -1,4 +1,4 @@
-#include "limbo/render/Camera.hpp"
+#include "limbo/render/common/Camera.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
 

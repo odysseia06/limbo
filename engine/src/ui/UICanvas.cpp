@@ -1,8 +1,8 @@
 #include "limbo/ui/UICanvas.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/platform/Input.hpp"
-#include "limbo/render/Renderer2D.hpp"
-#include "limbo/render/Camera.hpp"
+#include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/render/common/Camera.hpp"
 
 #include <spdlog/spdlog.h>
 #include <algorithm>

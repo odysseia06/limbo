@@ -1,5 +1,5 @@
 #include "limbo/ui/Widgets.hpp"
-#include "limbo/render/Renderer2D.hpp"
+#include "limbo/render/2d/Renderer2D.hpp"
 
 namespace limbo {
 

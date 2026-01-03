@@ -2,7 +2,7 @@
 
 #include "limbo/core/Types.hpp"
 #include "limbo/core/Base.hpp"
-#include "limbo/render/Texture.hpp"
+#include "limbo/render/common/Texture.hpp"
 
 #include <glm/glm.hpp>
 #include <vector>
