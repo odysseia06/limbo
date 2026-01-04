@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#define NOMINMAX
+#endif
+
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio.h>
 

@@ -52,6 +52,13 @@ jobs:
       - name: Build (Debug)
         run: cmake --build build-debug --parallel
 
+      - name: Show errors if build failed (Debug)
+        if: failure()
+        shell: bash
+        run: |
+          echo "=== SEARCHING FOR BUILD ERRORS ==="
+          find build-debug -name "*.log" -exec grep -l -i "error" {} \; -exec cat {} \; 2>/dev/null || true
+
       - name: Run Tests (Debug)
         run: ctest --test-dir build-debug --output-on-failure
 
@@ -60,6 +67,13 @@ jobs:
 
       - name: Build (Release)
         run: cmake --build build-release --parallel
+
+      - name: Show errors if build failed (Release)
+        if: failure()
+        shell: bash
+        run: |
+          echo "=== SEARCHING FOR BUILD ERRORS ==="
+          find build-release -name "*.log" -exec grep -l -i "error" {} \; -exec cat {} \; 2>/dev/null || true
 
       - name: Run Tests (Release)
         run: ctest --test-dir build-release --output-on-failure
