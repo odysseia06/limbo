@@ -23,11 +23,6 @@ FetchContent_Declare(
 )
 
 # ============================================================================
-# GLAD - OpenGL loader (pre-generated sources in extern/glad)
-# ============================================================================
-# We use pre-generated GLAD sources to avoid Python/jinja2 dependency at build time
-
-# ============================================================================
 # GLM - Math library
 # ============================================================================
 FetchContent_Declare(
@@ -172,7 +167,6 @@ FetchContent_MakeAvailable(lua)
 FetchContent_GetProperties(lua)
 
 # Create Lua library from source files
-# Official Lua repo has sources in root directory, not src/
 file(GLOB LUA_SOURCES "${lua_SOURCE_DIR}/*.c")
 list(FILTER LUA_SOURCES EXCLUDE REGEX "lua\\.c$")
 list(FILTER LUA_SOURCES EXCLUDE REGEX "luac\\.c$")
@@ -189,6 +183,25 @@ add_library(lua::lua ALIAS lua_static)
 
 # sol2
 FetchContent_MakeAvailable(sol2)
+FetchContent_GetProperties(sol2)
+
+# Patch sol2 for Clang compatibility (strict function pointer type matching)
+# See: https://github.com/ThePhD/sol2/issues/1444
+set(SOL2_FUNCTION_TYPES_HPP "${sol2_SOURCE_DIR}/include/sol/function_types.hpp")
+if(EXISTS "${SOL2_FUNCTION_TYPES_HPP}")
+    file(READ "${SOL2_FUNCTION_TYPES_HPP}" SOL2_CONTENT)
+    # Add explicit cast to fix "address of overloaded function 'call' does not match required type"
+    string(REPLACE
+        "lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>;"
+        "lua_CFunction freefunc = static_cast<lua_CFunction>(&function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>);"
+        SOL2_CONTENT "${SOL2_CONTENT}")
+    string(REPLACE
+        "lua_CFunction freefunc = &function_detail::upvalue_member_variable<C, Fx, is_yielding, no_trampoline>::call;"
+        "lua_CFunction freefunc = static_cast<lua_CFunction>(&function_detail::upvalue_member_variable<C, Fx, is_yielding, no_trampoline>::call);"
+        SOL2_CONTENT "${SOL2_CONTENT}")
+    file(WRITE "${SOL2_FUNCTION_TYPES_HPP}" "${SOL2_CONTENT}")
+    message(STATUS "Patched sol2 for Clang compatibility")
+endif()
 
 # GLAD - use pre-generated sources from extern/glad
 add_library(glad STATIC
