@@ -62,10 +62,10 @@ void EditorApp::onUpdate(f32 deltaTime) {
     if (Input::isKeyDown(Key::LeftControl) || Input::isKeyDown(Key::RightControl)) {
         if (Input::isKeyPressed(Key::N)) {
             newScene();
-}
+        }
         if (Input::isKeyPressed(Key::O)) {
             openScene();
-}
+        }
         if (Input::isKeyPressed(Key::S)) {
             if (Input::isKeyDown(Key::LeftShift) || Input::isKeyDown(Key::RightShift)) {
                 saveSceneAs();
@@ -192,7 +192,8 @@ void EditorApp::renderToolbar() {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
 
-    ImGuiWindowFlags const flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+    ImGuiWindowFlags const flags =
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
     if (ImGui::Begin("##Toolbar", nullptr, flags)) {
         // Play/Pause/Stop buttons
@@ -242,7 +243,7 @@ void EditorApp::renderToolbar() {
             m_currentScenePath.empty() ? "Untitled" : m_currentScenePath.filename().string();
         if (m_sceneModified) {
             sceneName += "*";
-}
+        }
         ImGui::Text("Scene: %s", sceneName.c_str());
     }
     ImGui::End();
@@ -313,7 +314,8 @@ void EditorApp::newScene() {
 void EditorApp::openScene() {
     // TODO: Open file dialog
     // For now, try to load a default scene
-    std::filesystem::path const scenePath = m_assetManager.getAssetRoot() / "scenes" / "default.json";
+    std::filesystem::path const scenePath =
+        m_assetManager.getAssetRoot() / "scenes" / "default.json";
 
     if (std::filesystem::exists(scenePath)) {
         SceneSerializer serializer(getWorld());
@@ -348,7 +350,8 @@ void EditorApp::saveScene() {
 void EditorApp::saveSceneAs() {
     // TODO: Save file dialog
     // For now, save to default location
-    std::filesystem::path const scenePath = m_assetManager.getAssetRoot() / "scenes" / "default.json";
+    std::filesystem::path const scenePath =
+        m_assetManager.getAssetRoot() / "scenes" / "default.json";
     std::filesystem::create_directories(scenePath.parent_path());
 
     SceneSerializer serializer(getWorld());

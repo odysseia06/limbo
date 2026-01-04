@@ -14,7 +14,7 @@ void SceneHierarchyPanel::shutdown() {}
 void SceneHierarchyPanel::render() {
     if (!m_open) {
         return;
-}
+    }
 
     ImGui::Begin("Hierarchy", &m_open);
 
@@ -54,7 +54,7 @@ void SceneHierarchyPanel::render() {
 void SceneHierarchyPanel::drawEntityNode(Entity entity) {
     if (!entity.isValid()) {
         return;
-}
+    }
 
     auto& nameComp = entity.getComponent<NameComponent>();
 

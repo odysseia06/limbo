@@ -10,7 +10,7 @@ namespace limbo {
 void Panel::render(const glm::vec2& screenSize) {
     if (!m_visible) {
         return;
-}
+    }
 
     // Render panel background
     Widget::render(screenSize);
@@ -23,7 +23,7 @@ void Panel::render(const glm::vec2& screenSize) {
 void Label::render(const glm::vec2& screenSize) {
     if (!m_visible) {
         return;
-}
+    }
 
     // For now, just render a simple indicator showing the text area
     // Full text rendering would require a font system
@@ -64,7 +64,7 @@ bool Button::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize) {
 void Button::render(const glm::vec2& screenSize) {
     if (!m_visible) {
         return;
-}
+    }
 
     // Render button background
     glm::vec4 const bounds = getScreenBounds(screenSize);
@@ -110,7 +110,7 @@ void Button::render(const glm::vec2& screenSize) {
 void ProgressBar::render(const glm::vec2& screenSize) {
     if (!m_visible) {
         return;
-}
+    }
 
     glm::vec4 const bounds = getScreenBounds(screenSize);
     glm::vec3 const pos((bounds.x + bounds.z) * 0.5f, (bounds.y + bounds.w) * 0.5f, 0.0f);
@@ -151,7 +151,7 @@ void ProgressBar::render(const glm::vec2& screenSize) {
 void Image::render(const glm::vec2& screenSize) {
     if (!m_visible) {
         return;
-}
+    }
 
     glm::vec4 const bounds = getScreenBounds(screenSize);
     glm::vec3 const pos((bounds.x + bounds.z) * 0.5f, (bounds.y + bounds.w) * 0.5f, 0.0f);

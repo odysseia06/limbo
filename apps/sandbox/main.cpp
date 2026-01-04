@@ -94,7 +94,7 @@ protected:
 
         // Initialize camera
         float const aspect = static_cast<float>(getWindow().getWidth()) /
-                       static_cast<float>(getWindow().getHeight());
+                             static_cast<float>(getWindow().getHeight());
         m_camera = limbo::OrthographicCamera(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
         // Initialize physics
@@ -237,10 +237,10 @@ protected:
             float speedY = 0.15f + static_cast<float>(i % 5) * 0.05f;
             if (i % 2 == 0) {
                 speedX = -speedX;
-}
+            }
             if (i % 3 == 0) {
                 speedY = -speedY;
-}
+            }
             entity.addComponent<VelocityComponent>(glm::vec3(speedX, speedY, 0.0f));
 
             // Add sprite renderer with different colors
@@ -587,7 +587,8 @@ protected:
         auto& world = getWorld();
 
         // Find script path
-        std::filesystem::path const scriptPath = m_assetManager.getAssetRoot() / "scripts" / "player.lua";
+        std::filesystem::path const scriptPath =
+            m_assetManager.getAssetRoot() / "scripts" / "player.lua";
 
         if (!std::filesystem::exists(scriptPath)) {
             spdlog::warn("Script not found: {}", scriptPath.string());
@@ -869,7 +870,7 @@ protected:
             m_zoom = glm::clamp(m_zoom, 0.1f, 10.0f);
 
             float const aspect = static_cast<float>(getWindow().getWidth()) /
-                           static_cast<float>(getWindow().getHeight());
+                                 static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
         }
 
@@ -880,7 +881,7 @@ protected:
             m_zoom = 1.0f;
 
             float const aspect = static_cast<float>(getWindow().getWidth()) /
-                           static_cast<float>(getWindow().getHeight());
+                                 static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
             spdlog::info("Camera reset");

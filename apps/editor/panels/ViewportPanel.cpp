@@ -67,7 +67,7 @@ void ViewportPanel::handleCameraInput(f32 deltaTime) {
 void ViewportPanel::render() {
     if (!m_open) {
         return;
-}
+    }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("Viewport", &m_open);
@@ -131,16 +131,16 @@ void ViewportPanel::drawGrid() {
     // Adjust step based on zoom
     if (m_cameraZoom > 5.0f) {
         step = 2.0f;
-}
+    }
     if (m_cameraZoom > 10.0f) {
         step = 5.0f;
-}
+    }
     if (m_cameraZoom < 0.5f) {
         step = 0.5f;
-}
+    }
     if (m_cameraZoom < 0.2f) {
         step = 0.1f;
-}
+    }
 
     // Draw vertical lines
     for (float x = -gridExtent; x <= gridExtent; x += step) {

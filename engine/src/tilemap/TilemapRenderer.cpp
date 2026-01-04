@@ -20,12 +20,12 @@ void TilemapRenderer::renderLayer(const Tilemap& tilemap, u32 layerIndex, const 
     const TilemapLayer* layer = tilemap.getLayer(layerIndex);
     if (!layer || !layer->visible) {
         return;
-}
+    }
 
     const Tileset* tileset = tilemap.getTileset();
     if (!tileset || !tileset->getTexture()) {
         return;
-}
+    }
 
     u32 const mapWidth = tilemap.getWidth();
     u32 const mapHeight = tilemap.getHeight();
@@ -42,8 +42,10 @@ void TilemapRenderer::renderLayer(const Tilemap& tilemap, u32 layerIndex, const 
         f32 const halfWidth = (camera->getRight() - camera->getLeft()) * 0.5f;
         f32 const halfHeight = (camera->getTop() - camera->getBottom()) * 0.5f;
 
-        glm::vec2 const camMin(camPos.x - halfWidth - position.x, camPos.y - halfHeight - position.y);
-        glm::vec2 const camMax(camPos.x + halfWidth - position.x, camPos.y + halfHeight - position.y);
+        glm::vec2 const camMin(camPos.x - halfWidth - position.x,
+                               camPos.y - halfHeight - position.y);
+        glm::vec2 const camMax(camPos.x + halfWidth - position.x,
+                               camPos.y + halfHeight - position.y);
 
         // Convert to tile coordinates with margin
         glm::ivec2 const tileMin = tilemap.worldToTile(camMin);
@@ -67,12 +69,12 @@ void TilemapRenderer::renderLayer(const Tilemap& tilemap, u32 layerIndex, const 
             u32 const tileId = tilemap.getTile(layerIndex, x, y);
             if (tileId == TILE_EMPTY) {
                 continue;
-}
+            }
 
             // Calculate tile position
             glm::vec3 const tilePos(position.x + (static_cast<f32>(x) + 0.5f) * tileWidth,
-                              position.y + (static_cast<f32>(y) + 0.5f) * tileHeight,
-                              position.z + static_cast<f32>(layer->zOrder) * 0.001f);
+                                    position.y + (static_cast<f32>(y) + 0.5f) * tileHeight,
+                                    position.z + static_cast<f32>(layer->zOrder) * 0.001f);
 
             renderTile(tilemap, tileId, tilePos, layer->opacity);
         }
@@ -84,12 +86,12 @@ void TilemapRenderer::renderTile(const Tilemap& tilemap, u32 tileId, const glm::
     const Tileset* tileset = tilemap.getTileset();
     if (!tileset) {
         return;
-}
+    }
 
     const TileDefinition* tile = tileset->getTile(tileId);
     if (!tile) {
         return;
-}
+    }
 
     glm::vec2 const size(tilemap.getTileWidth(), tilemap.getTileHeight());
     glm::vec4 const color(1.0f, 1.0f, 1.0f, opacity);
@@ -122,7 +124,7 @@ void TilemapRenderSystem::render(World& world) {
         [this](World::EntityId, TransformComponent& transform, TilemapComponent& tilemapComp) {
             if (!tilemapComp.visible || !tilemapComp.tilemap) {
                 return;
-}
+            }
 
             glm::vec3 pos = transform.position;
             pos.x += tilemapComp.offset.x;

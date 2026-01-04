@@ -15,7 +15,7 @@ void InspectorPanel::shutdown() {}
 void InspectorPanel::render() {
     if (!m_open) {
         return;
-}
+    }
 
     ImGui::Begin("Inspector", &m_open);
 
@@ -63,7 +63,8 @@ void InspectorPanel::drawComponents() {
     // Sprite Renderer component
     if (m_selectedEntity.hasComponent<SpriteRendererComponent>()) {
         ImGui::Separator();
-        bool const open = ImGui::CollapsingHeader("Sprite Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open =
+            ImGui::CollapsingHeader("Sprite Renderer", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##SpriteRenderer")) {
@@ -91,7 +92,8 @@ void InspectorPanel::drawComponents() {
     // BoxCollider2D component
     if (m_selectedEntity.hasComponent<BoxCollider2DComponent>()) {
         ImGui::Separator();
-        bool const open = ImGui::CollapsingHeader("Box Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open =
+            ImGui::CollapsingHeader("Box Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##BoxCollider2D")) {
@@ -105,7 +107,8 @@ void InspectorPanel::drawComponents() {
     // CircleCollider2D component
     if (m_selectedEntity.hasComponent<CircleCollider2DComponent>()) {
         ImGui::Separator();
-        bool const open = ImGui::CollapsingHeader("Circle Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open =
+            ImGui::CollapsingHeader("Circle Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##CircleCollider2D")) {

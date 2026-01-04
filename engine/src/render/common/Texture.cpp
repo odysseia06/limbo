@@ -226,9 +226,10 @@ Result<void, String> Texture2D::create(const TextureSpec& spec, const void* data
     GLenum const dataType = toGLType(spec.format);
 
     // Allocate storage
-    u32 const mipLevels = spec.generateMipmaps
-                        ? static_cast<u32>(std::floor(std::log2(std::max(m_width, m_height)))) + 1
-                        : 1;
+    u32 const mipLevels =
+        spec.generateMipmaps
+            ? static_cast<u32>(std::floor(std::log2(std::max(m_width, m_height)))) + 1
+            : 1;
 
     glTextureStorage2D(m_textureId, static_cast<GLsizei>(mipLevels), internalFormat,
                        static_cast<GLsizei>(m_width), static_cast<GLsizei>(m_height));

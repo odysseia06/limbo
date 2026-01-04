@@ -49,14 +49,14 @@ u32 Tilemap::addLayer(const String& name, i32 zOrder) {
 TilemapLayer* Tilemap::getLayer(u32 index) {
     if (index >= m_layers.size()) {
         return nullptr;
-}
+    }
     return &m_layers[index];
 }
 
 const TilemapLayer* Tilemap::getLayer(u32 index) const {
     if (index >= m_layers.size()) {
         return nullptr;
-}
+    }
     return &m_layers[index];
 }
 
@@ -64,7 +64,7 @@ TilemapLayer* Tilemap::getLayerByName(const String& name) {
     for (auto& layer : m_layers) {
         if (layer.name == name) {
             return &layer;
-}
+        }
     }
     return nullptr;
 }
@@ -73,7 +73,7 @@ const TilemapLayer* Tilemap::getLayerByName(const String& name) const {
     for (const auto& layer : m_layers) {
         if (layer.name == name) {
             return &layer;
-}
+        }
     }
     return nullptr;
 }
@@ -95,7 +95,7 @@ void Tilemap::setTile(u32 layer, u32 x, u32 y, u32 tileId) {
 void Tilemap::fillRect(u32 layer, u32 x, u32 y, u32 width, u32 height, u32 tileId) {
     if (layer >= m_layers.size()) {
         return;
-}
+    }
 
     u32 const endX = std::min(x + width, m_width);
     u32 const endY = std::min(y + height, m_height);
@@ -110,7 +110,7 @@ void Tilemap::fillRect(u32 layer, u32 x, u32 y, u32 width, u32 height, u32 tileI
 void Tilemap::fillLayer(u32 layer, u32 tileId) {
     if (layer >= m_layers.size()) {
         return;
-}
+    }
     std::fill(m_layers[layer].tiles.begin(), m_layers[layer].tiles.end(), tileId);
 }
 
@@ -144,7 +144,7 @@ bool Tilemap::hasTileFlags(i32 x, i32 y, TileFlags flags) const {
         u32 const tileId = layer.tiles[tileIndex(static_cast<u32>(x), static_cast<u32>(y))];
         if (tileId == TILE_EMPTY) {
             continue;
-}
+        }
 
         const TileDefinition* tile = m_tileset->getTile(tileId);
         if (tile && hasFlag(tile->flags, flags)) {

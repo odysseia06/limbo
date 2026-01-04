@@ -35,7 +35,7 @@ void showStatsPanel(f32 deltaTime) {
         float sum = 0.0f;
         for (float const f : fpsHistory) {
             sum += f;
-}
+        }
         displayFps = sum / 120.0f;
         displayMs = 1000.0f / displayFps;
     }

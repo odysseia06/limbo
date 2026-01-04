@@ -34,7 +34,7 @@ void UICanvas::clear() {
 void UICanvas::update(f32 deltaTime) {
     if (!m_enabled) {
         return;
-}
+    }
 
     for (auto& widget : m_widgets) {
         if (widget->isEnabled()) {
@@ -46,7 +46,7 @@ void UICanvas::update(f32 deltaTime) {
 void UICanvas::render(const glm::vec2& screenSize) {
     if (!m_enabled) {
         return;
-}
+    }
 
     for (auto& widget : m_widgets) {
         if (widget->isVisible()) {
@@ -58,10 +58,10 @@ void UICanvas::render(const glm::vec2& screenSize) {
 void UICanvas::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize) {
     if (!m_enabled) {
         return;
-}
+    }
 
     // Process in reverse order (top widgets first)
-    for (auto & m_widget : std::ranges::reverse_view(m_widgets)) {
+    for (auto& m_widget : std::ranges::reverse_view(m_widgets)) {
         if (m_widget->onMouseMove(mousePos, screenSize)) {
             break;
         }
@@ -71,9 +71,9 @@ void UICanvas::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSiz
 void UICanvas::onMouseDown(const glm::vec2& mousePos, const glm::vec2& screenSize) {
     if (!m_enabled) {
         return;
-}
+    }
 
-    for (auto & m_widget : std::ranges::reverse_view(m_widgets)) {
+    for (auto& m_widget : std::ranges::reverse_view(m_widgets)) {
         if (m_widget->onMouseDown(mousePos, screenSize)) {
             break;
         }
@@ -83,9 +83,9 @@ void UICanvas::onMouseDown(const glm::vec2& mousePos, const glm::vec2& screenSiz
 void UICanvas::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize) {
     if (!m_enabled) {
         return;
-}
+    }
 
-    for (auto & m_widget : std::ranges::reverse_view(m_widgets)) {
+    for (auto& m_widget : std::ranges::reverse_view(m_widgets)) {
         if (m_widget->onMouseUp(mousePos, screenSize)) {
             break;
         }
@@ -110,7 +110,7 @@ void UISystem::update(World& world, f32 deltaTime) {
         [this, deltaTime, &mousePos](World::EntityId, UICanvasComponent& canvasComp) {
             if (!canvasComp.canvas) {
                 return;
-}
+            }
 
             // Update widgets
             canvasComp.canvas->update(deltaTime);

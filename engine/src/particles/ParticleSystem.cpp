@@ -124,7 +124,7 @@ f32 ParticlePool::randomFloat(f32 min, f32 max) {
 f32 ParticlePool::randomVariance(f32 base, f32 variance) {
     if (variance <= 0.0f) {
         return base;
-}
+    }
     return base + randomFloat(-variance, variance);
 }
 

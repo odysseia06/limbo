@@ -114,7 +114,7 @@ bool Input::isKeyDown(Key key) {
     auto idx = static_cast<size_t>(key);
     if (idx >= s_state.keysCurrent.size()) {
         return false;
-}
+    }
     return s_state.keysCurrent[idx];
 }
 
@@ -122,7 +122,7 @@ bool Input::isKeyPressed(Key key) {
     auto idx = static_cast<size_t>(key);
     if (idx >= s_state.keysCurrent.size()) {
         return false;
-}
+    }
     return s_state.keysCurrent[idx] && !s_state.keysPrevious[idx];
 }
 
@@ -130,7 +130,7 @@ bool Input::isKeyReleased(Key key) {
     auto idx = static_cast<size_t>(key);
     if (idx >= s_state.keysCurrent.size()) {
         return false;
-}
+    }
     return !s_state.keysCurrent[idx] && s_state.keysPrevious[idx];
 }
 
@@ -139,7 +139,7 @@ bool Input::isMouseButtonDown(MouseButton button) {
     auto idx = static_cast<size_t>(button);
     if (idx >= s_state.mouseButtonsCurrent.size()) {
         return false;
-}
+    }
     return s_state.mouseButtonsCurrent[idx];
 }
 
@@ -147,7 +147,7 @@ bool Input::isMouseButtonPressed(MouseButton button) {
     auto idx = static_cast<size_t>(button);
     if (idx >= s_state.mouseButtonsCurrent.size()) {
         return false;
-}
+    }
     return s_state.mouseButtonsCurrent[idx] && !s_state.mouseButtonsPrevious[idx];
 }
 
@@ -155,7 +155,7 @@ bool Input::isMouseButtonReleased(MouseButton button) {
     auto idx = static_cast<size_t>(button);
     if (idx >= s_state.mouseButtonsCurrent.size()) {
         return false;
-}
+    }
     return !s_state.mouseButtonsCurrent[idx] && s_state.mouseButtonsPrevious[idx];
 }
 

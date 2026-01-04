@@ -22,7 +22,7 @@ void AssetBrowserPanel::shutdown() {}
 void AssetBrowserPanel::render() {
     if (!m_open) {
         return;
-}
+    }
 
     ImGui::Begin("Asset Browser", &m_open);
 
@@ -57,7 +57,7 @@ void AssetBrowserPanel::drawAssetGrid() {
     int columnCount = static_cast<int>(panelWidth / (m_thumbnailSize + m_padding));
     if (columnCount < 1) {
         columnCount = 1;
-}
+    }
 
     ImGui::Columns(columnCount, nullptr, false);
 

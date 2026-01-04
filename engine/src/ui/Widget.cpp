@@ -20,7 +20,7 @@ void Widget::update(f32 deltaTime) {
 void Widget::render(const glm::vec2& screenSize) {
     if (!m_visible) {
         return;
-}
+    }
 
     // Default rendering: draw background quad
     glm::vec4 const bounds = getScreenBounds(screenSize);
@@ -84,7 +84,8 @@ glm::vec4 Widget::getScreenBounds(const glm::vec2& screenSize) const {
 
         // Children are positioned from parent's top-left with Y going down
         // Position is offset from top-left of parent
-        glm::vec2 const topLeft(parentBounds.x + m_position.x, parentBounds.w - m_position.y - m_size.y);
+        glm::vec2 const topLeft(parentBounds.x + m_position.x,
+                                parentBounds.w - m_position.y - m_size.y);
         return glm::vec4(topLeft.x, topLeft.y, topLeft.x + m_size.x, topLeft.y + m_size.y);
     }
 
@@ -146,7 +147,7 @@ bool Widget::containsPoint(const glm::vec2& point, const glm::vec2& screenSize) 
 bool Widget::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize) {
     if (!m_enabled || !m_interactive) {
         return false;
-}
+    }
 
     bool const isHovered = containsPoint(mousePos, screenSize);
 
@@ -157,7 +158,7 @@ bool Widget::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize)
     }
 
     // Propagate to children
-    for (auto & it : std::ranges::reverse_view(m_children)) {
+    for (auto& it : std::ranges::reverse_view(m_children)) {
         if (it->onMouseMove(mousePos, screenSize)) {
             return true;
         }
@@ -169,10 +170,10 @@ bool Widget::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize)
 bool Widget::onMouseDown(const glm::vec2& mousePos, const glm::vec2& screenSize) {
     if (!m_enabled || !m_interactive) {
         return false;
-}
+    }
 
     // Check children first (reverse order for proper z-ordering)
-    for (auto & it : std::ranges::reverse_view(m_children)) {
+    for (auto& it : std::ranges::reverse_view(m_children)) {
         if (it->onMouseDown(mousePos, screenSize)) {
             return true;
         }
@@ -189,12 +190,12 @@ bool Widget::onMouseDown(const glm::vec2& mousePos, const glm::vec2& screenSize)
 bool Widget::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize) {
     if (!m_enabled || !m_interactive) {
         return false;
-}
+    }
 
     bool const wasPressed = (m_state == WidgetState::Pressed);
 
     // Check children first
-    for (auto & it : std::ranges::reverse_view(m_children)) {
+    for (auto& it : std::ranges::reverse_view(m_children)) {
         if (it->onMouseUp(mousePos, screenSize)) {
             return true;
         }
@@ -211,7 +212,7 @@ bool Widget::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize) {
 glm::vec4 Widget::getCurrentBackgroundColor() const {
     if (!m_enabled) {
         return m_style.disabledColor;
-}
+    }
 
     switch (m_state) {
     case WidgetState::Hovered:

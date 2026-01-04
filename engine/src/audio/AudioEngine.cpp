@@ -89,7 +89,7 @@ void AudioEngine::shutdown() {
 void AudioEngine::registerSource(AudioSource* source) {
     if (!source) {
         return;
-}
+    }
 
     std::scoped_lock const lock(m_sourcesMutex);
     auto it = std::find(m_sources.begin(), m_sources.end(), source);
@@ -101,7 +101,7 @@ void AudioEngine::registerSource(AudioSource* source) {
 void AudioEngine::unregisterSource(AudioSource* source) {
     if (!source) {
         return;
-}
+    }
 
     std::scoped_lock const lock(m_sourcesMutex);
     auto it = std::find(m_sources.begin(), m_sources.end(), source);
