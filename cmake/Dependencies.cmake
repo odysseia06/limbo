@@ -185,22 +185,20 @@ add_library(lua::lua ALIAS lua_static)
 FetchContent_MakeAvailable(sol2)
 FetchContent_GetProperties(sol2)
 
-# Patch sol2 for Clang compatibility (strict function pointer type matching)
-# See: https://github.com/ThePhD/sol2/issues/1444
-set(SOL2_FUNCTION_TYPES_HPP "${sol2_SOURCE_DIR}/include/sol/function_types.hpp")
-if(EXISTS "${SOL2_FUNCTION_TYPES_HPP}")
-    file(READ "${SOL2_FUNCTION_TYPES_HPP}" SOL2_CONTENT)
-    # Add explicit cast to fix "address of overloaded function 'call' does not match required type"
+# Patch sol2 for Clang compatibility
+# The issue is that sol2's call functions have noexcept specifiers, but lua_CFunction
+# is int(*)(lua_State*) without noexcept. In C++17+, noexcept is part of the type.
+# Fix by treating Clang the same as MSVC (which already has this workaround).
+set(SOL2_STATELESS_HPP "${sol2_SOURCE_DIR}/include/sol/function_types_stateless.hpp")
+if(EXISTS "${SOL2_STATELESS_HPP}")
+    file(READ "${SOL2_STATELESS_HPP}" SOL2_CONTENT)
+    # Change the condition to also exclude Clang from noexcept specifier
     string(REPLACE
-        "lua_CFunction freefunc = &function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>;"
-        "lua_CFunction freefunc = static_cast<lua_CFunction>(&function_detail::upvalue_this_member_variable<C, Fx>::template call<is_yielding, no_trampoline>);"
+        "#if SOL_IS_ON(SOL_COMPILER_VCXX)"
+        "#if SOL_IS_ON(SOL_COMPILER_VCXX) || SOL_IS_ON(SOL_COMPILER_CLANG)"
         SOL2_CONTENT "${SOL2_CONTENT}")
-    string(REPLACE
-        "lua_CFunction freefunc = &function_detail::upvalue_member_variable<C, Fx, is_yielding, no_trampoline>::call;"
-        "lua_CFunction freefunc = static_cast<lua_CFunction>(&function_detail::upvalue_member_variable<C, Fx, is_yielding, no_trampoline>::call);"
-        SOL2_CONTENT "${SOL2_CONTENT}")
-    file(WRITE "${SOL2_FUNCTION_TYPES_HPP}" "${SOL2_CONTENT}")
-    message(STATUS "Patched sol2 for Clang compatibility")
+    file(WRITE "${SOL2_STATELESS_HPP}" "${SOL2_CONTENT}")
+    message(STATUS "Patched sol2 for Clang noexcept compatibility")
 endif()
 
 # GLAD - use pre-generated sources from extern/glad
