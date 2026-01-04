@@ -116,11 +116,10 @@ FetchContent_Declare(
 # ============================================================================
 # sol2 - C++ Lua binding library
 # ============================================================================
-# Use develop branch for Clang 21 compatibility
 FetchContent_Declare(
     sol2
     GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-    GIT_TAG        develop
+    GIT_TAG        v3.5.0
     GIT_SHALLOW    TRUE
 )
 
