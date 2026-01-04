@@ -192,15 +192,14 @@ FetchContent_GetProperties(sol2)
 set(SOL2_STATELESS_HPP "${sol2_SOURCE_DIR}/include/sol/function_types_stateless.hpp")
 if(EXISTS "${SOL2_STATELESS_HPP}")
     file(READ "${SOL2_STATELESS_HPP}" SOL2_CONTENT)
-    # Remove conditional noexcept from call functions (used as lua_CFunction pointers)
-    string(REGEX REPLACE
-        "(template <bool is_yielding, bool no_trampoline>[^}]*static int call\\(lua_State\\* L\\)) noexcept\\([^)]+\\)"
-        "\\1"
+    # Remove specific noexcept patterns from call functions using simple string replace
+    string(REPLACE
+        "static int call(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>)"
+        "static int call(lua_State* L)"
         SOL2_CONTENT "${SOL2_CONTENT}")
-    # Also handle the simpler noexcept(traits_type::is_noexcept) pattern
-    string(REGEX REPLACE
-        "(static int call\\(lua_State\\* L\\))[^{]*noexcept\\(traits_type::is_noexcept\\)"
-        "\\1"
+    string(REPLACE
+        "static int call(lua_State* L) noexcept(traits_type::is_noexcept)"
+        "static int call(lua_State* L)"
         SOL2_CONTENT "${SOL2_CONTENT}")
     file(WRITE "${SOL2_STATELESS_HPP}" "${SOL2_CONTENT}")
     message(STATUS "Patched sol2 for Clang noexcept compatibility")
