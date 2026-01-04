@@ -52,8 +52,8 @@ void Application::run() {
     spdlog::info("Entering main loop");
 
     while (m_running && !m_window->shouldClose()) {
-        f64 currentTime = platform::getTime();
-        f32 deltaTime = static_cast<f32>(currentTime - m_lastFrameTime);
+        f64 const currentTime = platform::getTime();
+        f32 const deltaTime = static_cast<f32>(currentTime - m_lastFrameTime);
         m_lastFrameTime = currentTime;
 
         // Update input state before polling events

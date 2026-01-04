@@ -20,14 +20,14 @@ public:
         fs::remove_all(m_path, ec);
     }
 
-    const fs::path& path() const { return m_path; }
+    [[nodiscard]] const fs::path& path() const { return m_path; }
 
 private:
     fs::path m_path;
 };
 
 TEST_CASE("File I/O text operations", "[util][fileio]") {
-    TempDirectory tempDir;
+    TempDirectory const tempDir;
 
     SECTION("Write and read text file") {
         auto filePath = tempDir.path() / "test.txt";
@@ -75,7 +75,7 @@ TEST_CASE("File I/O text operations", "[util][fileio]") {
 }
 
 TEST_CASE("File I/O binary operations", "[util][fileio]") {
-    TempDirectory tempDir;
+    TempDirectory const tempDir;
 
     SECTION("Write and read binary file") {
         auto filePath = tempDir.path() / "test.bin";
@@ -98,7 +98,7 @@ TEST_CASE("File I/O binary operations", "[util][fileio]") {
 
     SECTION("Write empty binary file") {
         auto filePath = tempDir.path() / "empty.bin";
-        std::vector<limbo::u8> data;
+        std::vector<limbo::u8> const data;
 
         auto writeResult = limbo::util::writeFileBinary(filePath, data);
         REQUIRE(writeResult.has_value());
@@ -110,7 +110,7 @@ TEST_CASE("File I/O binary operations", "[util][fileio]") {
 }
 
 TEST_CASE("File utility functions", "[util][fileio]") {
-    TempDirectory tempDir;
+    TempDirectory const tempDir;
 
     SECTION("fileExists") {
         auto existingFile = tempDir.path() / "exists.txt";
@@ -135,7 +135,7 @@ TEST_CASE("File utility functions", "[util][fileio]") {
 
     SECTION("getFileSize") {
         auto file = tempDir.path() / "sized.txt";
-        limbo::String content = "12345";  // 5 bytes
+        limbo::String const content = "12345";  // 5 bytes
         limbo::util::writeFileText(file, content);
 
         REQUIRE(limbo::util::getFileSize(file) == 5);

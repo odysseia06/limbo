@@ -5,19 +5,19 @@
 
 TEST_CASE("AssetId basic functionality", "[assets][assetid]") {
     SECTION("Default constructed AssetId is invalid") {
-        limbo::AssetId id;
+        limbo::AssetId const id;
         REQUIRE(!id.isValid());
         REQUIRE(id.value() == 0);
     }
 
     SECTION("AssetId from value is valid") {
-        limbo::AssetId id(12345);
+        limbo::AssetId const id(12345);
         REQUIRE(id.isValid());
         REQUIRE(id.value() == 12345);
     }
 
     SECTION("AssetId from path is valid") {
-        limbo::AssetId id("textures/player.png");
+        limbo::AssetId const id("textures/player.png");
         REQUIRE(id.isValid());
         REQUIRE(id.value() != 0);
     }
@@ -66,9 +66,9 @@ TEST_CASE("AssetId comparison operators", "[assets][assetid]") {
 TEST_CASE("AssetId can be used in unordered containers", "[assets][assetid]") {
     std::unordered_set<limbo::AssetId> ids;
 
-    limbo::AssetId id1("texture1.png");
-    limbo::AssetId id2("texture2.png");
-    limbo::AssetId id3("texture1.png");  // Same as id1
+    limbo::AssetId const id1("texture1.png");
+    limbo::AssetId const id2("texture2.png");
+    limbo::AssetId const id3("texture1.png");  // Same as id1
 
     ids.insert(id1);
     ids.insert(id2);

@@ -2,6 +2,7 @@
 #include "limbo/render/2d/Renderer2D.hpp"
 
 #include <algorithm>
+#include <ranges>
 
 namespace limbo {
 
@@ -17,13 +18,14 @@ void Widget::update(f32 deltaTime) {
 }
 
 void Widget::render(const glm::vec2& screenSize) {
-    if (!m_visible)
+    if (!m_visible) {
         return;
+}
 
     // Default rendering: draw background quad
-    glm::vec4 bounds = getScreenBounds(screenSize);
-    glm::vec3 pos((bounds.x + bounds.z) * 0.5f, (bounds.y + bounds.w) * 0.5f, 0.0f);
-    glm::vec2 size(bounds.z - bounds.x, bounds.w - bounds.y);
+    glm::vec4 const bounds = getScreenBounds(screenSize);
+    glm::vec3 const pos((bounds.x + bounds.z) * 0.5f, (bounds.y + bounds.w) * 0.5f, 0.0f);
+    glm::vec2 const size(bounds.z - bounds.x, bounds.w - bounds.y);
 
     Renderer2D::drawQuad(pos, size, getCurrentBackgroundColor());
 
@@ -76,19 +78,19 @@ glm::vec4 Widget::getScreenBounds(const glm::vec2& screenSize) const {
     glm::vec2 parentPos{0.0f};
 
     if (m_parent) {
-        glm::vec4 parentBounds = m_parent->getScreenBounds(screenSize);
+        glm::vec4 const parentBounds = m_parent->getScreenBounds(screenSize);
         parentPos = glm::vec2(parentBounds.x, parentBounds.y);
         parentSize = glm::vec2(parentBounds.z - parentBounds.x, parentBounds.w - parentBounds.y);
 
         // Children are positioned from parent's top-left with Y going down
         // Position is offset from top-left of parent
-        glm::vec2 topLeft(parentBounds.x + m_position.x, parentBounds.w - m_position.y - m_size.y);
+        glm::vec2 const topLeft(parentBounds.x + m_position.x, parentBounds.w - m_position.y - m_size.y);
         return glm::vec4(topLeft.x, topLeft.y, topLeft.x + m_size.x, topLeft.y + m_size.y);
     }
 
     // Root widgets use anchor system
     // Get anchor position in parent space (screen coords: 0,0 at bottom-left)
-    glm::vec2 anchorPos = getAnchorPosition(parentSize);
+    glm::vec2 const anchorPos = getAnchorPosition(parentSize);
 
     // Position offset depends on anchor type
     // For top anchors, Y position goes DOWN (negative in screen coords)
@@ -106,8 +108,8 @@ glm::vec4 Widget::getScreenBounds(const glm::vec2& screenSize) const {
     }
 
     // Calculate position with pivot offset
-    glm::vec2 pivotOffset = m_size * m_pivot;
-    glm::vec2 bottomLeft = parentPos + anchorPos + offset - pivotOffset;
+    glm::vec2 const pivotOffset = m_size * m_pivot;
+    glm::vec2 const bottomLeft = parentPos + anchorPos + offset - pivotOffset;
 
     return glm::vec4(bottomLeft.x, bottomLeft.y, bottomLeft.x + m_size.x, bottomLeft.y + m_size.y);
 }
@@ -137,15 +139,16 @@ glm::vec2 Widget::getAnchorPosition(const glm::vec2& parentSize) const {
 }
 
 bool Widget::containsPoint(const glm::vec2& point, const glm::vec2& screenSize) const {
-    glm::vec4 bounds = getScreenBounds(screenSize);
+    glm::vec4 const bounds = getScreenBounds(screenSize);
     return point.x >= bounds.x && point.x <= bounds.z && point.y >= bounds.y && point.y <= bounds.w;
 }
 
 bool Widget::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize) {
-    if (!m_enabled || !m_interactive)
+    if (!m_enabled || !m_interactive) {
         return false;
+}
 
-    bool isHovered = containsPoint(mousePos, screenSize);
+    bool const isHovered = containsPoint(mousePos, screenSize);
 
     if (isHovered && m_state != WidgetState::Pressed) {
         m_state = WidgetState::Hovered;
@@ -154,8 +157,8 @@ bool Widget::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize)
     }
 
     // Propagate to children
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->onMouseMove(mousePos, screenSize)) {
+    for (auto & it : std::ranges::reverse_view(m_children)) {
+        if (it->onMouseMove(mousePos, screenSize)) {
             return true;
         }
     }
@@ -164,12 +167,13 @@ bool Widget::onMouseMove(const glm::vec2& mousePos, const glm::vec2& screenSize)
 }
 
 bool Widget::onMouseDown(const glm::vec2& mousePos, const glm::vec2& screenSize) {
-    if (!m_enabled || !m_interactive)
+    if (!m_enabled || !m_interactive) {
         return false;
+}
 
     // Check children first (reverse order for proper z-ordering)
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->onMouseDown(mousePos, screenSize)) {
+    for (auto & it : std::ranges::reverse_view(m_children)) {
+        if (it->onMouseDown(mousePos, screenSize)) {
             return true;
         }
     }
@@ -183,14 +187,15 @@ bool Widget::onMouseDown(const glm::vec2& mousePos, const glm::vec2& screenSize)
 }
 
 bool Widget::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize) {
-    if (!m_enabled || !m_interactive)
+    if (!m_enabled || !m_interactive) {
         return false;
+}
 
-    bool wasPressed = (m_state == WidgetState::Pressed);
+    bool const wasPressed = (m_state == WidgetState::Pressed);
 
     // Check children first
-    for (auto it = m_children.rbegin(); it != m_children.rend(); ++it) {
-        if ((*it)->onMouseUp(mousePos, screenSize)) {
+    for (auto & it : std::ranges::reverse_view(m_children)) {
+        if (it->onMouseUp(mousePos, screenSize)) {
             return true;
         }
     }
@@ -204,8 +209,9 @@ bool Widget::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize) {
 }
 
 glm::vec4 Widget::getCurrentBackgroundColor() const {
-    if (!m_enabled)
+    if (!m_enabled) {
         return m_style.disabledColor;
+}
 
     switch (m_state) {
     case WidgetState::Hovered:

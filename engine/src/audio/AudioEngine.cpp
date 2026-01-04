@@ -78,7 +78,7 @@ void AudioEngine::shutdown() {
     }
 
     {
-        std::lock_guard<std::mutex> lock(m_sourcesMutex);
+        std::scoped_lock const lock(m_sourcesMutex);
         m_sources.clear();
     }
 
@@ -87,10 +87,11 @@ void AudioEngine::shutdown() {
 }
 
 void AudioEngine::registerSource(AudioSource* source) {
-    if (!source)
+    if (!source) {
         return;
+}
 
-    std::lock_guard<std::mutex> lock(m_sourcesMutex);
+    std::scoped_lock const lock(m_sourcesMutex);
     auto it = std::find(m_sources.begin(), m_sources.end(), source);
     if (it == m_sources.end()) {
         m_sources.push_back(source);
@@ -98,10 +99,11 @@ void AudioEngine::registerSource(AudioSource* source) {
 }
 
 void AudioEngine::unregisterSource(AudioSource* source) {
-    if (!source)
+    if (!source) {
         return;
+}
 
-    std::lock_guard<std::mutex> lock(m_sourcesMutex);
+    std::scoped_lock const lock(m_sourcesMutex);
     auto it = std::find(m_sources.begin(), m_sources.end(), source);
     if (it != m_sources.end()) {
         m_sources.erase(it);
@@ -119,14 +121,14 @@ void AudioEngine::audioCallback(void* output, u32 frameCount) {
     // Clear output buffer
     std::fill(outputBuffer, outputBuffer + totalSamples, 0.0f);
 
-    std::lock_guard<std::mutex> lock(m_sourcesMutex);
+    std::scoped_lock const lock(m_sourcesMutex);
 
     for (AudioSource* source : m_sources) {
         if (!source || !source->isPlaying()) {
             continue;
         }
 
-        AudioClip* clip = source->getClip();
+        AudioClip const* clip = source->getClip();
         if (!clip || !clip->isLoaded()) {
             continue;
         }
@@ -155,8 +157,8 @@ void AudioEngine::audioCallback(void* output, u32 frameCount) {
 
             // Handle channel conversion if needed
             for (u32 ch = 0; ch < m_channels; ++ch) {
-                usize srcChannel = ch % format.channels;
-                usize srcIndex = (samplePos / format.channels) * format.channels + srcChannel;
+                usize const srcChannel = ch % format.channels;
+                usize const srcIndex = (samplePos / format.channels) * format.channels + srcChannel;
 
                 if (srcIndex < clipSampleCount) {
                     outputBuffer[frame * m_channels + ch] += samples[srcIndex] * volume;
@@ -180,7 +182,7 @@ void AudioEngine::audioCallback(void* output, u32 frameCount) {
 // ============================================================================
 
 bool AudioClip::loadFromFile(const String& filepath) {
-    ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 2, 44100);
+    ma_decoder_config const config = ma_decoder_config_init(ma_format_f32, 2, 44100);
     ma_decoder decoder;
 
     ma_result result = ma_decoder_init_file(filepath.c_str(), &config, &decoder);
@@ -222,7 +224,7 @@ bool AudioClip::loadFromFile(const String& filepath) {
 }
 
 bool AudioClip::loadFromMemory(const void* data, usize size) {
-    ma_decoder_config config = ma_decoder_config_init(ma_format_f32, 2, 44100);
+    ma_decoder_config const config = ma_decoder_config_init(ma_format_f32, 2, 44100);
     ma_decoder decoder;
 
     ma_result result = ma_decoder_init_memory(data, size, &config, &decoder);
@@ -270,11 +272,11 @@ void AudioClip::generateTestTone(f32 frequency, f32 duration, f32 amplitude) {
     const f32 twoPi = 6.28318530718f;
 
     for (usize i = 0; i < totalSamples / m_format.channels; ++i) {
-        f32 t = static_cast<f32>(i) / static_cast<f32>(m_format.sampleRate);
+        f32 const t = static_cast<f32>(i) / static_cast<f32>(m_format.sampleRate);
         f32 sample = amplitude * std::sin(twoPi * frequency * t);
 
         // Apply fade in/out to avoid clicks
-        f32 fadeTime = 0.01f;  // 10ms fade
+        f32 const fadeTime = 0.01f;  // 10ms fade
         if (t < fadeTime) {
             sample *= t / fadeTime;
         } else if (t > duration - fadeTime) {

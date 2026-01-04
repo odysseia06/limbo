@@ -159,7 +159,7 @@ public:
             return false;
         }
 
-        System* ptr = it->second;
+        System const* ptr = it->second;
         m_systemMap.erase(it);
 
         auto sysIt =

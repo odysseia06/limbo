@@ -85,7 +85,7 @@ struct unexpected {
     E m_error;
     explicit unexpected(const E& e) : m_error(e) {}
     explicit unexpected(E&& e) : m_error(std::move(e)) {}
-    const E& error() const { return m_error; }
+    [[nodiscard]] const E& error() const { return m_error; }
 };
 
 // Fallback Result implementation for compilers without std::expected
@@ -95,19 +95,19 @@ public:
     Result(const T& value) : m_value(value), m_hasValue(true) {}
     Result(T&& value) : m_value(std::move(value)), m_hasValue(true) {}
 
-    Result(const unexpected<E>& err) : m_error(err.error()), m_hasValue(false) {}
-    Result(unexpected<E>&& err) : m_error(std::move(err.m_error)), m_hasValue(false) {}
+    Result(const unexpected<E>& err) : m_error(err.error()) {}
+    Result(unexpected<E>&& err) : m_error(std::move(err.m_error)) {}
 
-    bool has_value() const { return m_hasValue; }
+    [[nodiscard]] bool has_value() const { return m_hasValue; }
     explicit operator bool() const { return m_hasValue; }
 
     T& value() { return m_value; }
-    const T& value() const { return m_value; }
+    [[nodiscard]] const T& value() const { return m_value; }
     T& operator*() { return m_value; }
     const T& operator*() const { return m_value; }
 
     E& error() { return m_error; }
-    const E& error() const { return m_error; }
+    [[nodiscard]] const E& error() const { return m_error; }
 
 private:
     T m_value{};
@@ -121,14 +121,14 @@ class Result<void, E> {
 public:
     Result() : m_hasValue(true) {}
 
-    Result(const unexpected<E>& err) : m_error(err.error()), m_hasValue(false) {}
-    Result(unexpected<E>&& err) : m_error(std::move(err.m_error)), m_hasValue(false) {}
+    Result(const unexpected<E>& err) : m_error(err.error()) {}
+    Result(unexpected<E>&& err) : m_error(std::move(err.m_error)) {}
 
-    bool has_value() const { return m_hasValue; }
+    [[nodiscard]] bool has_value() const { return m_hasValue; }
     explicit operator bool() const { return m_hasValue; }
 
     E& error() { return m_error; }
-    const E& error() const { return m_error; }
+    [[nodiscard]] const E& error() const { return m_error; }
 
 private:
     E m_error{};

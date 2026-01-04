@@ -42,38 +42,45 @@ public:
      * Set shader uniforms (convenience methods)
      */
     void setInt(StringView name, i32 value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setInt(name, value);
+}
     }
 
     void setFloat(StringView name, f32 value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setFloat(name, value);
+}
     }
 
     void setVec2(StringView name, const glm::vec2& value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setVec2(name, value);
+}
     }
 
     void setVec3(StringView name, const glm::vec3& value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setVec3(name, value);
+}
     }
 
     void setVec4(StringView name, const glm::vec4& value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setVec4(name, value);
+}
     }
 
     void setMat3(StringView name, const glm::mat3& value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setMat3(name, value);
+}
     }
 
     void setMat4(StringView name, const glm::mat4& value) const {
-        if (m_shader)
+        if (m_shader) {
             m_shader->setMat4(name, value);
+}
     }
 
     /**

@@ -32,14 +32,14 @@ struct AABB {
     glm::vec3 min{0.0f};
     glm::vec3 max{0.0f};
 
-    glm::vec3 getCenter() const { return (min + max) * 0.5f; }
-    glm::vec3 getSize() const { return max - min; }
-    glm::vec3 getExtents() const { return getSize() * 0.5f; }
+    [[nodiscard]] glm::vec3 getCenter() const { return (min + max) * 0.5f; }
+    [[nodiscard]] glm::vec3 getSize() const { return max - min; }
+    [[nodiscard]] glm::vec3 getExtents() const { return getSize() * 0.5f; }
 
     void expand(const glm::vec3& point);
     void expand(const AABB& other);
-    bool contains(const glm::vec3& point) const;
-    bool intersects(const AABB& other) const;
+    [[nodiscard]] bool contains(const glm::vec3& point) const;
+    [[nodiscard]] bool intersects(const AABB& other) const;
 };
 
 /**
@@ -79,16 +79,16 @@ public:
     void addSubmesh(const Submesh& submesh);
 
     /// Get all submeshes
-    const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
+    [[nodiscard]] const std::vector<Submesh>& getSubmeshes() const { return m_submeshes; }
 
     /// Get the bounding box encompassing all geometry
-    const AABB& getBoundingBox() const { return m_boundingBox; }
+    [[nodiscard]] const AABB& getBoundingBox() const { return m_boundingBox; }
 
     /// Get vertex count
-    u32 getVertexCount() const { return m_vertexCount; }
+    [[nodiscard]] u32 getVertexCount() const { return m_vertexCount; }
 
     /// Get index count
-    u32 getIndexCount() const { return m_indexCount; }
+    [[nodiscard]] u32 getIndexCount() const { return m_indexCount; }
 
     /// Bind for rendering
     void bind() const;

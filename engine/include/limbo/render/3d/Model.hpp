@@ -19,7 +19,7 @@ struct ModelNode {
     std::vector<Unique<ModelNode>> children;
 
     /// Get world transform (requires parent transform)
-    glm::mat4 getWorldTransform(const glm::mat4& parentTransform) const {
+    [[nodiscard]] glm::mat4 getWorldTransform(const glm::mat4& parentTransform) const {
         return parentTransform * localTransform;
     }
 };
@@ -46,22 +46,22 @@ public:
     bool load(const String& filepath);
 
     /// Get all meshes in the model
-    const std::vector<Shared<Mesh>>& getMeshes() const { return m_meshes; }
+    [[nodiscard]] const std::vector<Shared<Mesh>>& getMeshes() const { return m_meshes; }
 
     /// Get all materials in the model
-    const std::vector<Shared<Material>>& getMaterials() const { return m_materials; }
+    [[nodiscard]] const std::vector<Shared<Material>>& getMaterials() const { return m_materials; }
 
     /// Get the root node of the hierarchy
-    const ModelNode* getRootNode() const { return m_rootNode.get(); }
+    [[nodiscard]] const ModelNode* getRootNode() const { return m_rootNode.get(); }
 
     /// Get the bounding box encompassing the entire model
-    const AABB& getBoundingBox() const { return m_boundingBox; }
+    [[nodiscard]] const AABB& getBoundingBox() const { return m_boundingBox; }
 
     /// Get the file path this model was loaded from
-    const String& getFilePath() const { return m_filepath; }
+    [[nodiscard]] const String& getFilePath() const { return m_filepath; }
 
     /// Check if model is valid (loaded successfully)
-    bool isValid() const { return !m_meshes.empty(); }
+    [[nodiscard]] bool isValid() const { return !m_meshes.empty(); }
 
     // Supported file formats
     static std::vector<String> getSupportedExtensions();

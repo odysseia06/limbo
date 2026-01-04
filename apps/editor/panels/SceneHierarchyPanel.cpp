@@ -12,8 +12,9 @@ void SceneHierarchyPanel::init() {}
 void SceneHierarchyPanel::shutdown() {}
 
 void SceneHierarchyPanel::render() {
-    if (!m_open)
+    if (!m_open) {
         return;
+}
 
     ImGui::Begin("Hierarchy", &m_open);
 
@@ -21,7 +22,7 @@ void SceneHierarchyPanel::render() {
 
     // Draw all entities
     world.each<NameComponent>([this](World::EntityId id, NameComponent&) {
-        Entity entity(id, &m_editor.getWorld());
+        Entity const entity(id, &m_editor.getWorld());
         drawEntityNode(entity);
     });
 
@@ -51,8 +52,9 @@ void SceneHierarchyPanel::render() {
 }
 
 void SceneHierarchyPanel::drawEntityNode(Entity entity) {
-    if (!entity.isValid())
+    if (!entity.isValid()) {
         return;
+}
 
     auto& nameComp = entity.getComponent<NameComponent>();
 
@@ -63,7 +65,7 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
-    bool opened = ImGui::TreeNodeEx(
+    bool const opened = ImGui::TreeNodeEx(
         reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<u32>(entity.id()))), flags, "%s",
         nameComp.name.c_str());
 

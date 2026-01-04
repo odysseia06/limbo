@@ -20,8 +20,9 @@ void AssetBrowserPanel::init() {
 void AssetBrowserPanel::shutdown() {}
 
 void AssetBrowserPanel::render() {
-    if (!m_open)
+    if (!m_open) {
         return;
+}
 
     ImGui::Begin("Asset Browser", &m_open);
 
@@ -52,10 +53,11 @@ void AssetBrowserPanel::drawDirectoryTree(const std::filesystem::path& path) {
 }
 
 void AssetBrowserPanel::drawAssetGrid() {
-    float panelWidth = ImGui::GetContentRegionAvail().x;
+    float const panelWidth = ImGui::GetContentRegionAvail().x;
     int columnCount = static_cast<int>(panelWidth / (m_thumbnailSize + m_padding));
-    if (columnCount < 1)
+    if (columnCount < 1) {
         columnCount = 1;
+}
 
     ImGui::Columns(columnCount, nullptr, false);
 
@@ -67,7 +69,7 @@ void AssetBrowserPanel::drawAssetGrid() {
 
     for (auto& entry : std::filesystem::directory_iterator(m_currentDirectory)) {
         const auto& path = entry.path();
-        std::string filename = path.filename().string();
+        std::string const filename = path.filename().string();
 
         ImGui::PushID(filename.c_str());
 
@@ -79,7 +81,7 @@ void AssetBrowserPanel::drawAssetGrid() {
             color = ImVec4(0.9f, 0.8f, 0.3f, 1.0f);
             icon = "[D]";
         } else {
-            std::string ext = path.extension().string();
+            std::string const ext = path.extension().string();
             if (ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
                 color = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);
                 icon = "[I]";
@@ -116,7 +118,7 @@ void AssetBrowserPanel::drawAssetGrid() {
 
         // Drag source for drag-drop
         if (ImGui::BeginDragDropSource()) {
-            std::string pathStr = path.string();
+            std::string const pathStr = path.string();
             ImGui::SetDragDropPayload("ASSET_PATH", pathStr.c_str(), pathStr.size() + 1);
             ImGui::Text("%s", filename.c_str());
             ImGui::EndDragDropSource();

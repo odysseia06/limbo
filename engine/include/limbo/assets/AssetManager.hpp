@@ -157,8 +157,8 @@ Shared<T> AssetManager::load(const std::filesystem::path& path) {
     static_assert(std::is_base_of_v<Asset, T>, "T must derive from Asset");
 
     // Generate ID from path
-    String pathStr = path.generic_string();
-    AssetId id(pathStr);
+    String const pathStr = path.generic_string();
+    AssetId const id(pathStr);
 
     // Check if already loaded
     auto it = m_assets.find(id);
@@ -205,7 +205,7 @@ Shared<T> AssetManager::get(AssetId id) {
 
 template <typename T>
 Shared<T> AssetManager::get(const std::filesystem::path& path) {
-    String pathStr = path.generic_string();
+    String const pathStr = path.generic_string();
     AssetId id(pathStr);
     return get<T>(id);
 }
@@ -217,7 +217,7 @@ void AssetManager::unloadAll() {
         return;
     }
 
-    for (AssetId id : typeIt->second) {
+    for (AssetId const id : typeIt->second) {
         auto it = m_assets.find(id);
         if (it != m_assets.end()) {
             it->second->unload();

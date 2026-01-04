@@ -50,7 +50,7 @@ public:
      * Set the texture for this sprite sheet
      */
     void setTexture(Texture2D* texture);
-    Texture2D* getTexture() const { return m_texture; }
+    [[nodiscard]] Texture2D* getTexture() const { return m_texture; }
 
     /**
      * Create frames from a grid layout
@@ -80,22 +80,22 @@ public:
     /**
      * Get frame by index
      */
-    const SpriteFrame& getFrame(usize index) const;
+    [[nodiscard]] const SpriteFrame& getFrame(usize index) const;
 
     /**
      * Get frame by name
      */
-    const SpriteFrame* getFrameByName(const String& name) const;
+    [[nodiscard]] const SpriteFrame* getFrameByName(const String& name) const;
 
     /**
      * Get frame index by name
      */
-    i32 getFrameIndex(const String& name) const;
+    [[nodiscard]] i32 getFrameIndex(const String& name) const;
 
     /**
      * Get total frame count
      */
-    usize getFrameCount() const { return m_frames.size(); }
+    [[nodiscard]] usize getFrameCount() const { return m_frames.size(); }
 
     /**
      * Clear all frames
@@ -105,7 +105,7 @@ public:
     /**
      * Check if sprite sheet is valid (has texture and frames)
      */
-    bool isValid() const { return m_texture != nullptr && !m_frames.empty(); }
+    [[nodiscard]] bool isValid() const { return m_texture != nullptr && !m_frames.empty(); }
 
 private:
     Texture2D* m_texture = nullptr;

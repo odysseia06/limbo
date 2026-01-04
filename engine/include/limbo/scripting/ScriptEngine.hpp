@@ -43,13 +43,13 @@ public:
     /**
      * Check if initialized
      */
-    bool isInitialized() const { return m_initialized; }
+    [[nodiscard]] bool isInitialized() const { return m_initialized; }
 
     /**
      * Get the Lua state
      */
     sol::state& getLuaState() { return m_lua; }
-    const sol::state& getLuaState() const { return m_lua; }
+    [[nodiscard]] const sol::state& getLuaState() const { return m_lua; }
 
     /**
      * Load and execute a script file
@@ -68,7 +68,7 @@ public:
      */
     template <typename... Args>
     sol::protected_function_result callFunction(const String& name, Args&&... args) {
-        sol::protected_function func = m_lua[name];
+        sol::protected_function const func = m_lua[name];
         if (!func.valid()) {
             return sol::protected_function_result();
         }
@@ -78,7 +78,7 @@ public:
     /**
      * Check if a global function exists
      */
-    bool hasFunction(const String& name) const;
+    [[nodiscard]] bool hasFunction(const String& name) const;
 
     /**
      * Register engine bindings (called during init)
@@ -93,7 +93,7 @@ public:
     /**
      * Get last error message
      */
-    const String& getLastError() const { return m_lastError; }
+    [[nodiscard]] const String& getLastError() const { return m_lastError; }
 
 private:
     void bindMathTypes();

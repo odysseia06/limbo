@@ -47,29 +47,33 @@ u32 Tilemap::addLayer(const String& name, i32 zOrder) {
 }
 
 TilemapLayer* Tilemap::getLayer(u32 index) {
-    if (index >= m_layers.size())
+    if (index >= m_layers.size()) {
         return nullptr;
+}
     return &m_layers[index];
 }
 
 const TilemapLayer* Tilemap::getLayer(u32 index) const {
-    if (index >= m_layers.size())
+    if (index >= m_layers.size()) {
         return nullptr;
+}
     return &m_layers[index];
 }
 
 TilemapLayer* Tilemap::getLayerByName(const String& name) {
     for (auto& layer : m_layers) {
-        if (layer.name == name)
+        if (layer.name == name) {
             return &layer;
+}
     }
     return nullptr;
 }
 
 const TilemapLayer* Tilemap::getLayerByName(const String& name) const {
     for (const auto& layer : m_layers) {
-        if (layer.name == name)
+        if (layer.name == name) {
             return &layer;
+}
     }
     return nullptr;
 }
@@ -89,11 +93,12 @@ void Tilemap::setTile(u32 layer, u32 x, u32 y, u32 tileId) {
 }
 
 void Tilemap::fillRect(u32 layer, u32 x, u32 y, u32 width, u32 height, u32 tileId) {
-    if (layer >= m_layers.size())
+    if (layer >= m_layers.size()) {
         return;
+}
 
-    u32 endX = std::min(x + width, m_width);
-    u32 endY = std::min(y + height, m_height);
+    u32 const endX = std::min(x + width, m_width);
+    u32 const endY = std::min(y + height, m_height);
 
     for (u32 ty = y; ty < endY; ++ty) {
         for (u32 tx = x; tx < endX; ++tx) {
@@ -103,8 +108,9 @@ void Tilemap::fillRect(u32 layer, u32 x, u32 y, u32 width, u32 height, u32 tileI
 }
 
 void Tilemap::fillLayer(u32 layer, u32 tileId) {
-    if (layer >= m_layers.size())
+    if (layer >= m_layers.size()) {
         return;
+}
     std::fill(m_layers[layer].tiles.begin(), m_layers[layer].tiles.end(), tileId);
 }
 
@@ -119,8 +125,8 @@ glm::vec2 Tilemap::tileToWorld(i32 x, i32 y) const {
 }
 
 glm::vec4 Tilemap::getTileBounds(i32 x, i32 y) const {
-    f32 minX = static_cast<f32>(x) * m_tileWidth;
-    f32 minY = static_cast<f32>(y) * m_tileHeight;
+    f32 const minX = static_cast<f32>(x) * m_tileWidth;
+    f32 const minY = static_cast<f32>(y) * m_tileHeight;
     return glm::vec4(minX, minY, minX + m_tileWidth, minY + m_tileHeight);
 }
 
@@ -135,9 +141,10 @@ bool Tilemap::hasTileFlags(i32 x, i32 y, TileFlags flags) const {
 
     // Check all layers for tiles with the specified flags
     for (const auto& layer : m_layers) {
-        u32 tileId = layer.tiles[tileIndex(static_cast<u32>(x), static_cast<u32>(y))];
-        if (tileId == TILE_EMPTY)
+        u32 const tileId = layer.tiles[tileIndex(static_cast<u32>(x), static_cast<u32>(y))];
+        if (tileId == TILE_EMPTY) {
             continue;
+}
 
         const TileDefinition* tile = m_tileset->getTile(tileId);
         if (tile && hasFlag(tile->flags, flags)) {
@@ -149,13 +156,13 @@ bool Tilemap::hasTileFlags(i32 x, i32 y, TileFlags flags) const {
 }
 
 bool Tilemap::isSolidAt(const glm::vec2& worldPos) const {
-    glm::ivec2 tilePos = worldToTile(worldPos);
+    glm::ivec2 const tilePos = worldToTile(worldPos);
     return hasTileFlags(tilePos.x, tilePos.y, TileFlags::Solid);
 }
 
 bool Tilemap::checkCollision(const glm::vec2& min, const glm::vec2& max) const {
-    glm::ivec2 tileMin = worldToTile(min);
-    glm::ivec2 tileMax = worldToTile(max);
+    glm::ivec2 const tileMin = worldToTile(min);
+    glm::ivec2 const tileMax = worldToTile(max);
 
     for (i32 y = tileMin.y; y <= tileMax.y; ++y) {
         for (i32 x = tileMin.x; x <= tileMax.x; ++x) {
@@ -172,8 +179,8 @@ std::vector<glm::ivec2> Tilemap::getSolidTilesInRect(const glm::vec2& min,
                                                      const glm::vec2& max) const {
     std::vector<glm::ivec2> result;
 
-    glm::ivec2 tileMin = worldToTile(min);
-    glm::ivec2 tileMax = worldToTile(max);
+    glm::ivec2 const tileMin = worldToTile(min);
+    glm::ivec2 const tileMax = worldToTile(max);
 
     for (i32 y = tileMin.y; y <= tileMax.y; ++y) {
         for (i32 x = tileMin.x; x <= tileMax.x; ++x) {

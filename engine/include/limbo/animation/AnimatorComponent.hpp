@@ -63,7 +63,7 @@ struct LIMBO_API AnimatorComponent {
     /**
      * Check if an animation exists
      */
-    bool hasClip(const String& name) const { return clips.find(name) != clips.end(); }
+    bool hasClip(const String& name) const { return clips.contains(name); }
 };
 
 }  // namespace limbo

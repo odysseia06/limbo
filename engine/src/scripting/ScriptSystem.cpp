@@ -39,7 +39,7 @@ void ScriptSystem::update(World& world, f32 deltaTime) {
                 if (script.onStart.valid()) {
                     auto result = script.onStart();
                     if (!result.valid()) {
-                        sol::error err = result;
+                        sol::error const err = result;
                         spdlog::error("Script onStart error: {}", err.what());
                     }
                 }
@@ -58,7 +58,7 @@ void ScriptSystem::onDetach(World& world) {
         if (script.initialized && script.onDestroy.valid()) {
             auto result = script.onDestroy();
             if (!result.valid()) {
-                sol::error err = result;
+                sol::error const err = result;
                 spdlog::error("Script onDestroy error: {}", err.what());
             }
         }
@@ -88,7 +88,7 @@ void ScriptSystem::initializeScript(World& world, World::EntityId entityId) {
         script.environment = sol::environment(lua, sol::create, lua.globals());
 
         // Add 'self' reference to the entity
-        Entity entity(entityId, &world);
+        Entity const entity(entityId, &world);
         script.environment["self"] = entity;
 
         // Load and execute the script in the environment
@@ -96,7 +96,7 @@ void ScriptSystem::initializeScript(World& world, World::EntityId entityId) {
                                            sol::script_pass_on_error);
 
         if (!result.valid()) {
-            sol::error err = result;
+            sol::error const err = result;
             spdlog::error("Script load error in {}: {}", script.scriptPath.string(), err.what());
             script.enabled = false;
             return;
@@ -126,7 +126,7 @@ void ScriptSystem::updateScript(World& world, World::EntityId entityId, f32 delt
     try {
         auto result = script.onUpdate(deltaTime);
         if (!result.valid()) {
-            sol::error err = result;
+            sol::error const err = result;
             spdlog::error("Script onUpdate error: {}", err.what());
         }
     } catch (const sol::error& e) {

@@ -13,8 +13,9 @@ void InspectorPanel::init() {}
 void InspectorPanel::shutdown() {}
 
 void InspectorPanel::render() {
-    if (!m_open)
+    if (!m_open) {
         return;
+}
 
     ImGui::Begin("Inspector", &m_open);
 
@@ -24,7 +25,7 @@ void InspectorPanel::render() {
         ImGui::Separator();
 
         // Add component button
-        float buttonWidth = ImGui::GetContentRegionAvail().x;
+        float const buttonWidth = ImGui::GetContentRegionAvail().x;
         if (ImGui::Button("Add Component", ImVec2(buttonWidth, 0))) {
             ImGui::OpenPopup("AddComponentPopup");
         }
@@ -47,7 +48,7 @@ void InspectorPanel::drawComponents() {
     // Transform component
     if (m_selectedEntity.hasComponent<TransformComponent>()) {
         ImGui::Separator();
-        bool open = ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open = ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen);
 
         // Remove button
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
@@ -62,7 +63,7 @@ void InspectorPanel::drawComponents() {
     // Sprite Renderer component
     if (m_selectedEntity.hasComponent<SpriteRendererComponent>()) {
         ImGui::Separator();
-        bool open = ImGui::CollapsingHeader("Sprite Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open = ImGui::CollapsingHeader("Sprite Renderer", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##SpriteRenderer")) {
@@ -76,7 +77,7 @@ void InspectorPanel::drawComponents() {
     // Rigidbody2D component
     if (m_selectedEntity.hasComponent<Rigidbody2DComponent>()) {
         ImGui::Separator();
-        bool open = ImGui::CollapsingHeader("Rigidbody 2D", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open = ImGui::CollapsingHeader("Rigidbody 2D", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##Rigidbody2D")) {
@@ -90,7 +91,7 @@ void InspectorPanel::drawComponents() {
     // BoxCollider2D component
     if (m_selectedEntity.hasComponent<BoxCollider2DComponent>()) {
         ImGui::Separator();
-        bool open = ImGui::CollapsingHeader("Box Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open = ImGui::CollapsingHeader("Box Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##BoxCollider2D")) {
@@ -104,7 +105,7 @@ void InspectorPanel::drawComponents() {
     // CircleCollider2D component
     if (m_selectedEntity.hasComponent<CircleCollider2DComponent>()) {
         ImGui::Separator();
-        bool open = ImGui::CollapsingHeader("Circle Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
+        bool const open = ImGui::CollapsingHeader("Circle Collider 2D", ImGuiTreeNodeFlags_DefaultOpen);
 
         ImGui::SameLine(ImGui::GetWindowWidth() - 30);
         if (ImGui::SmallButton("X##CircleCollider2D")) {
@@ -196,7 +197,7 @@ void InspectorPanel::drawSpriteRendererComponent(SpriteRendererComponent& compon
 
 void InspectorPanel::drawRigidbody2DComponent(Rigidbody2DComponent& component) {
     // Body type
-    const char* bodyTypes[] = {"Static", "Kinematic", "Dynamic"};
+    const char const* bodyTypes[] = {"Static", "Kinematic", "Dynamic"};
     int currentType = static_cast<int>(component.type);
     ImGui::Text("Body Type");
     if (ImGui::Combo("##BodyType", &currentType, bodyTypes, 3)) {

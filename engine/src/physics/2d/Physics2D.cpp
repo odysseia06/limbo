@@ -14,7 +14,7 @@ void Physics2D::init(const glm::vec2& gravity) {
         return;
     }
 
-    b2Vec2 b2Gravity(gravity.x, gravity.y);
+    b2Vec2 const b2Gravity(gravity.x, gravity.y);
     m_world = new b2World(b2Gravity);
 
     spdlog::info("Physics2D initialized (gravity: {}, {})", gravity.x, gravity.y);
@@ -44,7 +44,7 @@ void Physics2D::setGravity(const glm::vec2& gravity) {
 
 glm::vec2 Physics2D::getGravity() const {
     if (m_world) {
-        b2Vec2 g = m_world->GetGravity();
+        b2Vec2 const g = m_world->GetGravity();
         return {g.x, g.y};
     }
     return {0.0f, 0.0f};

@@ -5,7 +5,7 @@
 namespace limbo {
 
 Entity World::createEntity() {
-    EntityId id = m_registry.create();
+    EntityId const id = m_registry.create();
     return Entity(id, this);
 }
 

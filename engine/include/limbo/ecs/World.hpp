@@ -21,7 +21,7 @@ class Entity;
 class LIMBO_API World {
 public:
     using EntityId = entt::entity;
-    static constexpr EntityId NullEntity = entt::null;
+    static constexpr EntityId kNullEntity = entt::null;
 
     World() = default;
     ~World() = default;

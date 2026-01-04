@@ -66,12 +66,12 @@ void ParticlePool::setMaxParticles(u32 max) {
 
 Particle& ParticlePool::getNextParticle() {
     // Simple ring buffer approach
-    u32 startIndex = m_poolIndex;
+    u32 const startIndex = m_poolIndex;
 
     // First, try to find an inactive particle
     do {
         if (!m_particles[m_poolIndex].active) {
-            u32 index = m_poolIndex;
+            u32 const index = m_poolIndex;
             m_poolIndex = (m_poolIndex + 1) % m_maxParticles;
             return m_particles[index];
         }
@@ -79,7 +79,7 @@ Particle& ParticlePool::getNextParticle() {
     } while (m_poolIndex != startIndex);
 
     // All particles active, reuse the oldest (current index)
-    u32 index = m_poolIndex;
+    u32 const index = m_poolIndex;
     m_poolIndex = (m_poolIndex + 1) % m_maxParticles;
     return m_particles[index];
 }
@@ -122,8 +122,9 @@ f32 ParticlePool::randomFloat(f32 min, f32 max) {
 }
 
 f32 ParticlePool::randomVariance(f32 base, f32 variance) {
-    if (variance <= 0.0f)
+    if (variance <= 0.0f) {
         return base;
+}
     return base + randomFloat(-variance, variance);
 }
 
@@ -150,7 +151,7 @@ void ParticleEmitter::update(f32 deltaTime) {
 
     // Accumulate time and emit particles
     m_emitAccumulator += deltaTime;
-    f32 emitInterval = 1.0f / props.emissionRate;
+    f32 const emitInterval = 1.0f / props.emissionRate;
 
     while (m_emitAccumulator >= emitInterval) {
         m_emitAccumulator -= emitInterval;

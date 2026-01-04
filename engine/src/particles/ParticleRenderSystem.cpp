@@ -32,7 +32,7 @@ void ParticleRenderSystem::update(World& world, f32 deltaTime) {
             // Emit particles based on rate
             if (props.emissionRate > 0.0f) {
                 emitter.emitAccumulator += deltaTime;
-                f32 emitInterval = 1.0f / props.emissionRate;
+                f32 const emitInterval = 1.0f / props.emissionRate;
 
                 while (emitter.emitAccumulator >= emitInterval) {
                     emitter.emitAccumulator -= emitInterval;
@@ -70,13 +70,13 @@ void ParticleRenderSystem::render() {
         }
 
         // Calculate life progress (0 = just born, 1 = about to die)
-        f32 lifeProgress = 1.0f - (particle.lifeRemaining / particle.lifetime);
+        f32 const lifeProgress = 1.0f - (particle.lifeRemaining / particle.lifetime);
 
         // Interpolate color
-        glm::vec4 color = glm::mix(particle.colorStart, particle.colorEnd, lifeProgress);
+        glm::vec4 const color = glm::mix(particle.colorStart, particle.colorEnd, lifeProgress);
 
         // Interpolate size
-        f32 size = glm::mix(particle.sizeStart, particle.sizeEnd, lifeProgress);
+        f32 const size = glm::mix(particle.sizeStart, particle.sizeEnd, lifeProgress);
 
         // Render the particle
         Renderer2D::drawRotatedQuad(particle.position, glm::vec2(size), particle.rotation, color);

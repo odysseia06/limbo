@@ -28,8 +28,8 @@ public:
      * Get audio format
      */
     [[nodiscard]] const AudioFormat& getFormat() const {
-        static AudioFormat defaultFormat;
-        return m_clip ? m_clip->getFormat() : defaultFormat;
+        static AudioFormat const s_defaultFormat;
+        return m_clip ? m_clip->getFormat() : s_defaultFormat;
     }
 
     /**

@@ -161,13 +161,13 @@ public:
     void destroy() {
         if (m_world) {
             m_world->destroyEntity(m_id);
-            m_id = World::NullEntity;
+            m_id = World::kNullEntity;
             m_world = nullptr;
         }
     }
 
 private:
-    World::EntityId m_id = World::NullEntity;
+    World::EntityId m_id = World::kNullEntity;
     World* m_world = nullptr;
 };
 

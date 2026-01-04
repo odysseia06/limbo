@@ -34,7 +34,7 @@ Result<void, String> Shader::loadFromSource(StringView vertexSource, StringView 
     if (!vertexResult) {
         return unexpected<String>("Vertex shader: " + vertexResult.error());
     }
-    u32 vertexShader = vertexResult.value();
+    u32 const vertexShader = vertexResult.value();
 
     // Compile fragment shader
     auto fragmentResult = compileShader(GL_FRAGMENT_SHADER, fragmentSource);
@@ -42,10 +42,10 @@ Result<void, String> Shader::loadFromSource(StringView vertexSource, StringView 
         glDeleteShader(vertexShader);
         return unexpected<String>("Fragment shader: " + fragmentResult.error());
     }
-    u32 fragmentShader = fragmentResult.value();
+    u32 const fragmentShader = fragmentResult.value();
 
     // Create and link program
-    u32 program = glCreateProgram();
+    u32 const program = glCreateProgram();
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
     glLinkProgram(program);
@@ -105,14 +105,14 @@ void Shader::unbind() {
 }
 
 i32 Shader::getUniformLocation(StringView name) const {
-    String nameStr(name);
+    String const nameStr(name);
 
     auto it = m_uniformLocationCache.find(nameStr);
     if (it != m_uniformLocationCache.end()) {
         return it->second;
     }
 
-    i32 location = glGetUniformLocation(m_programId, nameStr.c_str());
+    i32 const location = glGetUniformLocation(m_programId, nameStr.c_str());
     if (location == -1) {
         spdlog::warn("Uniform '{}' not found in shader", name);
     }

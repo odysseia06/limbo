@@ -100,7 +100,7 @@ struct LightingEnvironment {
     std::vector<SpotLight> spotLights;
 
     void clear();
-    u32 getTotalLightCount() const;
+    [[nodiscard]] u32 getTotalLightCount() const;
 };
 
 /**
@@ -119,7 +119,7 @@ public:
     void setAmbientLight(const glm::vec3& color, float intensity = 1.0f);
 
     /// Get the current lighting environment
-    const LightingEnvironment& getLightingEnvironment() const { return m_environment; }
+    [[nodiscard]] const LightingEnvironment& getLightingEnvironment() const { return m_environment; }
 
     /// Upload lighting data to shader uniforms
     void uploadToShader(Shader& shader) const;

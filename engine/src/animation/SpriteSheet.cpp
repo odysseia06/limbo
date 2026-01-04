@@ -33,13 +33,13 @@ void SpriteSheet::createFromGrid(u32 cellWidth, u32 cellHeight, u32 frameCount, 
     m_frames.reserve(frameCount);
 
     for (u32 i = 0; i < frameCount; ++i) {
-        u32 cellIndex = startIndex + i;
+        u32 const cellIndex = startIndex + i;
         if (cellIndex >= totalCells) {
             break;
         }
 
-        u32 col = cellIndex % cols;
-        u32 row = cellIndex / cols;
+        u32 const col = cellIndex % cols;
+        u32 const row = cellIndex / cols;
 
         SpriteFrame frame;
         frame.uvMin.x = static_cast<f32>(col * cellWidth) / static_cast<f32>(texWidth);
@@ -83,10 +83,10 @@ void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const glm::vec2&
 }
 
 const SpriteFrame& SpriteSheet::getFrame(usize index) const {
-    static SpriteFrame defaultFrame;
+    static SpriteFrame const s_defaultFrame;
     if (index >= m_frames.size()) {
         spdlog::warn("SpriteSheet::getFrame: Index {} out of bounds", index);
-        return defaultFrame;
+        return s_defaultFrame;
     }
     return m_frames[index];
 }

@@ -54,7 +54,7 @@ void SpriteRenderSystem::update(World& world, f32 /*deltaTime*/) {
         const auto& sprite = *renderable.sprite;
 
         // Build transform matrix
-        glm::mat4 transformMatrix = transform.getMatrix();
+        glm::mat4 const transformMatrix = transform.getMatrix();
 
         // Draw the quad with the sprite's color
         // TODO: Support textured sprites via AssetId lookup

@@ -42,13 +42,13 @@ public:
      * Set animation name
      */
     void setName(const String& name) { m_name = name; }
-    const String& getName() const { return m_name; }
+    [[nodiscard]] const String& getName() const { return m_name; }
 
     /**
      * Set the sprite sheet this animation uses
      */
     void setSpriteSheet(SpriteSheet* sheet) { m_spriteSheet = sheet; }
-    SpriteSheet* getSpriteSheet() const { return m_spriteSheet; }
+    [[nodiscard]] SpriteSheet* getSpriteSheet() const { return m_spriteSheet; }
 
     /**
      * Add a frame to the animation
@@ -63,29 +63,29 @@ public:
     /**
      * Get frame at index
      */
-    const AnimationFrame& getFrame(usize index) const;
+    [[nodiscard]] const AnimationFrame& getFrame(usize index) const;
 
     /**
      * Get frame count
      */
-    usize getFrameCount() const { return m_frames.size(); }
+    [[nodiscard]] usize getFrameCount() const { return m_frames.size(); }
 
     /**
      * Get total animation duration
      */
-    f32 getTotalDuration() const;
+    [[nodiscard]] f32 getTotalDuration() const;
 
     /**
      * Set playback mode
      */
     void setPlayMode(AnimationPlayMode mode) { m_playMode = mode; }
-    AnimationPlayMode getPlayMode() const { return m_playMode; }
+    [[nodiscard]] AnimationPlayMode getPlayMode() const { return m_playMode; }
 
     /**
      * Set playback speed multiplier
      */
     void setSpeed(f32 speed) { m_speed = speed; }
-    f32 getSpeed() const { return m_speed; }
+    [[nodiscard]] f32 getSpeed() const { return m_speed; }
 
     /**
      * Clear all frames
@@ -95,7 +95,7 @@ public:
     /**
      * Check if animation is valid
      */
-    bool isValid() const { return m_spriteSheet != nullptr && !m_frames.empty(); }
+    [[nodiscard]] bool isValid() const { return m_spriteSheet != nullptr && !m_frames.empty(); }
 
 private:
     String m_name;
@@ -117,7 +117,7 @@ public:
      * Set the animation clip to play
      */
     void setClip(AnimationClip* clip);
-    AnimationClip* getClip() const { return m_clip; }
+    [[nodiscard]] AnimationClip* getClip() const { return m_clip; }
 
     /**
      * Update animation (call each frame)
@@ -148,27 +148,27 @@ public:
     /**
      * Check if playing
      */
-    bool isPlaying() const { return m_playing; }
+    [[nodiscard]] bool isPlaying() const { return m_playing; }
 
     /**
      * Check if animation has finished (for non-looping)
      */
-    bool isFinished() const { return m_finished; }
+    [[nodiscard]] bool isFinished() const { return m_finished; }
 
     /**
      * Get current frame index (into sprite sheet)
      */
-    u32 getCurrentFrameIndex() const;
+    [[nodiscard]] u32 getCurrentFrameIndex() const;
 
     /**
      * Get current sprite frame from the sprite sheet
      */
-    const SpriteFrame* getCurrentSpriteFrame() const;
+    [[nodiscard]] const SpriteFrame* getCurrentSpriteFrame() const;
 
     /**
      * Get normalized playback time (0-1)
      */
-    f32 getNormalizedTime() const;
+    [[nodiscard]] f32 getNormalizedTime() const;
 
     /**
      * Set normalized playback time (0-1)

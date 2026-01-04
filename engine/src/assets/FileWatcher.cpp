@@ -10,7 +10,7 @@ void FileWatcher::watch(const std::filesystem::path& path, Callback callback) {
         return;
     }
 
-    String key = path.generic_string();
+    String const key = path.generic_string();
 
     WatchedFile watched;
     watched.path = path;
@@ -23,7 +23,7 @@ void FileWatcher::watch(const std::filesystem::path& path, Callback callback) {
 }
 
 void FileWatcher::unwatch(const std::filesystem::path& path) {
-    String key = path.generic_string();
+    String const key = path.generic_string();
     auto it = m_watchedFiles.find(key);
     if (it != m_watchedFiles.end()) {
         m_watchedFiles.erase(it);
@@ -74,8 +74,8 @@ void FileWatcher::poll() {
 }
 
 bool FileWatcher::isWatching(const std::filesystem::path& path) const {
-    String key = path.generic_string();
-    return m_watchedFiles.find(key) != m_watchedFiles.end();
+    String const key = path.generic_string();
+    return m_watchedFiles.contains(key);
 }
 
 }  // namespace limbo

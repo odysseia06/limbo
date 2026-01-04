@@ -23,9 +23,9 @@ void AnimationClip::addFrameRange(u32 startFrame, u32 endFrame, f32 frameDuratio
 }
 
 const AnimationFrame& AnimationClip::getFrame(usize index) const {
-    static AnimationFrame defaultFrame;
+    static AnimationFrame const s_defaultFrame;
     if (index >= m_frames.size()) {
-        return defaultFrame;
+        return s_defaultFrame;
     }
     return m_frames[index];
 }
@@ -113,7 +113,7 @@ const SpriteFrame* AnimationState::getCurrentSpriteFrame() const {
     if (!m_clip || !m_clip->getSpriteSheet()) {
         return nullptr;
     }
-    u32 frameIndex = getCurrentFrameIndex();
+    u32 const frameIndex = getCurrentFrameIndex();
     return &m_clip->getSpriteSheet()->getFrame(frameIndex);
 }
 
@@ -121,7 +121,7 @@ f32 AnimationState::getNormalizedTime() const {
     if (!m_clip) {
         return 0.0f;
     }
-    f32 totalDuration = m_clip->getTotalDuration();
+    f32 const totalDuration = m_clip->getTotalDuration();
     if (totalDuration <= 0.0f) {
         return 0.0f;
     }
@@ -134,8 +134,8 @@ void AnimationState::setNormalizedTime(f32 t) {
     }
 
     t = glm::clamp(t, 0.0f, 1.0f);
-    f32 totalDuration = m_clip->getTotalDuration();
-    f32 targetTime = t * totalDuration;
+    f32 const totalDuration = m_clip->getTotalDuration();
+    f32 const targetTime = t * totalDuration;
 
     // Find the frame at this time
     f32 accumulatedTime = 0.0f;
@@ -161,8 +161,8 @@ void AnimationState::advanceFrame() {
         return;
     }
 
-    usize frameCount = m_clip->getFrameCount();
-    usize prevFrame = m_currentFrame;
+    usize const frameCount = m_clip->getFrameCount();
+    usize const prevFrame = m_currentFrame;
 
     switch (m_clip->getPlayMode()) {
     case AnimationPlayMode::Once:

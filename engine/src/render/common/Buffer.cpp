@@ -229,8 +229,8 @@ void VertexArray::addVertexBuffer(VertexBuffer&& buffer) {
         }
         case ShaderDataType::Mat3:
         case ShaderDataType::Mat4: {
-            u32 count = element.getComponentCount();
-            u32 colCount = (element.type == ShaderDataType::Mat3) ? 3 : 4;
+            u32 const count = element.getComponentCount();
+            u32 const colCount = (element.type == ShaderDataType::Mat3) ? 3 : 4;
             for (u32 i = 0; i < colCount; i++) {
                 glEnableVertexAttribArray(m_vertexBufferIndex);
                 glVertexAttribPointer(m_vertexBufferIndex, static_cast<GLint>(count / colCount),

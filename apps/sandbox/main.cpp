@@ -93,7 +93,7 @@ protected:
         }
 
         // Initialize camera
-        float aspect = static_cast<float>(getWindow().getWidth()) /
+        float const aspect = static_cast<float>(getWindow().getWidth()) /
                        static_cast<float>(getWindow().getHeight());
         m_camera = limbo::OrthographicCamera(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
@@ -135,7 +135,7 @@ protected:
     void setupAssets() {
         // Set asset root to the sandbox assets directory
         // Try to find the assets folder relative to the executable
-        std::filesystem::path exePath = std::filesystem::current_path();
+        std::filesystem::path const exePath = std::filesystem::current_path();
         std::filesystem::path assetsPath = exePath / "apps" / "sandbox" / "assets";
 
         // Fallback paths for different build configurations
@@ -235,10 +235,12 @@ protected:
             // Add velocity for movement
             float speedX = 0.2f + static_cast<float>(i % 7) * 0.05f;
             float speedY = 0.15f + static_cast<float>(i % 5) * 0.05f;
-            if (i % 2 == 0)
+            if (i % 2 == 0) {
                 speedX = -speedX;
-            if (i % 3 == 0)
+}
+            if (i % 3 == 0) {
                 speedY = -speedY;
+}
             entity.addComponent<VelocityComponent>(glm::vec3(speedX, speedY, 0.0f));
 
             // Add sprite renderer with different colors
@@ -295,8 +297,8 @@ protected:
         m_tilemap->setTileset(m_tileset.get());
 
         // Add layers
-        uint32_t groundLayer = m_tilemap->addLayer("ground", 0);
-        uint32_t decorLayer = m_tilemap->addLayer("decorations", 1);
+        uint32_t const groundLayer = m_tilemap->addLayer("ground", 0);
+        uint32_t const decorLayer = m_tilemap->addLayer("decorations", 1);
 
         // Fill ground layer with grass (tile 0)
         m_tilemap->fillLayer(groundLayer, 0);
@@ -430,7 +432,7 @@ protected:
         // Helper to set pixel color
         auto setPixel = [&](uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t b,
                             uint8_t a = 255) {
-            uint32_t idx = (y * texWidth + x) * 4;
+            uint32_t const idx = (y * texWidth + x) * 4;
             pixels[idx + 0] = r;
             pixels[idx + 1] = g;
             pixels[idx + 2] = b;
@@ -440,38 +442,38 @@ protected:
         // Fill each tile with a base color and pattern
         for (uint32_t tileY = 0; tileY < rows; ++tileY) {
             for (uint32_t tileX = 0; tileX < cols; ++tileX) {
-                uint32_t tileIdx = tileY * cols + tileX;
-                uint32_t baseX = tileX * tileSize;
-                uint32_t baseY = tileY * tileSize;
+                uint32_t const tileIdx = tileY * cols + tileX;
+                uint32_t const baseX = tileX * tileSize;
+                uint32_t const baseY = tileY * tileSize;
 
                 for (uint32_t y = 0; y < tileSize; ++y) {
                     for (uint32_t x = 0; x < tileSize; ++x) {
-                        uint32_t px = baseX + x;
-                        uint32_t py = baseY + y;
+                        uint32_t const px = baseX + x;
+                        uint32_t const py = baseY + y;
 
                         // Different tile types
                         switch (tileIdx) {
                         case 0:  // Grass - green with variation
                         {
-                            uint8_t g = static_cast<uint8_t>(100 + (x * y) % 50);
+                            uint8_t const g = static_cast<uint8_t>(100 + (x * y) % 50);
                             setPixel(px, py, 40, g, 30);
                             break;
                         }
                         case 1:  // Dirt - brown
                         {
-                            uint8_t r = static_cast<uint8_t>(120 + (x + y) % 30);
+                            uint8_t const r = static_cast<uint8_t>(120 + (x + y) % 30);
                             setPixel(px, py, r, 80, 40);
                             break;
                         }
                         case 2:  // Stone - gray
                         {
-                            uint8_t v = static_cast<uint8_t>(100 + (x * 3 + y * 7) % 40);
+                            uint8_t const v = static_cast<uint8_t>(100 + (x * 3 + y * 7) % 40);
                             setPixel(px, py, v, v, static_cast<uint8_t>(v + 10));
                             break;
                         }
                         case 3:  // Water - blue
                         {
-                            uint8_t b = static_cast<uint8_t>(150 + (x + y * 2) % 50);
+                            uint8_t const b = static_cast<uint8_t>(150 + (x + y * 2) % 50);
                             setPixel(px, py, 30, 80, b);
                             break;
                         }
@@ -585,7 +587,7 @@ protected:
         auto& world = getWorld();
 
         // Find script path
-        std::filesystem::path scriptPath = m_assetManager.getAssetRoot() / "scripts" / "player.lua";
+        std::filesystem::path const scriptPath = m_assetManager.getAssetRoot() / "scripts" / "player.lua";
 
         if (!std::filesystem::exists(scriptPath)) {
             spdlog::warn("Script not found: {}", scriptPath.string());
@@ -674,28 +676,28 @@ protected:
         std::vector<uint8_t> pixels(texWidth * texHeight * 4);
 
         for (uint32_t frame = 0; frame < cols * rows; ++frame) {
-            uint32_t frameCol = frame % cols;
-            uint32_t frameRow = frame / cols;
+            uint32_t const frameCol = frame % cols;
+            uint32_t const frameRow = frame / cols;
 
             // Calculate color based on frame (pulsing effect)
-            float t = static_cast<float>(frame) / static_cast<float>(cols * rows - 1);
-            float intensity = 0.3f + 0.7f * (0.5f + 0.5f * std::sin(t * 6.28318f));
+            float const t = static_cast<float>(frame) / static_cast<float>(cols * rows - 1);
+            float const intensity = 0.3f + 0.7f * (0.5f + 0.5f * std::sin(t * 6.28318f));
 
-            uint8_t r = static_cast<uint8_t>(255 * intensity);
-            uint8_t g = static_cast<uint8_t>(128 * (1.0f - t) + 255 * t * intensity);
-            uint8_t b = static_cast<uint8_t>(255 * (1.0f - intensity * 0.5f));
+            uint8_t const r = static_cast<uint8_t>(255 * intensity);
+            uint8_t const g = static_cast<uint8_t>(128 * (1.0f - t) + 255 * t * intensity);
+            uint8_t const b = static_cast<uint8_t>(255 * (1.0f - intensity * 0.5f));
 
             for (uint32_t y = 0; y < frameHeight; ++y) {
                 for (uint32_t x = 0; x < frameWidth; ++x) {
-                    uint32_t px = frameCol * frameWidth + x;
-                    uint32_t py = frameRow * frameHeight + y;
-                    uint32_t idx = (py * texWidth + px) * 4;
+                    uint32_t const px = frameCol * frameWidth + x;
+                    uint32_t const py = frameRow * frameHeight + y;
+                    uint32_t const idx = (py * texWidth + px) * 4;
 
                     // Create a simple circular shape
-                    float dx = static_cast<float>(x) - frameWidth * 0.5f;
-                    float dy = static_cast<float>(y) - frameHeight * 0.5f;
-                    float dist = std::sqrt(dx * dx + dy * dy);
-                    float radius = frameWidth * 0.4f;
+                    float const dx = static_cast<float>(x) - frameWidth * 0.5f;
+                    float const dy = static_cast<float>(y) - frameHeight * 0.5f;
+                    float const dist = std::sqrt(dx * dx + dy * dy);
+                    float const radius = frameWidth * 0.4f;
 
                     if (dist < radius) {
                         pixels[idx + 0] = r;
@@ -822,7 +824,7 @@ protected:
 
         // Update FPS label
         if (m_fpsLabel && deltaTime > 0.0f) {
-            int fps = static_cast<int>(1.0f / deltaTime);
+            int const fps = static_cast<int>(1.0f / deltaTime);
             m_fpsLabel->setText("FPS: " + std::to_string(fps));
         }
     }
@@ -830,7 +832,7 @@ protected:
     void updateCamera(limbo::f32 deltaTime) {
         // Camera movement with keyboard
         glm::vec3 camPos = m_camera.getPosition();
-        float camSpeed = 2.0f * deltaTime * m_zoom;
+        float const camSpeed = 2.0f * deltaTime * m_zoom;
 
         if (limbo::Input::isKeyDown(limbo::Key::W) || limbo::Input::isKeyDown(limbo::Key::Up)) {
             camPos.y += camSpeed;
@@ -849,7 +851,7 @@ protected:
 
         // Q/E to rotate
         float camRot = m_camera.getRotation();
-        float rotSpeed = 2.0f * deltaTime;
+        float const rotSpeed = 2.0f * deltaTime;
 
         if (limbo::Input::isKeyDown(limbo::Key::Q)) {
             camRot += rotSpeed;
@@ -861,12 +863,12 @@ protected:
         m_camera.setRotation(camRot);
 
         // Mouse scroll to zoom
-        float scroll = limbo::Input::getScrollY();
+        float const scroll = limbo::Input::getScrollY();
         if (scroll != 0.0f) {
             m_zoom -= scroll * 0.1f;
             m_zoom = glm::clamp(m_zoom, 0.1f, 10.0f);
 
-            float aspect = static_cast<float>(getWindow().getWidth()) /
+            float const aspect = static_cast<float>(getWindow().getWidth()) /
                            static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
         }
@@ -877,7 +879,7 @@ protected:
             m_camera.setRotation(0.0f);
             m_zoom = 1.0f;
 
-            float aspect = static_cast<float>(getWindow().getWidth()) /
+            float const aspect = static_cast<float>(getWindow().getWidth()) /
                            static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
@@ -935,7 +937,7 @@ protected:
         ImGui::InputText("Filename", saveFilename, sizeof(saveFilename));
 
         if (ImGui::Button("Save Scene")) {
-            std::filesystem::path savePath =
+            std::filesystem::path const savePath =
                 m_assetManager.getAssetRoot() / "scenes" / saveFilename;
 
             // Create scenes directory if needed
@@ -955,7 +957,7 @@ protected:
         ImGui::SameLine();
 
         if (ImGui::Button("Load Scene")) {
-            std::filesystem::path loadPath =
+            std::filesystem::path const loadPath =
                 m_assetManager.getAssetRoot() / "scenes" / saveFilename;
 
             limbo::SceneSerializer serializer(getWorld());

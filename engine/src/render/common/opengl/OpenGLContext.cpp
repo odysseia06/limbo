@@ -18,7 +18,7 @@ public:
         m_window = &window;
 
         // Load OpenGL functions via GLAD2
-        int version = gladLoadGL(glfwGetProcAddress);
+        int const version = gladLoadGL(glfwGetProcAddress);
         if (version == 0) {
             spdlog::critical("Failed to initialize GLAD");
             return false;
@@ -69,7 +69,7 @@ public:
 
     void drawIndexed(const VertexArray& vao, u32 indexCount) override {
         vao.bind();
-        u32 count = indexCount > 0 ? indexCount : vao.getIndexBuffer().getCount();
+        u32 const count = indexCount > 0 ? indexCount : vao.getIndexBuffer().getCount();
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(count), GL_UNSIGNED_INT, nullptr);
     }
 

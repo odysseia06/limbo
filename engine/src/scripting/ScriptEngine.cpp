@@ -49,7 +49,7 @@ bool ScriptEngine::loadScript(const std::filesystem::path& path) {
     try {
         auto result = m_lua.safe_script_file(path.string());
         if (!result.valid()) {
-            sol::error err = result;
+            sol::error const err = result;
             m_lastError = err.what();
             spdlog::error("Lua script error in {}: {}", path.string(), m_lastError);
             return false;
@@ -72,7 +72,7 @@ bool ScriptEngine::executeString(const String& code) {
     try {
         auto result = m_lua.safe_script(code);
         if (!result.valid()) {
-            sol::error err = result;
+            sol::error const err = result;
             m_lastError = err.what();
             spdlog::error("Lua error: {}", m_lastError);
             return false;
@@ -86,7 +86,7 @@ bool ScriptEngine::executeString(const String& code) {
 }
 
 bool ScriptEngine::hasFunction(const String& name) const {
-    sol::object obj = m_lua[name];
+    sol::object const obj = m_lua[name];
     return obj.is<sol::function>();
 }
 

@@ -17,14 +17,14 @@ bool ShaderAsset::load() {
         const char* fragment;
     };
 
-    static const ShaderExtensions extensionPairs[] = {
+    static const ShaderExtensions s_extensionPairs[] = {
         {".vert", ".frag"},
         {".vs", ".fs"},
         {".vertex.glsl", ".fragment.glsl"},
         {".vert.glsl", ".frag.glsl"},
     };
 
-    for (const auto& ext : extensionPairs) {
+    for (const auto& ext : s_extensionPairs) {
         std::filesystem::path vertPath = basePath;
         std::filesystem::path fragPath = basePath;
 

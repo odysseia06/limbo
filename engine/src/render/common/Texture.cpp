@@ -221,12 +221,12 @@ Result<void, String> Texture2D::create(const TextureSpec& spec, const void* data
     glTextureParameteri(m_textureId, GL_TEXTURE_WRAP_S, static_cast<GLint>(toGLWrap(spec.wrapS)));
     glTextureParameteri(m_textureId, GL_TEXTURE_WRAP_T, static_cast<GLint>(toGLWrap(spec.wrapT)));
 
-    GLenum internalFormat = toGLInternalFormat(spec.format);
-    GLenum dataFormat = toGLFormat(spec.format);
-    GLenum dataType = toGLType(spec.format);
+    GLenum const internalFormat = toGLInternalFormat(spec.format);
+    GLenum const dataFormat = toGLFormat(spec.format);
+    GLenum const dataType = toGLType(spec.format);
 
     // Allocate storage
-    u32 mipLevels = spec.generateMipmaps
+    u32 const mipLevels = spec.generateMipmaps
                         ? static_cast<u32>(std::floor(std::log2(std::max(m_width, m_height)))) + 1
                         : 1;
 
@@ -250,8 +250,8 @@ void Texture2D::setData(const void* data, u32 size) {
     LIMBO_ASSERT(m_textureId != 0, "Texture not created");
     LIMBO_UNUSED(size);
 
-    GLenum dataFormat = toGLFormat(m_format);
-    GLenum dataType = toGLType(m_format);
+    GLenum const dataFormat = toGLFormat(m_format);
+    GLenum const dataType = toGLType(m_format);
 
     glTextureSubImage2D(m_textureId, 0, 0, 0, static_cast<GLsizei>(m_width),
                         static_cast<GLsizei>(m_height), dataFormat, dataType, data);

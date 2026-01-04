@@ -4,6 +4,7 @@ Checks: >
   bugprone-*,
   -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
+  -bugprone-macro-parentheses,
   clang-analyzer-*,
   concurrency-*,
   cppcoreguidelines-*,
@@ -15,18 +16,34 @@ Checks: >
   -cppcoreguidelines-pro-type-union-access,
   -cppcoreguidelines-owning-memory,
   -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-macro-to-enum,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-rvalue-reference-param-not-moved,
+  -cppcoreguidelines-special-member-functions,
+  -cppcoreguidelines-init-variables,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-non-const-global-variables,
   misc-*,
   -misc-non-private-member-variables-in-classes,
   -misc-no-recursion,
+  -misc-include-cleaner,
   modernize-*,
   -modernize-use-trailing-return-type,
   -modernize-avoid-c-arrays,
+  -modernize-macro-to-enum,
+  -modernize-use-designated-initializers,
   performance-*,
   readability-*,
   -readability-magic-numbers,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-else-after-return,
+  -readability-use-concise-preprocessor-directives,
+  -readability-uppercase-literal-suffix,
+  -readability-convert-member-functions-to-static,
+  -readability-implicit-bool-conversion,
 
 WarningsAsErrors: ''
 
@@ -37,6 +54,12 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.StructCase
     value: CamelCase
+  - key: readability-identifier-naming.StructIgnoredRegexp
+    value: 'unexpected'
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: 'make_unique|make_shared|internal_.*'
+  - key: readability-identifier-naming.MethodIgnoredRegexp
+    value: 'has_value'
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
   - key: readability-identifier-naming.EnumConstantCase
@@ -55,6 +78,8 @@ CheckOptions:
     value: 'm_'
   - key: readability-identifier-naming.StaticVariablePrefix
     value: 's_'
+  - key: readability-identifier-naming.StaticVariableCase
+    value: camelBack
   - key: readability-identifier-naming.GlobalConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.ConstexprVariableCase

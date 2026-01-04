@@ -17,11 +17,11 @@ void Tileset::create(Texture2D* texture, u32 tileWidth, u32 tileHeight, u32 marg
     m_spacing = spacing;
 
     // Calculate grid dimensions
-    u32 texWidth = texture->getWidth();
-    u32 texHeight = texture->getHeight();
+    u32 const texWidth = texture->getWidth();
+    u32 const texHeight = texture->getHeight();
 
-    u32 usableWidth = texWidth - 2 * margin;
-    u32 usableHeight = texHeight - 2 * margin;
+    u32 const usableWidth = texWidth - 2 * margin;
+    u32 const usableHeight = texHeight - 2 * margin;
 
     m_columns = (usableWidth + spacing) / (tileWidth + spacing);
     m_rows = (usableHeight + spacing) / (tileHeight + spacing);
@@ -30,16 +30,16 @@ void Tileset::create(Texture2D* texture, u32 tileWidth, u32 tileHeight, u32 marg
     m_tiles.resize(tileCount);
 
     // Pre-calculate UV coordinates for each tile
-    f32 texWidthF = static_cast<f32>(texWidth);
-    f32 texHeightF = static_cast<f32>(texHeight);
+    f32 const texWidthF = static_cast<f32>(texWidth);
+    f32 const texHeightF = static_cast<f32>(texHeight);
 
     for (u32 i = 0; i < tileCount; ++i) {
-        u32 col = i % m_columns;
-        u32 row = i / m_columns;
+        u32 const col = i % m_columns;
+        u32 const row = i / m_columns;
 
         // Calculate pixel position
-        u32 px = margin + col * (tileWidth + spacing);
-        u32 py = margin + row * (tileHeight + spacing);
+        u32 const px = margin + col * (tileWidth + spacing);
+        u32 const py = margin + row * (tileHeight + spacing);
 
         // Convert to UV coordinates (flip Y for OpenGL)
         m_tiles[i].id = i;

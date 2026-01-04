@@ -205,7 +205,7 @@ void Renderer2D::flush() {
     }
 
     // Calculate data size
-    u32 dataSize = static_cast<u32>(reinterpret_cast<u8*>(s_data.quadVertexBufferPtr) -
+    u32 const dataSize = static_cast<u32>(reinterpret_cast<u8*>(s_data.quadVertexBufferPtr) -
                                     reinterpret_cast<u8*>(s_data.quadVertexBufferBase));
 
     // Upload vertex data
@@ -235,7 +235,7 @@ void Renderer2D::drawQuad(const glm::vec2& position, const glm::vec2& size,
 
 void Renderer2D::drawQuad(const glm::vec3& position, const glm::vec2& size,
                           const glm::vec4& color) {
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) *
+    glm::mat4 const transform = glm::translate(glm::mat4(1.0f), position) *
                           glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
     drawQuad(transform, color);
@@ -248,7 +248,7 @@ void Renderer2D::drawQuad(const glm::vec2& position, const glm::vec2& size,
 
 void Renderer2D::drawQuad(const glm::vec3& position, const glm::vec2& size,
                           const Texture2D& texture, f32 tilingFactor, const glm::vec4& tintColor) {
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) *
+    glm::mat4 const transform = glm::translate(glm::mat4(1.0f), position) *
                           glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
     drawQuad(transform, texture, tilingFactor, tintColor);
@@ -257,7 +257,7 @@ void Renderer2D::drawQuad(const glm::vec3& position, const glm::vec2& size,
 void Renderer2D::drawQuad(const glm::vec3& position, const glm::vec2& size,
                           const Texture2D& texture, const glm::vec2& uvMin, const glm::vec2& uvMax,
                           const glm::vec4& tintColor) {
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) *
+    glm::mat4 const transform = glm::translate(glm::mat4(1.0f), position) *
                           glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
     drawQuad(transform, texture, uvMin, uvMax, tintColor);
@@ -386,7 +386,7 @@ void Renderer2D::drawRotatedQuad(const glm::vec2& position, const glm::vec2& siz
 
 void Renderer2D::drawRotatedQuad(const glm::vec3& position, const glm::vec2& size, f32 rotation,
                                  const glm::vec4& color) {
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) *
+    glm::mat4 const transform = glm::translate(glm::mat4(1.0f), position) *
                           glm::rotate(glm::mat4(1.0f), rotation, {0.0f, 0.0f, 1.0f}) *
                           glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 
@@ -403,7 +403,7 @@ void Renderer2D::drawRotatedQuad(const glm::vec2& position, const glm::vec2& siz
 void Renderer2D::drawRotatedQuad(const glm::vec3& position, const glm::vec2& size, f32 rotation,
                                  const Texture2D& texture, f32 tilingFactor,
                                  const glm::vec4& tintColor) {
-    glm::mat4 transform = glm::translate(glm::mat4(1.0f), position) *
+    glm::mat4 const transform = glm::translate(glm::mat4(1.0f), position) *
                           glm::rotate(glm::mat4(1.0f), rotation, {0.0f, 0.0f, 1.0f}) *
                           glm::scale(glm::mat4(1.0f), {size.x, size.y, 1.0f});
 

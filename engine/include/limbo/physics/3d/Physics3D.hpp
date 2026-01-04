@@ -32,7 +32,7 @@ public:
     void setGravity(const glm::vec3& gravity);
 
     /// Get gravity vector
-    glm::vec3 getGravity() const;
+    [[nodiscard]] glm::vec3 getGravity() const;
 
     // Raycasting
     struct RaycastHit {

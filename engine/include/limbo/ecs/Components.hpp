@@ -89,10 +89,10 @@ struct CameraComponent {
         if (projectionType == ProjectionType::Perspective) {
             return glm::perspective(fov, aspectRatio, nearClip, farClip);
         } else {
-            f32 left = -orthoSize * aspectRatio;
-            f32 right = orthoSize * aspectRatio;
-            f32 bottom = -orthoSize;
-            f32 top = orthoSize;
+            f32 const left = -orthoSize * aspectRatio;
+            f32 const right = orthoSize * aspectRatio;
+            f32 const bottom = -orthoSize;
+            f32 const top = orthoSize;
             return glm::ortho(left, right, bottom, top, nearClip, farClip);
         }
     }

@@ -2,6 +2,7 @@
 #include "limbo/ecs/World.hpp"
 
 #include <algorithm>
+#include <ranges>
 
 namespace limbo {
 
@@ -16,8 +17,8 @@ void SystemManager::init(World& world) {
 
 void SystemManager::shutdown(World& world) {
     // Shutdown in reverse order
-    for (auto it = m_systems.rbegin(); it != m_systems.rend(); ++it) {
-        (*it)->onDetach(world);
+    for (auto & m_system : std::ranges::reverse_view(m_systems)) {
+        m_system->onDetach(world);
     }
 }
 

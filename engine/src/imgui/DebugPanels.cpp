@@ -25,7 +25,7 @@ void showStatsPanel(f32 deltaTime) {
     static float displayFps = 0.0f;
     static float displayMs = 0.0f;
 
-    float fps = deltaTime > 0.0f ? 1.0f / deltaTime : 0.0f;
+    float const fps = deltaTime > 0.0f ? 1.0f / deltaTime : 0.0f;
     fpsHistory[fpsIndex] = fps;
     fpsIndex = (fpsIndex + 1) % 120;
 
@@ -33,8 +33,9 @@ void showStatsPanel(f32 deltaTime) {
     if (fpsUpdateTimer >= 0.25f) {
         fpsUpdateTimer = 0.0f;
         float sum = 0.0f;
-        for (float f : fpsHistory)
+        for (float const f : fpsHistory) {
             sum += f;
+}
         displayFps = sum / 120.0f;
         displayMs = 1000.0f / displayFps;
     }
@@ -79,7 +80,7 @@ void showEntityInspector(World& world) {
         for (auto entity : view) {
             const auto& name = view.get<NameComponent>(entity);
 
-            bool isSelected = (selectedEntity == entity);
+            bool const isSelected = (selectedEntity == entity);
             if (ImGui::Selectable(name.name.c_str(), isSelected)) {
                 selectedEntity = entity;
             }

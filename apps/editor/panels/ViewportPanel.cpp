@@ -10,7 +10,7 @@ ViewportPanel::ViewportPanel(EditorApp& editor) : m_editor(editor) {}
 
 void ViewportPanel::init() {
     // Initialize camera
-    float aspect = m_viewportSize.x / m_viewportSize.y;
+    float const aspect = m_viewportSize.x / m_viewportSize.y;
     m_camera = OrthographicCamera(-aspect * m_cameraZoom, aspect * m_cameraZoom, -m_cameraZoom,
                                   m_cameraZoom);
 }
@@ -25,7 +25,7 @@ void ViewportPanel::update(f32 deltaTime) {
 
 void ViewportPanel::handleCameraInput(f32 deltaTime) {
     // Pan with middle mouse or WASD when focused
-    float panSpeed = 2.0f * m_cameraZoom * deltaTime;
+    float const panSpeed = 2.0f * m_cameraZoom * deltaTime;
 
     if (m_viewportFocused) {
         if (Input::isKeyDown(Key::W) || Input::isKeyDown(Key::Up)) {
@@ -50,7 +50,7 @@ void ViewportPanel::handleCameraInput(f32 deltaTime) {
 
     // Zoom with scroll wheel when hovered
     if (m_viewportHovered) {
-        float scroll = Input::getScrollY();
+        float const scroll = Input::getScrollY();
         if (scroll != 0.0f) {
             m_cameraZoom -= scroll * 0.1f * m_cameraZoom;
             m_cameraZoom = glm::clamp(m_cameraZoom, 0.1f, 50.0f);
@@ -58,15 +58,16 @@ void ViewportPanel::handleCameraInput(f32 deltaTime) {
     }
 
     // Update camera projection
-    float aspect = m_viewportSize.x / m_viewportSize.y;
+    float const aspect = m_viewportSize.x / m_viewportSize.y;
     m_camera.setProjection(-aspect * m_cameraZoom, aspect * m_cameraZoom, -m_cameraZoom,
                            m_cameraZoom);
     m_camera.setPosition(glm::vec3(m_cameraPosition, 0.0f));
 }
 
 void ViewportPanel::render() {
-    if (!m_open)
+    if (!m_open) {
         return;
+}
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("Viewport", &m_open);
@@ -75,16 +76,16 @@ void ViewportPanel::render() {
     m_viewportFocused = ImGui::IsWindowFocused();
     m_viewportHovered = ImGui::IsWindowHovered();
 
-    ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
+    ImVec2 const viewportPanelSize = ImGui::GetContentRegionAvail();
     m_viewportSize = {viewportPanelSize.x, viewportPanelSize.y};
 
     // Render scene to viewport
     renderScene();
 
     // Viewport bounds for mouse picking
-    ImVec2 minBound = ImGui::GetWindowContentRegionMin();
-    ImVec2 maxBound = ImGui::GetWindowContentRegionMax();
-    ImVec2 windowPos = ImGui::GetWindowPos();
+    ImVec2 const minBound = ImGui::GetWindowContentRegionMin();
+    ImVec2 const maxBound = ImGui::GetWindowContentRegionMax();
+    ImVec2 const windowPos = ImGui::GetWindowPos();
 
     m_viewportBounds[0] = {minBound.x + windowPos.x, minBound.y + windowPos.y};
     m_viewportBounds[1] = {maxBound.x + windowPos.x, maxBound.y + windowPos.y};
@@ -120,27 +121,31 @@ void ViewportPanel::renderScene() {
 
 void ViewportPanel::drawGrid() {
     // Draw a simple grid
-    glm::vec4 gridColor(0.3f, 0.3f, 0.3f, 0.5f);
-    glm::vec4 axisColorX(0.8f, 0.2f, 0.2f, 0.8f);
-    glm::vec4 axisColorY(0.2f, 0.8f, 0.2f, 0.8f);
+    glm::vec4 const gridColor(0.3f, 0.3f, 0.3f, 0.5f);
+    glm::vec4 const axisColorX(0.8f, 0.2f, 0.2f, 0.8f);
+    glm::vec4 const axisColorY(0.2f, 0.8f, 0.2f, 0.8f);
 
-    float gridExtent = 20.0f;
+    float const gridExtent = 20.0f;
     float step = m_gridSize;
 
     // Adjust step based on zoom
-    if (m_cameraZoom > 5.0f)
+    if (m_cameraZoom > 5.0f) {
         step = 2.0f;
-    if (m_cameraZoom > 10.0f)
+}
+    if (m_cameraZoom > 10.0f) {
         step = 5.0f;
-    if (m_cameraZoom < 0.5f)
+}
+    if (m_cameraZoom < 0.5f) {
         step = 0.5f;
-    if (m_cameraZoom < 0.2f)
+}
+    if (m_cameraZoom < 0.2f) {
         step = 0.1f;
+}
 
     // Draw vertical lines
     for (float x = -gridExtent; x <= gridExtent; x += step) {
-        glm::vec4 color = (std::abs(x) < 0.001f) ? axisColorY : gridColor;
-        float thickness = (std::abs(x) < 0.001f) ? 0.02f : 0.005f;
+        glm::vec4 const color = (std::abs(x) < 0.001f) ? axisColorY : gridColor;
+        float const thickness = (std::abs(x) < 0.001f) ? 0.02f : 0.005f;
 
         Renderer2D::drawQuad(glm::vec3(x, 0.0f, -0.1f), glm::vec2(thickness, gridExtent * 2.0f),
                              color);
@@ -148,8 +153,8 @@ void ViewportPanel::drawGrid() {
 
     // Draw horizontal lines
     for (float y = -gridExtent; y <= gridExtent; y += step) {
-        glm::vec4 color = (std::abs(y) < 0.001f) ? axisColorX : gridColor;
-        float thickness = (std::abs(y) < 0.001f) ? 0.02f : 0.005f;
+        glm::vec4 const color = (std::abs(y) < 0.001f) ? axisColorX : gridColor;
+        float const thickness = (std::abs(y) < 0.001f) ? 0.02f : 0.005f;
 
         Renderer2D::drawQuad(glm::vec3(0.0f, y, -0.1f), glm::vec2(gridExtent * 2.0f, thickness),
                              color);

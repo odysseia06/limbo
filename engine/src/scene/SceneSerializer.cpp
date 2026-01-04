@@ -49,7 +49,7 @@ SceneSerializer::SceneSerializer(World& world) : m_world(world) {}
 
 bool SceneSerializer::saveToFile(const std::filesystem::path& path) {
     try {
-        String jsonStr = serialize();
+        String const jsonStr = serialize();
 
         std::ofstream file(path);
         if (!file.is_open()) {

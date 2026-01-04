@@ -33,22 +33,22 @@ public:
     bool loadFromMemory(const void* data, usize size);
 
     /// Check if audio data is loaded
-    bool isLoaded() const { return !m_samples.empty(); }
+    [[nodiscard]] bool isLoaded() const { return !m_samples.empty(); }
 
     /// Get audio format
-    const AudioFormat& getFormat() const { return m_format; }
+    [[nodiscard]] const AudioFormat& getFormat() const { return m_format; }
 
     /// Get sample data
-    const std::vector<f32>& getSamples() const { return m_samples; }
+    [[nodiscard]] const std::vector<f32>& getSamples() const { return m_samples; }
 
     /// Get duration in seconds
-    f32 getDuration() const;
+    [[nodiscard]] f32 getDuration() const;
 
     /// Get sample count
-    usize getSampleCount() const { return m_samples.size(); }
+    [[nodiscard]] usize getSampleCount() const { return m_samples.size(); }
 
     /// Get file path (if loaded from file)
-    const String& getFilePath() const { return m_filepath; }
+    [[nodiscard]] const String& getFilePath() const { return m_filepath; }
 
     /// Generate a test tone (sine wave)
     void generateTestTone(f32 frequency = 440.0f, f32 duration = 1.0f, f32 amplitude = 0.5f);

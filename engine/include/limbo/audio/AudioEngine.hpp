@@ -31,7 +31,7 @@ public:
     void shutdown();
 
     /// Check if initialized
-    bool isInitialized() const { return m_initialized; }
+    [[nodiscard]] bool isInitialized() const { return m_initialized; }
 
     /// Register an audio source for playback
     void registerSource(AudioSource* source);
@@ -41,13 +41,13 @@ public:
 
     /// Set master volume (0.0 to 1.0)
     void setMasterVolume(f32 volume);
-    f32 getMasterVolume() const { return m_masterVolume; }
+    [[nodiscard]] f32 getMasterVolume() const { return m_masterVolume; }
 
     /// Get sample rate
-    u32 getSampleRate() const { return m_sampleRate; }
+    [[nodiscard]] u32 getSampleRate() const { return m_sampleRate; }
 
     /// Get channel count
-    u32 getChannels() const { return m_channels; }
+    [[nodiscard]] u32 getChannels() const { return m_channels; }
 
     /// Audio callback (internal use)
     void audioCallback(void* output, u32 frameCount);
