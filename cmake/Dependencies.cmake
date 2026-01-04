@@ -188,14 +188,19 @@ FetchContent_GetProperties(sol2)
 # Patch sol2 for Clang compatibility
 # The issue is that sol2's call functions have noexcept specifiers, but lua_CFunction
 # is int(*)(lua_State*) without noexcept. In C++17+, noexcept is part of the type.
-# Fix by treating Clang the same as MSVC (which already has this workaround).
+# Remove noexcept from the call() template functions that are used as lua_CFunction.
 set(SOL2_STATELESS_HPP "${sol2_SOURCE_DIR}/include/sol/function_types_stateless.hpp")
 if(EXISTS "${SOL2_STATELESS_HPP}")
     file(READ "${SOL2_STATELESS_HPP}" SOL2_CONTENT)
-    # Change the condition to also exclude Clang from noexcept specifier
-    string(REPLACE
-        "#if SOL_IS_ON(SOL_COMPILER_VCXX)"
-        "#if SOL_IS_ON(SOL_COMPILER_VCXX) || SOL_IS_ON(SOL_COMPILER_CLANG)"
+    # Remove conditional noexcept from call functions (used as lua_CFunction pointers)
+    string(REGEX REPLACE
+        "(template <bool is_yielding, bool no_trampoline>[^}]*static int call\\(lua_State\\* L\\)) noexcept\\([^)]+\\)"
+        "\\1"
+        SOL2_CONTENT "${SOL2_CONTENT}")
+    # Also handle the simpler noexcept(traits_type::is_noexcept) pattern
+    string(REGEX REPLACE
+        "(static int call\\(lua_State\\* L\\))[^{]*noexcept\\(traits_type::is_noexcept\\)"
+        "\\1"
         SOL2_CONTENT "${SOL2_CONTENT}")
     file(WRITE "${SOL2_STATELESS_HPP}" "${SOL2_CONTENT}")
     message(STATUS "Patched sol2 for Clang noexcept compatibility")
