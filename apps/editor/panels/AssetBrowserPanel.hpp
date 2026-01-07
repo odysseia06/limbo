@@ -35,6 +35,11 @@ private:
     // Icons would be loaded as textures
     float m_thumbnailSize = 64.0f;
     float m_padding = 8.0f;
+
+    // Rename state
+    bool m_openRenamePopup = false;
+    std::filesystem::path m_itemToRename;
+    char m_renameBuffer[256] = {0};
 };
 
 }  // namespace limbo::editor

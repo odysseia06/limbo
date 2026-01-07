@@ -45,6 +45,52 @@ void AssetBrowserPanel::render() {
     // Asset grid
     drawAssetGrid();
 
+    // Rename dialog
+    if (m_openRenamePopup) {
+        ImGui::OpenPopup("Rename Asset");
+        m_openRenamePopup = false;
+    }
+
+    if (ImGui::BeginPopupModal("Rename Asset", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        static std::string errorMessage;
+
+        ImGui::Text("Enter new name:");
+        bool triggerRename = ImGui::InputText("##rename", m_renameBuffer, sizeof(m_renameBuffer), ImGuiInputTextFlags_EnterReturnsTrue);
+
+        if (triggerRename || ImGui::Button("Rename")) {
+            if (m_renameBuffer[0] != '\0') {
+                std::filesystem::path newPath = m_itemToRename.parent_path() / m_renameBuffer;
+
+                if (std::filesystem::exists(newPath)) {
+                    errorMessage = "Name already exists!";
+                } else {
+                    std::error_code ec;
+                    std::filesystem::rename(m_itemToRename, newPath, ec);
+
+                    if (ec) {
+                        errorMessage = "Error: " + ec.message();
+                        spdlog::error("Failed to rename asset: {}", ec.message());
+                    } else {
+                        errorMessage.clear();
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+            }
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel")) {
+            errorMessage.clear();
+            ImGui::CloseCurrentPopup();
+        }
+
+        if (!errorMessage.empty()) {
+            ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", errorMessage.c_str());
+        }
+
+        ImGui::EndPopup();
+    }
+
     ImGui::End();
 }
 
@@ -130,7 +176,9 @@ void AssetBrowserPanel::drawAssetGrid() {
                 // TODO: Confirm and delete
             }
             if (ImGui::MenuItem("Rename")) {
-                // TODO: Rename dialog
+                m_itemToRename = path;
+                strncpy(m_renameBuffer, filename.c_str(), sizeof(m_renameBuffer) - 1);
+                m_openRenamePopup = true;
             }
             if (ImGui::MenuItem("Show in Explorer")) {
                 // TODO: Open file explorer
