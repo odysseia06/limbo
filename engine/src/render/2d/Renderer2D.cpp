@@ -8,6 +8,9 @@
 
 #include <array>
 #include <memory>
+#include <vector>
+#include <string>
+#include <algorithm>
 
 namespace limbo {
 
@@ -15,7 +18,7 @@ namespace limbo {
 static constexpr u32 MaxQuads = 10000;
 static constexpr u32 MaxVertices = MaxQuads * 4;
 static constexpr u32 MaxIndices = MaxQuads * 6;
-static constexpr u32 MaxTextureSlots = 32;  // TODO: Query from GPU
+static u32 s_MaxTextureSlots = 0;
 
 struct QuadVertex {
     glm::vec3 position;
@@ -36,7 +39,7 @@ struct Renderer2DData {
     QuadVertex* quadVertexBufferBase = nullptr;
     QuadVertex* quadVertexBufferPtr = nullptr;
 
-    std::array<const Texture2D*, MaxTextureSlots> textureSlots;
+    std::vector<const Texture2D*> textureSlots;
     u32 textureSlotIndex = 1;  // 0 = white texture
 
     glm::vec4 quadVertexPositions[4];
@@ -47,6 +50,11 @@ struct Renderer2DData {
 static Renderer2DData s_data;
 
 void Renderer2D::init() {
+    // Query max texture slots
+    i32 maxTextureUnits;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+    s_MaxTextureSlots = std::min(static_cast<u32>(maxTextureUnits), 32u);
+
     // Create VAO
     s_data.quadVAO = make_unique<VertexArray>();
     s_data.quadVAO->create();
@@ -94,6 +102,7 @@ void Renderer2D::init() {
     (void)s_data.whiteTexture->create(whiteSpec, &whitePixel);
 
     // Initialize texture slots
+    s_data.textureSlots.resize(s_MaxTextureSlots);
     s_data.textureSlots[0] = s_data.whiteTexture.get();
 
     // Create batch shader
@@ -125,7 +134,7 @@ void Renderer2D::init() {
         }
     )";
 
-    const char* fragmentSource = R"(
+    std::string fragmentSource = R"(
         #version 450 core
 
         in vec4 v_Color;
@@ -133,7 +142,9 @@ void Renderer2D::init() {
         in flat float v_TexIndex;
         in float v_TilingFactor;
 
-        uniform sampler2D u_Textures[32];
+        uniform sampler2D u_Textures[)";
+    fragmentSource += std::to_string(s_MaxTextureSlots);
+    fragmentSource += R"(];
 
         out vec4 o_Color;
 
@@ -144,19 +155,19 @@ void Renderer2D::init() {
         }
     )";
 
-    auto result = s_data.quadShader->loadFromSource(vertexSource, fragmentSource);
+    auto result = s_data.quadShader->loadFromSource(vertexSource, fragmentSource.c_str());
     if (!result) {
         // Log error but continue - will just render nothing
     }
 
     // Set up texture sampler array
     s_data.quadShader->bind();
-    i32 samplers[MaxTextureSlots];
-    for (u32 i = 0; i < MaxTextureSlots; ++i) {
+    std::vector<i32> samplers(s_MaxTextureSlots);
+    for (u32 i = 0; i < s_MaxTextureSlots; ++i) {
         samplers[i] = static_cast<i32>(i);
     }
     glUniform1iv(glGetUniformLocation(s_data.quadShader->getNativeHandle(), "u_Textures"),
-                 static_cast<GLsizei>(MaxTextureSlots), samplers);
+                 static_cast<GLsizei>(s_MaxTextureSlots), samplers.data());
 
     // Set up quad vertex positions (unit quad centered at origin)
     s_data.quadVertexPositions[0] = {-0.5f, -0.5f, 0.0f, 1.0f};
@@ -309,7 +320,7 @@ void Renderer2D::drawQuad(const glm::mat4& transform, const Texture2D& texture, 
     }
 
     if (textureIndex == 0.0f) {
-        if (s_data.textureSlotIndex >= MaxTextureSlots) {
+        if (s_data.textureSlotIndex >= s_MaxTextureSlots) {
             nextBatch();
         }
 
@@ -353,7 +364,7 @@ void Renderer2D::drawQuad(const glm::mat4& transform, const Texture2D& texture,
     }
 
     if (textureIndex == 0.0f) {
-        if (s_data.textureSlotIndex >= MaxTextureSlots) {
+        if (s_data.textureSlotIndex >= s_MaxTextureSlots) {
             nextBatch();
         }
 
