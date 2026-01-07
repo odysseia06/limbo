@@ -2,6 +2,7 @@
 #include "EditorApp.hpp"
 
 #include <imgui.h>
+#include <cstdio>
 
 namespace limbo::editor {
 
@@ -55,7 +56,8 @@ void AssetBrowserPanel::render() {
         static std::string errorMessage;
 
         ImGui::Text("Enter new name:");
-        bool triggerRename = ImGui::InputText("##rename", m_renameBuffer, sizeof(m_renameBuffer), ImGuiInputTextFlags_EnterReturnsTrue);
+        bool triggerRename = ImGui::InputText("##rename", m_renameBuffer, sizeof(m_renameBuffer),
+                                              ImGuiInputTextFlags_EnterReturnsTrue);
 
         if (triggerRename || ImGui::Button("Rename")) {
             if (m_renameBuffer[0] != '\0') {
@@ -177,7 +179,7 @@ void AssetBrowserPanel::drawAssetGrid() {
             }
             if (ImGui::MenuItem("Rename")) {
                 m_itemToRename = path;
-                strncpy(m_renameBuffer, filename.c_str(), sizeof(m_renameBuffer) - 1);
+                snprintf(m_renameBuffer, sizeof(m_renameBuffer), "%s", filename.c_str());
                 m_openRenamePopup = true;
             }
             if (ImGui::MenuItem("Show in Explorer")) {
