@@ -131,7 +131,7 @@ PrefabEntity Prefab::serializeEntity(World& world, World::EntityId entityId, i32
         json cameraJson;
         cameraJson["projectionType"] =
             camera.projectionType == CameraComponent::ProjectionType::Perspective ? "perspective"
-                                                                                  : "orthographic";
+                                                                                   : "orthographic";
         cameraJson["fov"] = camera.fov;
         cameraJson["orthoSize"] = camera.orthoSize;
         cameraJson["nearClip"] = camera.nearClip;
