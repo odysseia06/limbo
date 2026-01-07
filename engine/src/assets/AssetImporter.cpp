@@ -1,5 +1,7 @@
 #include "limbo/assets/AssetImporter.hpp"
 
+#include "limbo/render/2d/SpriteAtlasBuilder.hpp"
+
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
@@ -134,6 +136,131 @@ String AudioImporter::getDefaultSettings() const {
 }
 
 // ============================================================================
+// SpriteAtlasImporter
+// ============================================================================
+
+ImportResult SpriteAtlasImporter::import(const ImportContext& context) {
+    // Load the atlas definition JSON
+    std::ifstream file(context.sourcePath);
+    if (!file.is_open()) {
+        return ImportResult::fail("Failed to open atlas definition: " + context.sourcePath.string());
+    }
+
+    json atlasDefn;
+    try {
+        file >> atlasDefn;
+    } catch (const std::exception& e) {
+        return ImportResult::fail(String("Failed to parse atlas definition: ") + e.what());
+    }
+
+    // Parse build configuration
+    AtlasBuildConfig buildConfig;
+    if (atlasDefn.contains("config")) {
+        const auto& cfg = atlasDefn["config"];
+        buildConfig.maxWidth = cfg.value("maxWidth", 4096u);
+        buildConfig.maxHeight = cfg.value("maxHeight", 4096u);
+        buildConfig.padding = cfg.value("padding", 2u);
+        buildConfig.allowRotation = cfg.value("allowRotation", false);
+        buildConfig.generateMipmaps = cfg.value("generateMipmaps", true);
+        buildConfig.powerOfTwo = cfg.value("powerOfTwo", true);
+        buildConfig.trimTransparent = cfg.value("trimTransparent", false);
+    }
+
+    // Build the atlas
+    SpriteAtlasBuilder builder;
+
+    // Get source directory (relative to atlas definition file)
+    std::filesystem::path sourceDir = context.sourcePath.parent_path();
+
+    // Add sprites from the definition
+    if (atlasDefn.contains("sprites")) {
+        for (const auto& spriteDefn : atlasDefn["sprites"]) {
+            String name = spriteDefn.value("name", "");
+            String path = spriteDefn.value("path", "");
+
+            if (path.empty()) {
+                spdlog::warn("SpriteAtlasImporter: Sprite missing path, skipping");
+                continue;
+            }
+
+            // Use filename as name if not specified
+            if (name.empty()) {
+                name = std::filesystem::path(path).stem().string();
+            }
+
+            // Parse optional pivot
+            glm::vec2 pivot{0.5f, 0.5f};
+            if (spriteDefn.contains("pivot")) {
+                pivot.x = spriteDefn["pivot"][0];
+                pivot.y = spriteDefn["pivot"][1];
+            }
+
+            std::filesystem::path spritePath = sourceDir / path;
+            builder.addSprite(name, spritePath, pivot);
+        }
+    }
+
+    // Add sprites from directory if specified
+    if (atlasDefn.contains("directory")) {
+        String dir = atlasDefn["directory"];
+        bool recursive = atlasDefn.value("recursive", false);
+
+        std::vector<String> extensions = {".png", ".jpg", ".jpeg", ".bmp"};
+        if (atlasDefn.contains("extensions")) {
+            extensions.clear();
+            for (const auto& ext : atlasDefn["extensions"]) {
+                extensions.push_back(ext.get<String>());
+            }
+        }
+
+        std::filesystem::path dirPath = sourceDir / dir;
+        builder.addDirectory(dirPath, recursive, extensions);
+    }
+
+    if (builder.getSpriteCount() == 0) {
+        return ImportResult::fail("No sprites to pack in atlas definition");
+    }
+
+    // Build the atlas
+    AtlasBuildResult buildResult = builder.build(buildConfig);
+    if (!buildResult.success) {
+        return ImportResult::fail("Atlas build failed: " + buildResult.error);
+    }
+
+    // Create imported directory structure
+    std::filesystem::path importedPath = context.importedDir / "atlases";
+    std::filesystem::create_directories(importedPath);
+
+    // Generate filenames using asset ID
+    String baseName = context.assetId.uuid().toCompactString();
+    std::filesystem::path atlasMetaPath = importedPath / (baseName + ".atlas");
+    std::filesystem::path atlasTexturePath = importedPath / (baseName + ".png");
+
+    // Save the atlas
+    if (!SpriteAtlasBuilder::saveAtlas(*buildResult.atlas, atlasMetaPath, atlasTexturePath)) {
+        return ImportResult::fail("Failed to save atlas files");
+    }
+
+    String relativePath = "atlases/" + baseName + ".atlas";
+    spdlog::info("Imported sprite atlas: {} -> {} ({} sprites, {:.1f}% efficiency)",
+                 context.sourcePath.string(), relativePath, buildResult.packedSprites,
+                 buildResult.packingEfficiency * 100.0f);
+
+    return ImportResult::ok(relativePath);
+}
+
+String SpriteAtlasImporter::getDefaultSettings() const {
+    json settings;
+    settings["maxWidth"] = 4096;
+    settings["maxHeight"] = 4096;
+    settings["padding"] = 2;
+    settings["allowRotation"] = false;
+    settings["generateMipmaps"] = true;
+    settings["powerOfTwo"] = true;
+    return settings.dump();
+}
+
+// ============================================================================
 // AssetImporterManager
 // ============================================================================
 
@@ -149,6 +276,7 @@ void AssetImporterManager::registerDefaultImporters() {
     registerImporter(make_unique<TextureImporter>());
     registerImporter(make_unique<ShaderImporter>());
     registerImporter(make_unique<AudioImporter>());
+    registerImporter(make_unique<SpriteAtlasImporter>());
 }
 
 void AssetImporterManager::registerImporter(Unique<IAssetImporter> importer) {

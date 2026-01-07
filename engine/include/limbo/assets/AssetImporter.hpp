@@ -116,6 +116,29 @@ public:
 };
 
 /**
+ * SpriteAtlas importer - imports .atlas definition files
+ *
+ * Atlas definition files (.atlas.json) specify:
+ * - List of source images to pack
+ * - Packing configuration (padding, max size, etc.)
+ * - Optional per-sprite settings (pivot points, names)
+ *
+ * The importer builds the atlas texture and metadata.
+ */
+class LIMBO_API SpriteAtlasImporter : public IAssetImporter {
+public:
+    [[nodiscard]] AssetType getAssetType() const override { return AssetType::SpriteAtlas; }
+
+    [[nodiscard]] std::vector<String> getSupportedExtensions() const override {
+        return {".atlas.json"};
+    }
+
+    [[nodiscard]] ImportResult import(const ImportContext& context) override;
+
+    [[nodiscard]] String getDefaultSettings() const override;
+};
+
+/**
  * AssetImporter - Manages asset importing
  *
  * Coordinates the import pipeline:

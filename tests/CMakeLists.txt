@@ -9,6 +9,7 @@ set(TEST_SOURCES
     math/test_transform.cpp
     ecs/test_world.cpp
     scene/test_serialization.cpp
+    render/test_sprite_atlas.cpp
 )
 
 # Create test executable

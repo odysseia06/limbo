@@ -118,6 +118,8 @@ int cmdScan(AssetRegistry& registry) {
                 type = AssetType::Shader;
             } else if (ext == ".wav" || ext == ".mp3" || ext == ".ogg" || ext == ".flac") {
                 type = AssetType::Audio;
+            } else if (fullPath.string().ends_with(".atlas.json")) {
+                type = AssetType::SpriteAtlas;
             }
 
             if (type != AssetType::Unknown) {
@@ -227,6 +229,7 @@ int cmdStatus(AssetRegistry& registry) {
 
         switch (meta->type) {
             case AssetType::Texture: ++textureCount; break;
+            case AssetType::SpriteAtlas: ++textureCount; break;  // Count with textures
             case AssetType::Shader: ++shaderCount; break;
             case AssetType::Audio: ++audioCount; break;
             default: ++unknownCount; break;

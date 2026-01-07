@@ -37,6 +37,8 @@ set(LIMBO_ENGINE_SOURCES
 
     # Render 2D module
     src/render/2d/Renderer2D.cpp
+    src/render/2d/SpriteAtlas.cpp
+    src/render/2d/SpriteAtlasBuilder.cpp
 
     # Assets module
     src/assets/AssetId.cpp
@@ -46,6 +48,7 @@ set(LIMBO_ENGINE_SOURCES
     src/assets/TextureAsset.cpp
     src/assets/ShaderAsset.cpp
     src/assets/AudioAsset.cpp
+    src/assets/SpriteAtlasAsset.cpp
     src/assets/FileWatcher.cpp
 
     # Scene module
@@ -128,6 +131,8 @@ set(LIMBO_ENGINE_HEADERS
 
     # Render 2D headers
     include/limbo/render/2d/Renderer2D.hpp
+    include/limbo/render/2d/SpriteAtlas.hpp
+    include/limbo/render/2d/SpriteAtlasBuilder.hpp
 
     # Render 3D headers (skeleton)
     include/limbo/render/3d/Renderer3D.hpp
@@ -146,6 +151,7 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/assets/TextureAsset.hpp
     include/limbo/assets/ShaderAsset.hpp
     include/limbo/assets/AudioAsset.hpp
+    include/limbo/assets/SpriteAtlasAsset.hpp
     include/limbo/assets/FileWatcher.hpp
 
     # Scene headers

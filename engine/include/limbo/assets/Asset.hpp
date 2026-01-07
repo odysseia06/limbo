@@ -24,6 +24,7 @@ enum class AssetState : u8 {
 enum class AssetType : u8 {
     Unknown = 0,
     Texture,
+    SpriteAtlas,
     Shader,
     Audio,
     // Future types:
