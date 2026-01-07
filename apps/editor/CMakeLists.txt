@@ -4,6 +4,16 @@ add_executable(limbo_editor
     main.cpp
     EditorApp.cpp
     EditorApp.hpp
+    # Command system
+    commands/Command.hpp
+    commands/CommandHistory.cpp
+    commands/CommandHistory.hpp
+    commands/EntityCommands.hpp
+    commands/PropertyCommands.hpp
+    # Gizmos
+    gizmos/Gizmo.cpp
+    gizmos/Gizmo.hpp
+    # Panels
     panels/SceneHierarchyPanel.cpp
     panels/SceneHierarchyPanel.hpp
     panels/InspectorPanel.cpp

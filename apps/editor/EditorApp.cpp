@@ -1,4 +1,6 @@
 #include "EditorApp.hpp"
+#include "commands/EntityCommands.hpp"
+#include "commands/PropertyCommands.hpp"
 
 #include <imgui.h>
 #include <spdlog/spdlog.h>
@@ -23,8 +25,12 @@ void EditorApp::onInit() {
     // Initialize Renderer2D
     Renderer2D::init();
 
-    // Initialize ImGui
-    if (!m_imguiLayer.init(getWindow().getNativeHandle())) {
+    // Setup layout persistence path
+    std::filesystem::path const layoutPath = std::filesystem::current_path() / "limbo_editor.ini";
+    m_layoutIniPath = layoutPath.string();
+
+    // Initialize ImGui with layout persistence
+    if (!m_imguiLayer.init(getWindow().getNativeHandle(), m_layoutIniPath.c_str())) {
         spdlog::error("Failed to initialize ImGui");
     }
 
@@ -73,6 +79,16 @@ void EditorApp::onUpdate(f32 deltaTime) {
             } else {
                 saveScene();
             }
+        }
+        if (Input::isKeyPressed(Key::Z)) {
+            if (Input::isKeyDown(Key::LeftShift) || Input::isKeyDown(Key::RightShift)) {
+                redo();
+            } else {
+                undo();
+            }
+        }
+        if (Input::isKeyPressed(Key::Y)) {
+            redo();
         }
     }
 
@@ -136,12 +152,27 @@ void EditorApp::renderMenuBar() {
         }
 
         if (ImGui::BeginMenu("Edit")) {
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, false)) {}
-            if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false)) {}
+            String undoLabel = "Undo";
+            if (m_commandHistory.canUndo()) {
+                undoLabel += " " + m_commandHistory.getUndoDescription();
+            }
+            if (ImGui::MenuItem(undoLabel.c_str(), "Ctrl+Z", false, m_commandHistory.canUndo())) {
+                undo();
+            }
+
+            String redoLabel = "Redo";
+            if (m_commandHistory.canRedo()) {
+                redoLabel += " " + m_commandHistory.getRedoDescription();
+            }
+            if (ImGui::MenuItem(redoLabel.c_str(), "Ctrl+Y", false, m_commandHistory.canRedo())) {
+                redo();
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Delete", "Delete", false, m_selectedEntity.isValid())) {
                 if (m_selectedEntity.isValid()) {
-                    getWorld().destroyEntity(m_selectedEntity.id());
+                    auto cmd =
+                        std::make_unique<DeleteEntityCommand>(getWorld(), m_selectedEntity.id());
+                    executeCommand(std::move(cmd));
                     deselectAll();
                 }
             }
@@ -150,21 +181,25 @@ void EditorApp::renderMenuBar() {
 
         if (ImGui::BeginMenu("Entity")) {
             if (ImGui::MenuItem("Create Empty")) {
-                auto entity = getWorld().createEntity("New Entity");
-                entity.addComponent<TransformComponent>();
-                selectEntity(entity);
+                auto cmd = std::make_unique<CreateEntityCommand>(
+                    getWorld(), "New Entity", [this](Entity e) { selectEntity(e); });
+                executeCommand(std::move(cmd));
             }
             if (ImGui::MenuItem("Create Sprite")) {
-                auto entity = getWorld().createEntity("Sprite");
-                entity.addComponent<TransformComponent>();
-                entity.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
-                selectEntity(entity);
+                auto cmd = std::make_unique<CreateEntityCommand>(
+                    getWorld(), "Sprite", [this](Entity e) {
+                        e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                        selectEntity(e);
+                    });
+                executeCommand(std::move(cmd));
             }
             if (ImGui::MenuItem("Create Camera")) {
-                auto entity = getWorld().createEntity("Camera");
-                entity.addComponent<TransformComponent>();
-                // TODO: Add CameraComponent when implemented
-                selectEntity(entity);
+                auto cmd = std::make_unique<CreateEntityCommand>(
+                    getWorld(), "Camera", [this](Entity e) {
+                        e.addComponent<CameraComponent>();
+                        selectEntity(e);
+                    });
+                executeCommand(std::move(cmd));
             }
             ImGui::EndMenu();
         }
@@ -311,8 +346,31 @@ void EditorApp::newScene() {
     getWorld().clear();
     m_currentScenePath.clear();
     m_sceneModified = false;
+    m_commandHistory.clear();
     deselectAll();
     spdlog::info("New scene created");
+}
+
+bool EditorApp::executeCommand(Unique<Command> command) {
+    if (m_commandHistory.execute(std::move(command))) {
+        markSceneModified();
+        return true;
+    }
+    return false;
+}
+
+void EditorApp::undo() {
+    if (m_commandHistory.undo()) {
+        markSceneModified();
+        spdlog::debug("Undo: {}", m_commandHistory.getRedoDescription());
+    }
+}
+
+void EditorApp::redo() {
+    if (m_commandHistory.redo()) {
+        markSceneModified();
+        spdlog::debug("Redo: {}", m_commandHistory.getUndoDescription());
+    }
 }
 
 void EditorApp::openScene() {
@@ -370,7 +428,19 @@ void EditorApp::saveSceneAs() {
 
 void EditorApp::onPlay() {
     if (m_editorState == EditorState::Edit) {
-        // TODO: Save scene state for restoration on stop
+        // Save scene state for restoration on stop
+        SceneSerializer serializer(getWorld());
+        m_savedSceneState = serializer.serialize();
+        m_wasModifiedBeforePlay = m_sceneModified;
+
+        // Clear undo history (play mode changes shouldn't be undone in edit mode)
+        m_commandHistory.clear();
+
+        // Deselect entity (selection may become invalid during play)
+        deselectAll();
+
+        // TODO: Initialize physics bodies from entities with RigidBody2DComponent
+
         m_editorState = EditorState::Play;
         spdlog::info("Play mode started");
     }
@@ -388,7 +458,23 @@ void EditorApp::onPause() {
 
 void EditorApp::onStop() {
     if (m_editorState != EditorState::Edit) {
-        // TODO: Restore scene state
+        // Restore scene state from before play
+        if (!m_savedSceneState.empty()) {
+            SceneSerializer serializer(getWorld());
+            if (serializer.deserialize(m_savedSceneState)) {
+                spdlog::info("Scene state restored");
+            } else {
+                spdlog::error("Failed to restore scene state: {}", serializer.getError());
+            }
+            m_savedSceneState.clear();
+        }
+
+        // Restore modification flag
+        m_sceneModified = m_wasModifiedBeforePlay;
+
+        // Deselect entity (entity IDs may have changed)
+        deselectAll();
+
         m_editorState = EditorState::Edit;
         spdlog::info("Play mode stopped");
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limbo/Limbo.hpp>
+#include "../gizmos/Gizmo.hpp"
 
 namespace limbo::editor {
 
@@ -21,11 +22,20 @@ public:
     [[nodiscard]] bool& isOpen() { return m_open; }
     [[nodiscard]] OrthographicCamera& getCamera() { return m_camera; }
 
+    // Gizmo access
+    [[nodiscard]] Gizmo& getGizmo() { return m_gizmo; }
+    [[nodiscard]] GizmoMode getGizmoMode() const { return m_gizmo.getMode(); }
+    void setGizmoMode(GizmoMode mode) { m_gizmo.setMode(mode); }
+
 private:
     void handleCameraInput(f32 deltaTime);
+    void handleGizmoInput();
+    void handleAssetDrop();
     void renderScene();
     void drawGrid();
     void drawGizmos();
+
+    [[nodiscard]] glm::vec2 screenToWorld(const glm::vec2& screenPos) const;
 
 private:
     EditorApp& m_editor;
@@ -45,6 +55,11 @@ private:
     // Grid
     bool m_showGrid = true;
     f32 m_gridSize = 1.0f;
+
+    // Gizmo
+    Gizmo m_gizmo;
+    bool m_gizmoWasManipulating = false;
+    TransformComponent m_gizmoStartTransform;
 };
 
 }  // namespace limbo::editor

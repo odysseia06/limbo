@@ -1,5 +1,6 @@
 #include "SceneHierarchyPanel.hpp"
 #include "EditorApp.hpp"
+#include "../commands/EntityCommands.hpp"
 
 #include <limbo/ecs/Hierarchy.hpp>
 
@@ -41,13 +42,18 @@ void SceneHierarchyPanel::render() {
                                        ImGuiPopupFlags_NoOpenOverItems |
                                            ImGuiPopupFlags_MouseButtonRight)) {
         if (ImGui::MenuItem("Create Empty Entity")) {
-            auto entity = m_editor.getWorld().createEntity("New Entity");
-            entity.addComponent<TransformComponent>();
+            auto cmd = std::make_unique<CreateEntityCommand>(
+                m_editor.getWorld(), "New Entity",
+                [this](Entity e) { m_editor.selectEntity(e); });
+            m_editor.executeCommand(std::move(cmd));
         }
         if (ImGui::MenuItem("Create Sprite")) {
-            auto entity = m_editor.getWorld().createEntity("Sprite");
-            entity.addComponent<TransformComponent>();
-            entity.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+            auto cmd = std::make_unique<CreateEntityCommand>(
+                m_editor.getWorld(), "Sprite", [this](Entity e) {
+                    e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                    m_editor.selectEntity(e);
+                });
+            m_editor.executeCommand(std::move(cmd));
         }
         ImGui::EndPopup();
     }
@@ -56,8 +62,9 @@ void SceneHierarchyPanel::render() {
     if (ImGui::BeginDragDropTarget()) {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("ENTITY_NODE")) {
             auto droppedEntityId = *static_cast<World::EntityId*>(payload->Data);
-            Hierarchy::detachFromParent(m_editor.getWorld(), droppedEntityId);
-            m_editor.markSceneModified();
+            auto cmd = std::make_unique<ReparentEntityCommand>(m_editor.getWorld(), droppedEntityId,
+                                                               World::kNullEntity);
+            m_editor.executeCommand(std::move(cmd));
         }
         ImGui::EndDragDropTarget();
     }
@@ -122,8 +129,9 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
             // Don't allow parenting to self or creating cycles
             if (droppedEntityId != entity.id() &&
                 !Hierarchy::isAncestorOf(world, droppedEntityId, entity.id())) {
-                Hierarchy::setParent(world, droppedEntityId, entity.id());
-                m_editor.markSceneModified();
+                auto cmd =
+                    std::make_unique<ReparentEntityCommand>(world, droppedEntityId, entity.id());
+                m_editor.executeCommand(std::move(cmd));
             }
         }
         ImGui::EndDragDropTarget();
@@ -132,10 +140,12 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
     // Context menu
     if (ImGui::BeginPopupContextItem()) {
         if (ImGui::MenuItem("Create Child")) {
-            auto child = world.createEntity("New Child");
-            child.addComponent<TransformComponent>();
-            Hierarchy::setParent(world, child.id(), entity.id());
-            m_editor.markSceneModified();
+            auto cmd = std::make_unique<CreateEntityCommand>(
+                world, "New Child", [this, entityId = entity.id()](Entity child) {
+                    Hierarchy::setParent(m_editor.getWorld(), child.id(), entityId);
+                    m_editor.selectEntity(child);
+                });
+            m_editor.executeCommand(std::move(cmd));
         }
         ImGui::Separator();
         if (ImGui::MenuItem("Duplicate")) {
@@ -147,8 +157,9 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
         ImGui::Separator();
         if (Hierarchy::getParent(world, entity.id()) != World::kNullEntity) {
             if (ImGui::MenuItem("Unparent")) {
-                Hierarchy::detachFromParent(world, entity.id());
-                m_editor.markSceneModified();
+                auto cmd =
+                    std::make_unique<ReparentEntityCommand>(world, entity.id(), World::kNullEntity);
+                m_editor.executeCommand(std::move(cmd));
             }
         }
         ImGui::EndPopup();
@@ -172,58 +183,12 @@ void SceneHierarchyPanel::duplicateEntity(Entity entity) {
         return;
     }
 
-    auto& world = m_editor.getWorld();
-
-    // Create new entity with same name + " (Copy)"
-    auto& nameComp = entity.getComponent<NameComponent>();
-    auto newEntity = world.createEntity(nameComp.name + " (Copy)");
-
-    // Copy TransformComponent
-    if (entity.hasComponent<TransformComponent>()) {
-        const auto& transform = entity.getComponent<TransformComponent>();
-        newEntity.addComponent<TransformComponent>(transform.position, transform.rotation,
-                                                   transform.scale);
-    }
-
-    // Copy SpriteRendererComponent
-    if (entity.hasComponent<SpriteRendererComponent>()) {
-        const auto& sprite = entity.getComponent<SpriteRendererComponent>();
-        auto& newSprite = newEntity.addComponent<SpriteRendererComponent>(sprite.color);
-        newSprite.textureId = sprite.textureId;
-        newSprite.sortingOrder = sprite.sortingOrder;
-        newSprite.uvMin = sprite.uvMin;
-        newSprite.uvMax = sprite.uvMax;
-    }
-
-    // Copy CameraComponent
-    if (entity.hasComponent<CameraComponent>()) {
-        const auto& camera = entity.getComponent<CameraComponent>();
-        auto& newCamera = newEntity.addComponent<CameraComponent>();
-        newCamera.projectionType = camera.projectionType;
-        newCamera.fov = camera.fov;
-        newCamera.orthoSize = camera.orthoSize;
-        newCamera.nearClip = camera.nearClip;
-        newCamera.farClip = camera.farClip;
-        newCamera.primary = false;  // Don't duplicate primary flag
-    }
-
-    // Copy tag components
-    if (entity.hasComponent<StaticComponent>()) {
-        newEntity.addComponent<StaticComponent>();
-    }
-    if (entity.hasComponent<ActiveComponent>()) {
-        newEntity.addComponent<ActiveComponent>();
-    }
-
-    // If original has a parent, parent the copy to the same parent
-    World::EntityId parent = Hierarchy::getParent(world, entity.id());
-    if (parent != World::kNullEntity) {
-        Hierarchy::setParent(world, newEntity.id(), parent);
-    }
-
-    m_selectedEntity = newEntity;
-    m_editor.selectEntity(newEntity);
-    m_editor.markSceneModified();
+    auto cmd = std::make_unique<DuplicateEntityCommand>(
+        m_editor.getWorld(), entity.id(), [this](Entity newEntity) {
+            m_selectedEntity = newEntity;
+            m_editor.selectEntity(newEntity);
+        });
+    m_editor.executeCommand(std::move(cmd));
 }
 
 void SceneHierarchyPanel::deleteEntity(Entity entity) {
@@ -231,17 +196,15 @@ void SceneHierarchyPanel::deleteEntity(Entity entity) {
         return;
     }
 
-    auto& world = m_editor.getWorld();
+    bool wasSelected = m_selectedEntity.isValid() && m_selectedEntity.id() == entity.id();
 
-    // Destroy with children
-    Hierarchy::destroyWithChildren(world, entity.id());
+    auto cmd = std::make_unique<DeleteEntityCommand>(m_editor.getWorld(), entity.id());
+    m_editor.executeCommand(std::move(cmd));
 
-    if (m_selectedEntity.id() == entity.id()) {
+    if (wasSelected) {
         m_selectedEntity = Entity();
         m_editor.deselectAll();
     }
-
-    m_editor.markSceneModified();
 }
 
 void SceneHierarchyPanel::drawContextMenu() {}

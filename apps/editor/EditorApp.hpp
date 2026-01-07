@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limbo/Limbo.hpp>
+#include "commands/CommandHistory.hpp"
 #include "panels/SceneHierarchyPanel.hpp"
 #include "panels/InspectorPanel.hpp"
 #include "panels/ViewportPanel.hpp"
@@ -68,6 +69,26 @@ public:
     // Scene modification tracking
     void markSceneModified() { m_sceneModified = true; }
 
+    // Command system access
+    CommandHistory& getCommandHistory() { return m_commandHistory; }
+
+    /**
+     * Execute a command through the undo/redo system
+     * @param command The command to execute
+     * @return True if the command executed successfully
+     */
+    bool executeCommand(Unique<Command> command);
+
+    /**
+     * Undo the last command
+     */
+    void undo();
+
+    /**
+     * Redo the last undone command
+     */
+    void redo();
+
 private:
     // Rendering
     Unique<RenderContext> m_renderContext;
@@ -95,6 +116,13 @@ private:
     std::filesystem::path m_currentScenePath;
     bool m_sceneModified = false;
 
+    // Play mode state preservation
+    String m_savedSceneState;       // Serialized scene before play
+    bool m_wasModifiedBeforePlay = false;
+
+    // Command history for undo/redo
+    CommandHistory m_commandHistory;
+
     // Selection
     Entity m_selectedEntity;
 
@@ -103,6 +131,9 @@ private:
 
     // UI state
     bool m_showDemoWindow = false;
+
+    // Layout persistence
+    std::string m_layoutIniPath;
 };
 
 }  // namespace limbo::editor
