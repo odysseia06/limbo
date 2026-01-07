@@ -6,6 +6,9 @@ set(TEST_SOURCES
     core/test_types.cpp
     core/test_asset_id.cpp
     util/test_file_io.cpp
+    math/test_transform.cpp
+    ecs/test_world.cpp
+    scene/test_serialization.cpp
 )
 
 # Create test executable

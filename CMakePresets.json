@@ -1,0 +1,207 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            }
+        },
+        {
+            "name": "base-ninja",
+            "hidden": true,
+            "inherits": "base",
+            "generator": "Ninja"
+        },
+        {
+            "name": "base-vs",
+            "hidden": true,
+            "inherits": "base",
+            "generator": "Visual Studio 17 2022",
+            "architecture": "x64"
+        },
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "description": "Debug build with full symbols",
+            "inherits": "base-ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "description": "Optimized release build",
+            "inherits": "base-ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "relwithdebinfo",
+            "displayName": "RelWithDebInfo",
+            "description": "Release build with debug info",
+            "inherits": "base-ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "debug-vs",
+            "displayName": "Debug (Visual Studio)",
+            "description": "Debug build using Visual Studio",
+            "inherits": "base-vs"
+        },
+        {
+            "name": "release-vs",
+            "displayName": "Release (Visual Studio)",
+            "description": "Release build using Visual Studio",
+            "inherits": "base-vs"
+        },
+        {
+            "name": "asan",
+            "displayName": "Debug + ASan",
+            "description": "Debug build with Address Sanitizer (Clang/GCC only)",
+            "inherits": "debug",
+            "cacheVariables": {
+                "LIMBO_ENABLE_ASAN": "ON"
+            }
+        },
+        {
+            "name": "ubsan",
+            "displayName": "Debug + UBSan",
+            "description": "Debug build with Undefined Behavior Sanitizer (Clang/GCC only)",
+            "inherits": "debug",
+            "cacheVariables": {
+                "LIMBO_ENABLE_UBSAN": "ON"
+            }
+        },
+        {
+            "name": "ci-linux",
+            "displayName": "CI Linux",
+            "description": "CI build configuration for Linux",
+            "inherits": "base-ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "LIMBO_WARNINGS_AS_ERRORS": "ON"
+            }
+        },
+        {
+            "name": "ci-windows",
+            "displayName": "CI Windows",
+            "description": "CI build configuration for Windows",
+            "inherits": "base-ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "LIMBO_WARNINGS_AS_ERRORS": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "displayName": "Release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "relwithdebinfo",
+            "displayName": "RelWithDebInfo",
+            "configurePreset": "relwithdebinfo"
+        },
+        {
+            "name": "debug-vs",
+            "displayName": "Debug (VS)",
+            "configurePreset": "debug-vs",
+            "configuration": "Debug"
+        },
+        {
+            "name": "release-vs",
+            "displayName": "Release (VS)",
+            "configurePreset": "release-vs",
+            "configuration": "Release"
+        },
+        {
+            "name": "asan",
+            "displayName": "Debug + ASan",
+            "configurePreset": "asan"
+        },
+        {
+            "name": "ubsan",
+            "displayName": "Debug + UBSan",
+            "configurePreset": "ubsan"
+        },
+        {
+            "name": "ci-linux",
+            "displayName": "CI Linux",
+            "configurePreset": "ci-linux"
+        },
+        {
+            "name": "ci-windows",
+            "displayName": "CI Windows",
+            "configurePreset": "ci-windows"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "debug",
+            "displayName": "Debug Tests",
+            "configurePreset": "debug",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Release Tests",
+            "configurePreset": "release",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "asan",
+            "displayName": "ASan Tests",
+            "configurePreset": "asan",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "ubsan",
+            "displayName": "UBSan Tests",
+            "configurePreset": "ubsan",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "ci-linux",
+            "displayName": "CI Linux Tests",
+            "configurePreset": "ci-linux",
+            "output": {
+                "outputOnFailure": true
+            }
+        },
+        {
+            "name": "ci-windows",
+            "displayName": "CI Windows Tests",
+            "configurePreset": "ci-windows",
+            "output": {
+                "outputOnFailure": true
+            }
+        }
+    ]
+}

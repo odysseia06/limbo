@@ -91,3 +91,82 @@ jobs:
         run: |
           find engine apps tests -name "*.cpp" -o -name "*.hpp" | \
             xargs clang-format-15 --dry-run --Werror
+
+  clang-tidy:
+    runs-on: ubuntu-latest
+    name: Static Analysis (clang-tidy)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            clang-tidy \
+            ninja-build \
+            libxinerama-dev \
+            libxcursor-dev \
+            xorg-dev \
+            libglu1-mesa-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            wayland-protocols \
+            extra-cmake-modules
+
+      - name: Configure CMake
+        run: cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy
+        run: |
+          find engine/src apps -name "*.cpp" | head -50 | \
+            xargs clang-tidy -p build --config-file=.clang-tidy
+
+  sanitizers:
+    runs-on: ubuntu-latest
+    name: Sanitizers (ASan + UBSan)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            ninja-build \
+            libxinerama-dev \
+            libxcursor-dev \
+            xorg-dev \
+            libglu1-mesa-dev \
+            libxrandr-dev \
+            libxi-dev \
+            libwayland-dev \
+            libxkbcommon-dev \
+            wayland-protocols \
+            extra-cmake-modules
+
+      - name: Configure CMake (ASan)
+        run: cmake -B build-asan -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_ENABLE_ASAN=ON -DLIMBO_BUILD_TESTS=ON
+
+      - name: Build (ASan)
+        run: cmake --build build-asan --parallel
+
+      - name: Run Tests (ASan)
+        run: ctest --test-dir build-asan --output-on-failure
+        env:
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+
+      - name: Configure CMake (UBSan)
+        run: cmake -B build-ubsan -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_ENABLE_UBSAN=ON -DLIMBO_BUILD_TESTS=ON
+
+      - name: Build (UBSan)
+        run: cmake --build build-ubsan --parallel
+
+      - name: Run Tests (UBSan)
+        run: ctest --test-dir build-ubsan --output-on-failure
+        env:
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1

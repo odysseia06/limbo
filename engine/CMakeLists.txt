@@ -52,6 +52,7 @@ set(LIMBO_ENGINE_SOURCES
 
     # Debug module
     src/debug/Debug.cpp
+    src/debug/Log.cpp
 
     # Physics 2D module
     src/physics/2d/Physics2D.cpp
@@ -147,6 +148,8 @@ set(LIMBO_ENGINE_HEADERS
 
     # Debug headers
     include/limbo/debug/Debug.hpp
+    include/limbo/debug/Log.hpp
+    include/limbo/debug/Validation.hpp
 
     # Physics 2D headers
     include/limbo/physics/2d/Physics2D.hpp

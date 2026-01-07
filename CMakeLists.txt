@@ -19,6 +19,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(Warnings)
 include(Options)
+include(ClangTidy)
 
 # Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -50,3 +51,7 @@ if(LIMBO_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
+
+# Create clang-tidy targets
+limbo_add_clang_tidy_target()
+limbo_add_clang_tidy_fix_target()

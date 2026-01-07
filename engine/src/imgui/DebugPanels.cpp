@@ -3,9 +3,11 @@
 #include "limbo/ecs/Components.hpp"
 #include "limbo/assets/AssetManager.hpp"
 #include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <imgui.h>
 #include <deque>
+#include <mutex>
 #include <string>
 
 namespace limbo {
@@ -171,16 +173,82 @@ void showDemoWindow() {
 // Log Console
 // ============================================================================
 
-// Simple ring buffer for log messages
-struct LogEntry {
+namespace {
+
+struct ConsoleLogEntry {
     std::string message;
-    int level;  // 0=trace, 1=debug, 2=info, 3=warn, 4=error
+    std::string category;
+    spdlog::level::level_enum level;
 };
 
-static std::deque<LogEntry> s_logBuffer;
-static constexpr size_t MAX_LOG_ENTRIES = 500;
+std::deque<ConsoleLogEntry> s_logBuffer;
+std::mutex s_logBufferMutex;
+constexpr size_t MAX_LOG_ENTRIES = 1000;
+bool s_callbackRegistered = false;
+
+void logCallback(const log::LogEntry& entry) {
+    std::lock_guard<std::mutex> lock(s_logBufferMutex);
+
+    ConsoleLogEntry consoleEntry;
+    consoleEntry.message = entry.message;
+    consoleEntry.category = entry.category;
+    consoleEntry.level = entry.level;
+
+    s_logBuffer.push_back(std::move(consoleEntry));
+
+    // Limit buffer size
+    while (s_logBuffer.size() > MAX_LOG_ENTRIES) {
+        s_logBuffer.pop_front();
+    }
+}
+
+ImVec4 getLevelColor(spdlog::level::level_enum level) {
+    switch (level) {
+    case spdlog::level::trace:
+        return ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+    case spdlog::level::debug:
+        return ImVec4(0.6f, 0.6f, 0.8f, 1.0f);
+    case spdlog::level::info:
+        return ImVec4(0.4f, 0.8f, 0.4f, 1.0f);
+    case spdlog::level::warn:
+        return ImVec4(1.0f, 0.8f, 0.3f, 1.0f);
+    case spdlog::level::err:
+        return ImVec4(1.0f, 0.4f, 0.4f, 1.0f);
+    case spdlog::level::critical:
+        return ImVec4(1.0f, 0.2f, 0.2f, 1.0f);
+    default:
+        return ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+}
+
+const char* getLevelName(spdlog::level::level_enum level) {
+    switch (level) {
+    case spdlog::level::trace:
+        return "TRACE";
+    case spdlog::level::debug:
+        return "DEBUG";
+    case spdlog::level::info:
+        return "INFO";
+    case spdlog::level::warn:
+        return "WARN";
+    case spdlog::level::err:
+        return "ERROR";
+    case spdlog::level::critical:
+        return "CRIT";
+    default:
+        return "???";
+    }
+}
+
+}  // namespace
 
 void showLogConsole() {
+    // Register callback on first call
+    if (!s_callbackRegistered) {
+        log::addLogCallback(logCallback);
+        s_callbackRegistered = true;
+    }
+
     ImGui::Begin("Log Console");
 
     // Filter buttons
@@ -189,6 +257,9 @@ void showLogConsole() {
     static bool showInfo = true;
     static bool showWarn = true;
     static bool showError = true;
+
+    // Category filter
+    static char categoryFilter[64] = "";
 
     ImGui::Checkbox("Trace", &showTrace);
     ImGui::SameLine();
@@ -200,8 +271,25 @@ void showLogConsole() {
     ImGui::SameLine();
     ImGui::Checkbox("Error", &showError);
 
+    ImGui::SameLine();
+    ImGui::Spacing();
+    ImGui::SameLine();
+
     if (ImGui::Button("Clear")) {
+        std::lock_guard<std::mutex> lock(s_logBufferMutex);
         s_logBuffer.clear();
+    }
+
+    ImGui::SetNextItemWidth(120);
+    ImGui::InputTextWithHint("##CategoryFilter", "Category filter", categoryFilter,
+                             sizeof(categoryFilter));
+
+    ImGui::Separator();
+
+    // Log entry count
+    {
+        std::lock_guard<std::mutex> lock(s_logBufferMutex);
+        ImGui::Text("Entries: %zu / %zu", s_logBuffer.size(), MAX_LOG_ENTRIES);
     }
 
     ImGui::Separator();
@@ -209,46 +297,56 @@ void showLogConsole() {
     // Log display
     if (ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), ImGuiChildFlags_None,
                           ImGuiWindowFlags_HorizontalScrollbar)) {
-        for (const auto& entry : s_logBuffer) {
-            bool show = false;
-            ImVec4 color;
+        std::lock_guard<std::mutex> lock(s_logBufferMutex);
 
+        for (const auto& entry : s_logBuffer) {
+            // Level filter
+            bool showLevel = false;
             switch (entry.level) {
-            case 0:
-                show = showTrace;
-                color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+            case spdlog::level::trace:
+                showLevel = showTrace;
                 break;
-            case 1:
-                show = showDebug;
-                color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f);
+            case spdlog::level::debug:
+                showLevel = showDebug;
                 break;
-            case 2:
-                show = showInfo;
-                color = ImVec4(0.4f, 0.8f, 0.4f, 1.0f);
+            case spdlog::level::info:
+                showLevel = showInfo;
                 break;
-            case 3:
-                show = showWarn;
-                color = ImVec4(1.0f, 0.8f, 0.3f, 1.0f);
+            case spdlog::level::warn:
+                showLevel = showWarn;
                 break;
-            case 4:
-                show = showError;
-                color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f);
+            case spdlog::level::err:
+            case spdlog::level::critical:
+                showLevel = showError;
                 break;
             default:
-                show = true;
-                color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+                showLevel = true;
                 break;
             }
 
-            if (show) {
-                ImGui::PushStyleColor(ImGuiCol_Text, color);
-                ImGui::TextUnformatted(entry.message.c_str());
-                ImGui::PopStyleColor();
+            if (!showLevel) {
+                continue;
             }
+
+            // Category filter
+            if (categoryFilter[0] != '\0') {
+                if (entry.category.find(categoryFilter) == std::string::npos) {
+                    continue;
+                }
+            }
+
+            // Format: [LEVEL] [CATEGORY] message
+            ImVec4 color = getLevelColor(entry.level);
+            ImGui::PushStyleColor(ImGuiCol_Text, color);
+
+            ImGui::Text("[%s] [%s] %s", getLevelName(entry.level), entry.category.c_str(),
+                        entry.message.c_str());
+
+            ImGui::PopStyleColor();
         }
 
-        // Auto-scroll
-        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+        // Auto-scroll to bottom
+        if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY() - 10.0f) {
             ImGui::SetScrollHereY(1.0f);
         }
     }

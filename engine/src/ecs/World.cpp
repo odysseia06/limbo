@@ -26,7 +26,7 @@ bool World::isValid(EntityId entity) const {
 }
 
 usize World::entityCount() const {
-    return static_cast<usize>(m_registry.storage<EntityId>()->size());
+    return static_cast<usize>(m_registry.storage<EntityId>()->in_use());
 }
 
 void World::clear() {
