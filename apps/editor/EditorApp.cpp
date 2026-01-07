@@ -7,7 +7,7 @@ namespace limbo::editor {
 
 EditorApp::EditorApp()
     : m_hierarchyPanel(*this), m_inspectorPanel(*this), m_viewportPanel(*this),
-      m_assetBrowserPanel(*this) {}
+      m_assetBrowserPanel(*this), m_assetPipelinePanel(*this) {}
 
 void EditorApp::onInit() {
     spdlog::info("Limbo Editor initialized");
@@ -48,6 +48,7 @@ void EditorApp::onInit() {
     m_inspectorPanel.init();
     m_viewportPanel.init();
     m_assetBrowserPanel.init();
+    m_assetPipelinePanel.init();
 
     // Start with a new scene
     newScene();
@@ -83,6 +84,7 @@ void EditorApp::onUpdate(f32 deltaTime) {
 
     // Update panels
     m_viewportPanel.update(deltaTime);
+    m_assetPipelinePanel.update(deltaTime);
 
     // Reset renderer stats
     Renderer2D::resetStats();
@@ -172,6 +174,7 @@ void EditorApp::renderMenuBar() {
             ImGui::MenuItem("Inspector", nullptr, &m_inspectorPanel.isOpen());
             ImGui::MenuItem("Viewport", nullptr, &m_viewportPanel.isOpen());
             ImGui::MenuItem("Asset Browser", nullptr, &m_assetBrowserPanel.isOpen());
+            ImGui::MenuItem("Asset Pipeline", nullptr, &m_assetPipelinePanel.isOpen());
             ImGui::Separator();
             ImGui::MenuItem("ImGui Demo", "F1", &m_showDemoWindow);
             ImGui::EndMenu();
@@ -288,6 +291,7 @@ void EditorApp::renderDockspace() {
     m_inspectorPanel.render();
     m_viewportPanel.render();
     m_assetBrowserPanel.render();
+    m_assetPipelinePanel.render();
 
     // Status bar
     renderStatusBar();
@@ -403,6 +407,7 @@ void EditorApp::deselectAll() {
 }
 
 void EditorApp::onShutdown() {
+    m_assetPipelinePanel.shutdown();
     m_assetBrowserPanel.shutdown();
     m_viewportPanel.shutdown();
     m_inspectorPanel.shutdown();

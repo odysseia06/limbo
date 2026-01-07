@@ -5,6 +5,7 @@
 #include "panels/InspectorPanel.hpp"
 #include "panels/ViewportPanel.hpp"
 #include "panels/AssetBrowserPanel.hpp"
+#include "panels/AssetPipelinePanel.hpp"
 
 #include <filesystem>
 
@@ -78,6 +79,7 @@ private:
     InspectorPanel m_inspectorPanel;
     ViewportPanel m_viewportPanel;
     AssetBrowserPanel m_assetBrowserPanel;
+    AssetPipelinePanel m_assetPipelinePanel;
 
     // Assets
     AssetManager m_assetManager;
