@@ -8,12 +8,20 @@
 
 namespace limbo {
 
+// Current scene format version
+inline constexpr i32 kSceneFormatVersion = 2;
+
 /**
  * SceneSerializer - Saves and loads scenes to/from JSON files
  *
  * Handles serialization of entities and their components to a human-readable
  * JSON format. Supports all built-in components and can be extended for
  * custom components.
+ *
+ * Features:
+ * - Schema versioning with automatic migration
+ * - Parent/child hierarchy support
+ * - Component serialization (Transform, SpriteRenderer, Camera, etc.)
  *
  * Usage:
  *   SceneSerializer serializer(world);

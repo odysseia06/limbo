@@ -55,10 +55,13 @@ set(LIMBO_ENGINE_SOURCES
     # Scene module
     src/scene/Scene.cpp
     src/scene/SceneSerializer.cpp
+    src/scene/Prefab.cpp
+    src/scene/SchemaMigration.cpp
 
     # ECS module
     src/ecs/World.cpp
     src/ecs/System.cpp
+    src/ecs/Hierarchy.cpp
     src/ecs/systems/2d/SpriteRenderSystem.cpp
 
     # Debug module
@@ -159,11 +162,14 @@ set(LIMBO_ENGINE_HEADERS
     # Scene headers
     include/limbo/scene/Scene.hpp
     include/limbo/scene/SceneSerializer.hpp
+    include/limbo/scene/Prefab.hpp
+    include/limbo/scene/SchemaMigration.hpp
 
     # ECS headers
     include/limbo/ecs/Components.hpp
     include/limbo/ecs/World.hpp
     include/limbo/ecs/Entity.hpp
+    include/limbo/ecs/Hierarchy.hpp
     include/limbo/ecs/System.hpp
     include/limbo/ecs/systems/2d/SpriteRenderSystem.hpp
     include/limbo/ecs/systems/3d/MeshRenderSystem.hpp

@@ -114,15 +114,18 @@ TEST_CASE("World component operations", "[ecs][world]") {
         world.addComponent<limbo::TransformComponent>(id);
         world.addComponent<limbo::SpriteRendererComponent>(id);
 
-        REQUIRE(world.hasAllComponents<limbo::TransformComponent, limbo::SpriteRendererComponent>(id));
-        REQUIRE_FALSE(world.hasAllComponents<limbo::TransformComponent, limbo::CameraComponent>(id));
+        REQUIRE(
+            world.hasAllComponents<limbo::TransformComponent, limbo::SpriteRendererComponent>(id));
+        REQUIRE_FALSE(
+            world.hasAllComponents<limbo::TransformComponent, limbo::CameraComponent>(id));
     }
 
     SECTION("Has any component") {
         world.addComponent<limbo::TransformComponent>(id);
 
         REQUIRE(world.hasAnyComponent<limbo::TransformComponent, limbo::CameraComponent>(id));
-        REQUIRE_FALSE(world.hasAnyComponent<limbo::SpriteRendererComponent, limbo::CameraComponent>(id));
+        REQUIRE_FALSE(
+            world.hasAnyComponent<limbo::SpriteRendererComponent, limbo::CameraComponent>(id));
     }
 }
 
