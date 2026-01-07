@@ -10,6 +10,7 @@ add_executable(assetcooker
 
 target_link_libraries(assetcooker
     PRIVATE
+        limbo::engine
         fmt::fmt
         spdlog::spdlog
 )

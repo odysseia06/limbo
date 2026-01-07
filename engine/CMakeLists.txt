@@ -12,6 +12,7 @@ set(LIMBO_ENGINE_SOURCES
     # Core module
     src/core/Types.cpp
     src/core/Time.cpp
+    src/core/UUID.cpp
 
     # Util module
     src/util/FileIO.cpp
@@ -39,7 +40,9 @@ set(LIMBO_ENGINE_SOURCES
 
     # Assets module
     src/assets/AssetId.cpp
+    src/assets/AssetImporter.cpp
     src/assets/AssetManager.cpp
+    src/assets/AssetRegistry.cpp
     src/assets/TextureAsset.cpp
     src/assets/ShaderAsset.cpp
     src/assets/AudioAsset.cpp
@@ -101,6 +104,7 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/core/Base.hpp
     include/limbo/core/Assert.hpp
     include/limbo/core/Time.hpp
+    include/limbo/core/UUID.hpp
 
     # Util headers
     include/limbo/util/FileIO.hpp
@@ -135,8 +139,10 @@ set(LIMBO_ENGINE_HEADERS
 
     # Assets headers
     include/limbo/assets/AssetId.hpp
+    include/limbo/assets/AssetImporter.hpp
     include/limbo/assets/Asset.hpp
     include/limbo/assets/AssetManager.hpp
+    include/limbo/assets/AssetRegistry.hpp
     include/limbo/assets/TextureAsset.hpp
     include/limbo/assets/ShaderAsset.hpp
     include/limbo/assets/AudioAsset.hpp
