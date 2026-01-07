@@ -5,6 +5,7 @@
 #include "limbo/assets/Asset.hpp"
 #include "limbo/assets/AssetId.hpp"
 #include "limbo/assets/FileWatcher.hpp"
+#include "limbo/assets/HotReloadManager.hpp"
 
 #include <filesystem>
 #include <unordered_map>
@@ -124,7 +125,7 @@ public:
      * Enable or disable hot-reloading
      * When enabled, assets will be automatically reloaded when their files change
      */
-    void setHotReloadEnabled(bool enabled) { m_hotReloadEnabled = enabled; }
+    void setHotReloadEnabled(bool enabled);
 
     /**
      * Check if hot-reloading is enabled
@@ -139,16 +140,40 @@ public:
 
     /**
      * Get the file watcher (for advanced configuration)
+     * @deprecated Use getHotReloadManager() instead
      */
     [[nodiscard]] FileWatcher& getFileWatcher() { return m_fileWatcher; }
 
+    /**
+     * Get the hot reload manager
+     */
+    [[nodiscard]] HotReloadManager& getHotReloadManager() { return m_hotReloadManager; }
+    [[nodiscard]] const HotReloadManager& getHotReloadManager() const {
+        return m_hotReloadManager;
+    }
+
+    /**
+     * Register a dependency between assets for hot-reload propagation
+     * When dependencyId changes, assetId will be reloaded too
+     */
+    void addAssetDependency(AssetId assetId, AssetId dependencyId);
+
+    /**
+     * Set callback for after an asset is reloaded
+     */
+    void setReloadCallback(ReloadCallback callback);
+
 private:
+    void setupHotReloadManager();
+
     std::filesystem::path m_assetRoot = "assets";
     std::unordered_map<AssetId, Shared<Asset>> m_assets;
     std::unordered_map<std::type_index, std::vector<AssetId>> m_assetsByType;
 
     FileWatcher m_fileWatcher;
+    HotReloadManager m_hotReloadManager;
     bool m_hotReloadEnabled = false;
+    ReloadCallback m_reloadCallback;
 };
 
 // Template implementations
@@ -178,10 +203,8 @@ Shared<T> AssetManager::load(const std::filesystem::path& path) {
 
         // Register file dependencies for hot-reload
         if (m_hotReloadEnabled) {
-            for (const auto& depPath : asset->getDependencies()) {
-                m_fileWatcher.watch(depPath,
-                                    [this, id](const std::filesystem::path&) { reload(id); });
-            }
+            std::vector<std::filesystem::path> deps = asset->getDependencies();
+            m_hotReloadManager.watchAsset(id, deps);
         }
     } else {
         asset->setState(AssetState::Failed);

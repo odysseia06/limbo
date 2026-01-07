@@ -50,6 +50,7 @@ set(LIMBO_ENGINE_SOURCES
     src/assets/AudioAsset.cpp
     src/assets/SpriteAtlasAsset.cpp
     src/assets/FileWatcher.cpp
+    src/assets/HotReloadManager.cpp
 
     # Scene module
     src/scene/Scene.cpp
@@ -153,6 +154,7 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/assets/AudioAsset.hpp
     include/limbo/assets/SpriteAtlasAsset.hpp
     include/limbo/assets/FileWatcher.hpp
+    include/limbo/assets/HotReloadManager.hpp
 
     # Scene headers
     include/limbo/scene/Scene.hpp

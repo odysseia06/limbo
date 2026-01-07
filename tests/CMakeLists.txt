@@ -10,6 +10,7 @@ set(TEST_SOURCES
     ecs/test_world.cpp
     scene/test_serialization.cpp
     render/test_sprite_atlas.cpp
+    assets/test_hot_reload.cpp
 )
 
 # Create test executable
