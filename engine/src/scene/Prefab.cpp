@@ -43,8 +43,12 @@ glm::vec3 deserializeVec3(const json& j) {
 
 glm::vec4 deserializeVec4(const json& j) {
     if (j.is_array() && j.size() >= 4) {
+<<<<<<< HEAD
         return glm::vec4(j[0].get<float>(), j[1].get<float>(), j[2].get<float>(),
                          j[3].get<float>());
+=======
+        return glm::vec4(j[0].get<float>(), j[1].get<float>(), j[2].get<float>(), j[3].get<float>());
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
     }
     return glm::vec4(1.0f);
 }
@@ -69,6 +73,7 @@ Prefab Prefab::createFromEntity(World& world, World::EntityId rootEntity) {
     std::unordered_map<World::EntityId, i32> entityIndexMap;
 
     // Recursive function to collect entities
+<<<<<<< HEAD
     std::function<void(World::EntityId, i32)> collectEntities = [&](World::EntityId entityId,
                                                                     i32 parentIndex) {
         i32 currentIndex = static_cast<i32>(entityList.size());
@@ -84,6 +89,23 @@ Prefab Prefab::createFromEntity(World& world, World::EntityId rootEntity) {
             return true;
         });
     };
+=======
+    std::function<void(World::EntityId, i32)> collectEntities =
+        [&](World::EntityId entityId, i32 parentIndex) {
+            i32 currentIndex = static_cast<i32>(entityList.size());
+            entityList.push_back(entityId);
+            entityIndexMap[entityId] = currentIndex;
+
+            // Serialize this entity
+            prefab.m_entities.push_back(serializeEntity(world, entityId, parentIndex));
+
+            // Process children
+            Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
+                collectEntities(childId, currentIndex);
+                return true;
+            });
+        };
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
 
     collectEntities(rootEntity, -1);
 
@@ -131,7 +153,11 @@ PrefabEntity Prefab::serializeEntity(World& world, World::EntityId entityId, i32
         json cameraJson;
         cameraJson["projectionType"] =
             camera.projectionType == CameraComponent::ProjectionType::Perspective ? "perspective"
+<<<<<<< HEAD
                                                                                   : "orthographic";
+=======
+                                                                                   : "orthographic";
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
         cameraJson["fov"] = camera.fov;
         cameraJson["orthoSize"] = camera.orthoSize;
         cameraJson["nearClip"] = camera.nearClip;
@@ -186,6 +212,10 @@ Entity Prefab::instantiate(World& world, const glm::vec3& position) const {
 World::EntityId Prefab::deserializeEntity(
     World& world, const PrefabEntity& prefabEntity,
     [[maybe_unused]] const std::vector<World::EntityId>& createdEntities) const {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
     Entity entity = world.createEntity(prefabEntity.name);
 
     // Transform

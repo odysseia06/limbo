@@ -38,9 +38,15 @@ struct PrefabEntity {
  * Tracks which prefab this entity came from and any property overrides.
  */
 struct PrefabInstanceComponent {
+<<<<<<< HEAD
     UUID prefabId;        // UUID of the source prefab asset
     i32 entityIndex = 0;  // Index of this entity in the prefab's entity list
     bool isRoot = true;   // Is this the root entity of the prefab instance?
+=======
+    UUID prefabId;                // UUID of the source prefab asset
+    i32 entityIndex = 0;          // Index of this entity in the prefab's entity list
+    bool isRoot = true;           // Is this the root entity of the prefab instance?
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
 
     // Override tracking - stores which properties have been modified
     // Key: component name + "." + property name, Value: true if overridden

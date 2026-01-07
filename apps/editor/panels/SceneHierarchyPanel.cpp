@@ -85,7 +85,12 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
         hasChildren = world.getComponent<HierarchyComponent>(entity.id()).hasChildren();
     }
 
+<<<<<<< HEAD
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanAvailWidth |
+=======
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
+                               ImGuiTreeNodeFlags_SpanAvailWidth |
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
                                ImGuiTreeNodeFlags_DefaultOpen;
 
     if (!hasChildren) {

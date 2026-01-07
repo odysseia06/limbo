@@ -221,6 +221,7 @@ TEST_CASE("SceneSerializer preserves hierarchy", "[scene][serialization]") {
         limbo::World::EntityId child2Id = limbo::World::kNullEntity;
         limbo::World::EntityId grandchildId = limbo::World::kNullEntity;
 
+<<<<<<< HEAD
         world2.each<limbo::NameComponent>(
             [&](limbo::World::EntityId id, limbo::NameComponent& name) {
                 if (name.name == "Parent")
@@ -232,6 +233,14 @@ TEST_CASE("SceneSerializer preserves hierarchy", "[scene][serialization]") {
                 if (name.name == "Grandchild")
                     grandchildId = id;
             });
+=======
+        world2.each<limbo::NameComponent>([&](limbo::World::EntityId id, limbo::NameComponent& name) {
+            if (name.name == "Parent") parentId = id;
+            if (name.name == "Child1") child1Id = id;
+            if (name.name == "Child2") child2Id = id;
+            if (name.name == "Grandchild") grandchildId = id;
+        });
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
 
         REQUIRE(parentId != limbo::World::kNullEntity);
         REQUIRE(child1Id != limbo::World::kNullEntity);
@@ -257,11 +266,17 @@ TEST_CASE("SceneSerializer preserves hierarchy", "[scene][serialization]") {
         serializer2.deserialize(json);
 
         limbo::World::EntityId grandchildId = limbo::World::kNullEntity;
+<<<<<<< HEAD
         world2.each<limbo::NameComponent>(
             [&](limbo::World::EntityId id, limbo::NameComponent& name) {
                 if (name.name == "Grandchild")
                     grandchildId = id;
             });
+=======
+        world2.each<limbo::NameComponent>([&](limbo::World::EntityId id, limbo::NameComponent& name) {
+            if (name.name == "Grandchild") grandchildId = id;
+        });
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
 
         REQUIRE(grandchildId != limbo::World::kNullEntity);
 

@@ -71,8 +71,12 @@ void detachFromParent(World& world, World::EntityId entity);
  * @param descendant The potential descendant
  * @return True if ancestor is in descendant's parent chain
  */
+<<<<<<< HEAD
 [[nodiscard]] bool isAncestorOf(const World& world, World::EntityId ancestor,
                                 World::EntityId descendant);
+=======
+[[nodiscard]] bool isAncestorOf(const World& world, World::EntityId ancestor, World::EntityId descendant);
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
 
 /**
  * Get the depth of an entity in the hierarchy

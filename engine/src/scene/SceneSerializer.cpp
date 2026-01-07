@@ -56,8 +56,13 @@ glm::vec4 deserializeVec4(const json& j) {
 }
 
 // Build a map from entity ID to index for hierarchy serialization
+<<<<<<< HEAD
 std::unordered_map<World::EntityId, i32>
 buildEntityIndexMap(World& world, const std::vector<World::EntityId>& orderedEntities) {
+=======
+std::unordered_map<World::EntityId, i32> buildEntityIndexMap(
+    World& world, const std::vector<World::EntityId>& orderedEntities) {
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
     std::unordered_map<World::EntityId, i32> map;
     for (i32 i = 0; i < static_cast<i32>(orderedEntities.size()); ++i) {
         map[orderedEntities[static_cast<usize>(i)]] = i;
@@ -362,8 +367,14 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                     i32 parentIndex = hierarchyJson["parent"].get<i32>();
                     if (parentIndex >= 0 &&
                         static_cast<usize>(parentIndex) < loadedEntities.size()) {
+<<<<<<< HEAD
                         Hierarchy::setParent(m_world, entityId,
                                              loadedEntities[static_cast<usize>(parentIndex)]);
+=======
+                        Hierarchy::setParent(
+                            m_world, entityId,
+                            loadedEntities[static_cast<usize>(parentIndex)]);
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
                     }
                 }
             }
@@ -398,9 +409,16 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
 
                 if (cameraJson.contains("projectionType")) {
                     String projType = cameraJson["projectionType"].get<String>();
+<<<<<<< HEAD
                     camera.projectionType = (projType == "orthographic")
                                                 ? CameraComponent::ProjectionType::Orthographic
                                                 : CameraComponent::ProjectionType::Perspective;
+=======
+                    camera.projectionType =
+                        (projType == "orthographic")
+                            ? CameraComponent::ProjectionType::Orthographic
+                            : CameraComponent::ProjectionType::Perspective;
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
                 }
                 if (cameraJson.contains("fov")) {
                     camera.fov = cameraJson["fov"].get<f32>();

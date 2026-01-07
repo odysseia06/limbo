@@ -406,7 +406,12 @@ void sortChildren(World& world, World::EntityId entity,
     for (usize i = 0; i < children.size(); ++i) {
         auto* childHierarchy = world.tryGetComponent<HierarchyComponent>(children[i]);
         if (childHierarchy != nullptr) {
+<<<<<<< HEAD
             childHierarchy->prevSibling = (i > 0) ? children[i - 1] : World::kNullEntity;
+=======
+            childHierarchy->prevSibling =
+                (i > 0) ? children[i - 1] : World::kNullEntity;
+>>>>>>> 06875892ed8995d879d0cd1681cf1409670aa9f0
             childHierarchy->nextSibling =
                 (i < children.size() - 1) ? children[i + 1] : World::kNullEntity;
         }
