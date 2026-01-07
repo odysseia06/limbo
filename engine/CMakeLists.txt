@@ -11,6 +11,7 @@ endif()
 set(LIMBO_ENGINE_SOURCES
     # Core module
     src/core/Types.cpp
+    src/core/Time.cpp
 
     # Util module
     src/util/FileIO.cpp
@@ -18,6 +19,9 @@ set(LIMBO_ENGINE_SOURCES
     # Platform module
     src/platform/Platform.cpp
     src/platform/Input.cpp
+
+    # Input module
+    src/input/InputManager.cpp
 
     # Runtime module
     src/runtime/Application.cpp
@@ -96,6 +100,7 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/core/Types.hpp
     include/limbo/core/Base.hpp
     include/limbo/core/Assert.hpp
+    include/limbo/core/Time.hpp
 
     # Util headers
     include/limbo/util/FileIO.hpp
@@ -103,6 +108,9 @@ set(LIMBO_ENGINE_HEADERS
     # Platform headers
     include/limbo/platform/Platform.hpp
     include/limbo/platform/Input.hpp
+
+    # Input headers
+    include/limbo/input/InputManager.hpp
 
     # Runtime headers
     include/limbo/runtime/Application.hpp

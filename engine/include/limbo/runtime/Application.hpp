@@ -2,6 +2,7 @@
 
 #include "limbo/core/Base.hpp"
 #include "limbo/core/Types.hpp"
+#include "limbo/core/Time.hpp"
 #include "limbo/platform/Platform.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/System.hpp"
@@ -11,6 +12,7 @@ namespace limbo {
 struct ApplicationConfig {
     WindowConfig window;
     String appName = "Limbo Application";
+    TimeConfig time;  // Time system configuration
 };
 
 class LIMBO_API Application {
@@ -39,8 +41,9 @@ public:
 
 protected:
     virtual void onInit() {}
+    virtual void onFixedUpdate([[maybe_unused]] f32 fixedDeltaTime) {}
     virtual void onUpdate([[maybe_unused]] f32 deltaTime) {}
-    virtual void onRender() {}
+    virtual void onRender([[maybe_unused]] f32 interpolationAlpha) {}
     virtual void onShutdown() {}
 
 private:
@@ -48,7 +51,6 @@ private:
     World m_world;
     SystemManager m_systems;
     bool m_running = false;
-    f64 m_lastFrameTime = 0.0;
 
     static Application* s_instance;
 };

@@ -88,7 +88,7 @@ void EditorApp::onUpdate(f32 deltaTime) {
     Renderer2D::resetStats();
 }
 
-void EditorApp::onRender() {
+void EditorApp::onRender([[maybe_unused]] f32 interpolationAlpha) {
     // Clear to dark gray
     m_renderContext->clear(0.15f, 0.15f, 0.15f, 1.0f);
 

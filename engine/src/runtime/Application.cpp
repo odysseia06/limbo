@@ -1,5 +1,7 @@
 #include "limbo/runtime/Application.hpp"
+#include "limbo/core/Time.hpp"
 #include "limbo/platform/Input.hpp"
+#include "limbo/input/InputManager.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -35,6 +37,10 @@ Result<void> Application::init(const ApplicationConfig& config) {
 
     // Initialize input system
     Input::init(*m_window);
+    InputManager::init();
+
+    // Initialize time system
+    Time::init(config.time);
 
     onInit();
 
@@ -47,17 +53,18 @@ Result<void> Application::init(const ApplicationConfig& config) {
 
 void Application::run() {
     m_running = true;
-    m_lastFrameTime = platform::getTime();
 
     spdlog::info("Entering main loop");
 
     while (m_running && !m_window->shouldClose()) {
-        f64 const currentTime = platform::getTime();
-        f32 const deltaTime = static_cast<f32>(currentTime - m_lastFrameTime);
-        m_lastFrameTime = currentTime;
+        // Begin frame timing
+        Time::beginFrame();
+        f32 const deltaTime = Time::getDeltaTime();
+        f32 const fixedDeltaTime = Time::getFixedDeltaTime();
 
         // Update input state before polling events
         Input::update();
+        InputManager::update();
 
         m_window->pollEvents();
 
@@ -66,11 +73,19 @@ void Application::run() {
             m_window->setShouldClose(true);
         }
 
-        // Update all systems
-        m_systems.update(m_world, deltaTime);
+        // Fixed timestep updates (physics, deterministic logic)
+        while (Time::shouldFixedUpdate()) {
+            m_systems.fixedUpdate(m_world, fixedDeltaTime);
+            onFixedUpdate(fixedDeltaTime);
+        }
 
+        // Variable timestep update (animations, AI, etc.)
+        m_systems.update(m_world, deltaTime);
         onUpdate(deltaTime);
-        onRender();
+
+        // Render with interpolation alpha for smooth visuals
+        f32 const alpha = Time::getInterpolationAlpha();
+        onRender(alpha);
 
         m_window->swapBuffers();
     }
@@ -88,6 +103,9 @@ void Application::shutdown() {
 
     // Clear all entities
     m_world.clear();
+
+    // Shutdown input manager
+    InputManager::shutdown();
 
     m_window.reset();
     platform::shutdown();

@@ -37,7 +37,7 @@ public:
 protected:
     void onInit() override;
     void onUpdate(f32 deltaTime) override;
-    void onRender() override;
+    void onRender(f32 interpolationAlpha) override;
     void onShutdown() override;
 
 private:
