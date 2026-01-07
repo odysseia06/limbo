@@ -65,6 +65,9 @@ public:
     void deselectAll();
     [[nodiscard]] Entity getSelectedEntity() const { return m_selectedEntity; }
 
+    // Scene modification tracking
+    void markSceneModified() { m_sceneModified = true; }
+
 private:
     // Rendering
     Unique<RenderContext> m_renderContext;

@@ -4,7 +4,9 @@
 #include <limbo/ecs/World.hpp>
 #include <limbo/ecs/Entity.hpp>
 #include <limbo/ecs/Components.hpp>
+#include <limbo/ecs/Hierarchy.hpp>
 #include <limbo/scene/SceneSerializer.hpp>
+#include <limbo/scene/Prefab.hpp>
 
 using Catch::Matchers::WithinAbs;
 
@@ -181,4 +183,165 @@ TEST_CASE("SceneSerializer preserves entity with multiple components", "[scene][
         }
     }
     REQUIRE(hasStatic);
+}
+
+TEST_CASE("SceneSerializer preserves hierarchy", "[scene][serialization]") {
+    limbo::World world;
+
+    // Create a hierarchy: Parent -> Child1, Child2 -> Grandchild
+    auto parent = world.createEntity("Parent");
+    world.addComponent<limbo::TransformComponent>(parent.id(), glm::vec3(10.0f, 0.0f, 0.0f));
+
+    auto child1 = world.createEntity("Child1");
+    world.addComponent<limbo::TransformComponent>(child1.id(), glm::vec3(5.0f, 0.0f, 0.0f));
+    limbo::Hierarchy::setParent(world, child1.id(), parent.id());
+
+    auto child2 = world.createEntity("Child2");
+    world.addComponent<limbo::TransformComponent>(child2.id(), glm::vec3(0.0f, 5.0f, 0.0f));
+    limbo::Hierarchy::setParent(world, child2.id(), parent.id());
+
+    auto grandchild = world.createEntity("Grandchild");
+    world.addComponent<limbo::TransformComponent>(grandchild.id(), glm::vec3(2.0f, 2.0f, 0.0f));
+    limbo::Hierarchy::setParent(world, grandchild.id(), child1.id());
+
+    limbo::SceneSerializer serializer(world);
+    limbo::String json = serializer.serialize();
+
+    SECTION("Roundtrip preserves hierarchy structure") {
+        limbo::World world2;
+        limbo::SceneSerializer serializer2(world2);
+        bool success = serializer2.deserialize(json);
+        REQUIRE(success);
+        REQUIRE(world2.entityCount() == 4);
+
+        // Find entities by name
+        limbo::World::EntityId parentId = limbo::World::kNullEntity;
+        limbo::World::EntityId child1Id = limbo::World::kNullEntity;
+        limbo::World::EntityId child2Id = limbo::World::kNullEntity;
+        limbo::World::EntityId grandchildId = limbo::World::kNullEntity;
+
+        world2.each<limbo::NameComponent>([&](limbo::World::EntityId id, limbo::NameComponent& name) {
+            if (name.name == "Parent") parentId = id;
+            if (name.name == "Child1") child1Id = id;
+            if (name.name == "Child2") child2Id = id;
+            if (name.name == "Grandchild") grandchildId = id;
+        });
+
+        REQUIRE(parentId != limbo::World::kNullEntity);
+        REQUIRE(child1Id != limbo::World::kNullEntity);
+        REQUIRE(child2Id != limbo::World::kNullEntity);
+        REQUIRE(grandchildId != limbo::World::kNullEntity);
+
+        // Verify parent is root
+        REQUIRE(limbo::Hierarchy::getParent(world2, parentId) == limbo::World::kNullEntity);
+
+        // Verify children of parent
+        REQUIRE(limbo::Hierarchy::getParent(world2, child1Id) == parentId);
+        REQUIRE(limbo::Hierarchy::getParent(world2, child2Id) == parentId);
+        REQUIRE(limbo::Hierarchy::getChildCount(world2, parentId) == 2);
+
+        // Verify grandchild
+        REQUIRE(limbo::Hierarchy::getParent(world2, grandchildId) == child1Id);
+        REQUIRE(limbo::Hierarchy::getChildCount(world2, child1Id) == 1);
+    }
+
+    SECTION("World transforms are correct after load") {
+        limbo::World world2;
+        limbo::SceneSerializer serializer2(world2);
+        serializer2.deserialize(json);
+
+        limbo::World::EntityId grandchildId = limbo::World::kNullEntity;
+        world2.each<limbo::NameComponent>([&](limbo::World::EntityId id, limbo::NameComponent& name) {
+            if (name.name == "Grandchild") grandchildId = id;
+        });
+
+        REQUIRE(grandchildId != limbo::World::kNullEntity);
+
+        // Grandchild world position: Parent(10,0,0) + Child1(5,0,0) + Grandchild(2,2,0) = (17,2,0)
+        glm::vec3 worldPos = limbo::Hierarchy::getWorldPosition(world2, grandchildId);
+        REQUIRE_THAT(worldPos.x, WithinAbs(17.0f, 0.001f));
+        REQUIRE_THAT(worldPos.y, WithinAbs(2.0f, 0.001f));
+    }
+}
+
+TEST_CASE("SceneSerializer preserves CameraComponent", "[scene][serialization]") {
+    limbo::World world;
+
+    auto cameraEntity = world.createEntity("MainCamera");
+    world.addComponent<limbo::TransformComponent>(cameraEntity.id());
+    auto& camera = world.addComponent<limbo::CameraComponent>(cameraEntity.id());
+    camera.projectionType = limbo::CameraComponent::ProjectionType::Orthographic;
+    camera.orthoSize = 10.0f;
+    camera.nearClip = 0.01f;
+    camera.farClip = 100.0f;
+    camera.primary = true;
+
+    limbo::SceneSerializer serializer(world);
+    limbo::String json = serializer.serialize();
+
+    limbo::World world2;
+    limbo::SceneSerializer serializer2(world2);
+    bool success = serializer2.deserialize(json);
+    REQUIRE(success);
+
+    bool found = false;
+    world2.each<limbo::NameComponent, limbo::CameraComponent>(
+        [&](auto, limbo::NameComponent& name, limbo::CameraComponent& cam) {
+            if (name.name == "MainCamera") {
+                found = true;
+                REQUIRE(cam.projectionType == limbo::CameraComponent::ProjectionType::Orthographic);
+                REQUIRE_THAT(cam.orthoSize, WithinAbs(10.0f, 0.001f));
+                REQUIRE_THAT(cam.nearClip, WithinAbs(0.01f, 0.001f));
+                REQUIRE_THAT(cam.farClip, WithinAbs(100.0f, 0.001f));
+                REQUIRE(cam.primary == true);
+            }
+        });
+
+    REQUIRE(found);
+}
+
+TEST_CASE("SceneSerializer preserves PrefabInstanceComponent with overrides",
+          "[scene][serialization]") {
+    limbo::World world;
+
+    // Create a prefab and instantiate it
+    auto source = world.createEntity("Template");
+    source.addComponent<limbo::TransformComponent>(glm::vec3(5.0f, 0.0f, 0.0f));
+
+    limbo::Prefab prefab = limbo::Prefab::createFromEntity(world, source.id());
+    limbo::Entity instance = prefab.instantiate(world, glm::vec3(10.0f, 0.0f, 0.0f));
+
+    // Set some overrides
+    auto& prefabInstance = instance.getComponent<limbo::PrefabInstanceComponent>();
+    prefabInstance.setOverride("Transform.position");
+    prefabInstance.setOverride("SpriteRenderer.color");
+
+    limbo::SceneSerializer serializer(world);
+    limbo::String json = serializer.serialize();
+
+    // Deserialize into new world
+    limbo::World world2;
+    limbo::SceneSerializer serializer2(world2);
+    bool success = serializer2.deserialize(json);
+    REQUIRE(success);
+
+    // Find the prefab instance
+    bool found = false;
+    world2.each<limbo::NameComponent, limbo::PrefabInstanceComponent>(
+        [&](auto, limbo::NameComponent& name, limbo::PrefabInstanceComponent& inst) {
+            if (name.name == "Template") {
+                found = true;
+                // Verify prefab ID matches
+                REQUIRE(inst.prefabId == prefab.getPrefabId());
+                REQUIRE(inst.entityIndex == 0);
+                REQUIRE(inst.isRoot == true);
+
+                // Verify overrides survived
+                REQUIRE(inst.hasOverride("Transform.position"));
+                REQUIRE(inst.hasOverride("SpriteRenderer.color"));
+                REQUIRE_FALSE(inst.hasOverride("Transform.rotation"));
+            }
+        });
+
+    REQUIRE(found);
 }

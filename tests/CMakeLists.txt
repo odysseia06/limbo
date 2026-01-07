@@ -8,7 +8,9 @@ set(TEST_SOURCES
     util/test_file_io.cpp
     math/test_transform.cpp
     ecs/test_world.cpp
+    ecs/test_hierarchy.cpp
     scene/test_serialization.cpp
+    scene/test_prefab.cpp
     render/test_sprite_atlas.cpp
     assets/test_hot_reload.cpp
 )

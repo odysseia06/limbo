@@ -25,6 +25,8 @@ public:
 private:
     void drawEntityNode(Entity entity);
     void drawContextMenu();
+    void duplicateEntity(Entity entity);
+    void deleteEntity(Entity entity);
 
 private:
     EditorApp& m_editor;
