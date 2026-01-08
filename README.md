@@ -1,33 +1,37 @@
 # Limbo Engine
 
-A modern C++20 2D game engine with ECS architecture, physics, audio, scripting, and a visual editor.
+A modern C++20 2D game engine with ECS architecture, physics, scripting, and a visual editor.
 
 ## Features
 
 - OpenGL 4.5 batched 2D rendering
 - EnTT-based Entity Component System
+- Parent-child entity hierarchies
 - Box2D physics integration
 - Lua scripting via sol2
-- Particle system
-- Tilemap support
-- In-game UI widgets
-- Visual level editor
+- Prefab system with instance overrides
 - Hot-reloading assets
-- JSON scene serialization
+- JSON scene/prefab serialization
+
+### Editor
+
+- Dockable panel layout (persisted)
+- Scene hierarchy with drag-drop reparenting
+- Component inspector with property editing
+- Transform gizmos (translate/rotate/scale with snapping)
+- Undo/redo system (command pattern)
+- Play mode with scene state preservation
+- Asset browser with search and drag-drop
+- Viewport with grid and camera controls
 
 ## Building
-
-All dependencies are fetched automatically via CMake - no package manager required.
 
 ```bash
 cmake -B build -S .
 cmake --build build --config Debug
 
-# Run the demo
-./build/bin/sandbox
-
-# Run the editor
-./build/bin/limbo_editor
+./build/bin/sandbox        # Demo
+./build/bin/limbo_editor   # Editor
 ```
 
 ## Quick Start
@@ -47,19 +51,15 @@ protected:
         
         auto sprite = getWorld().createEntity("Sprite");
         sprite.addComponent<limbo::TransformComponent>();
-        sprite.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f, 0.5f, 0.2f, 1.0f));
+        sprite.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1, 0.5f, 0.2f, 1));
     }
     
-    void onUpdate(limbo::f32 dt) override { }
-    
-    void onRender() override {
+    void onRender(limbo::f32) override {
         m_renderContext->clear(0.1f, 0.1f, 0.2f, 1.0f);
         limbo::Renderer2D::beginScene(m_camera);
-        
         getWorld().each<limbo::TransformComponent, limbo::SpriteRendererComponent>(
             [](auto, auto& t, auto& s) { limbo::Renderer2D::drawQuad(t.getMatrix(), s.color); }
         );
-        
         limbo::Renderer2D::endScene();
     }
     
@@ -73,23 +73,17 @@ private:
     limbo::OrthographicCamera m_camera{-1, 1, -1, 1};
 };
 
-int main() {
-    limbo::debug::init();
-    MyGame game;
-    limbo::ApplicationConfig config;
-    config.window.title = "My Game";
-    if (game.init(config)) { game.run(); game.shutdown(); }
-    limbo::debug::shutdown();
-}
+LIMBO_MAIN(MyGame, "My Game")
 ```
 
 ## Documentation
 
-- [Getting Started](docs/GETTING_STARTED.md)
+- [Editor Workflows](docs/EDITOR_WORKFLOWS.md)
+- [Scenes and Prefabs](docs/SCENES_AND_PREFABS.md)
+- [Asset Pipeline](docs/ASSET_PIPELINE.md)
+- [Engine Lifecycle](docs/ENGINE_LIFECYCLE.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [API Reference](docs/API.md)
-- [Examples](docs/EXAMPLES.md)
-- [Editor Guide](docs/EDITOR.md)
 
 ## Requirements
 

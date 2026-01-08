@@ -5,11 +5,20 @@
 Limbo is a modern C++20 2D game engine featuring:
 - OpenGL 4.5 batched 2D rendering
 - EnTT-based Entity Component System (ECS)
+- Parent-child entity hierarchies
 - Box2D physics integration
 - Lua scripting via sol2
+- Prefab system with instance overrides
 - Visual level editor (ImGui-based)
 - Hot-reloading assets
-- JSON scene serialization
+- JSON scene/prefab serialization
+
+### Editor Features
+- Undo/redo system (command pattern)
+- Transform gizmos (translate/rotate/scale with snapping)
+- Play mode with scene state preservation
+- Asset browser with search and drag-drop
+- Docking layout persistence
 
 ## Quality Standards
 
@@ -75,9 +84,11 @@ cmake --build build --parallel
 # Run tests
 ctest --test-dir build --output-on-failure
 
-# Format code (run before committing)
-find engine apps tests -name "*.cpp" -o -name "*.hpp" | xargs clang-format -i
+# Format code (MUST run before committing - CI uses clang-format-15)
+find . -path ./build -prune -o \( -name '*.cpp' -o -name '*.hpp' \) -print | xargs clang-format -i
 ```
+
+**IMPORTANT**: Always run clang-format before pushing. CI uses clang-format-15, so formatting differences may occur with newer versions. Use `// clang-format off` for macros that format differently across versions.
 
 ## Project Structure
 
@@ -96,9 +107,12 @@ limbo/
 ├── extern/           # Additional externals
 ├── assets/           # Game assets
 ├── docs/             # Documentation
-│   ├── QUALITY_BAR.md      # Quality standards (MUST READ)
-│   ├── ENGINE_LIFECYCLE.md # Time, Input, App lifecycle
-│   └── ASSET_PIPELINE.md   # Asset system documentation
+│   ├── QUALITY_BAR.md       # Quality standards (MUST READ)
+│   ├── ENGINE_LIFECYCLE.md  # Time, Input, App lifecycle
+│   ├── ASSET_PIPELINE.md    # Asset system documentation
+│   ├── SCENES_AND_PREFABS.md # Prefab and hierarchy system
+│   ├── EDITOR_WORKFLOWS.md  # Editor usage guide
+│   └── ROADMAP.md           # Development milestones
 └── cmake/            # CMake modules
 ```
 
