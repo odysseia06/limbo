@@ -62,9 +62,9 @@ public:
 /**
  * Helper macro for implementing getTypeId() using typeid hash
  */
-#define COMMAND_TYPE_ID()                                                                          \
-    [[nodiscard]] usize getTypeId() const override {                                               \
-        return typeid(*this).hash_code();                                                          \
-    }
+// clang-format off
+#define COMMAND_TYPE_ID() \
+    [[nodiscard]] usize getTypeId() const override { return typeid(*this).hash_code(); }
+// clang-format on
 
 }  // namespace limbo::editor
