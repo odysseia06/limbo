@@ -85,18 +85,18 @@ f32 getAxisBindingValue(const AxisBinding& binding) {
     if (const auto* mouseAxis = std::get_if<MouseAxisBinding>(&binding)) {
         f32 value = 0.0f;
         switch (mouseAxis->axis) {
-            case MouseAxisBinding::Axis::X:
-                value = Input::getMouseDelta().x;
-                break;
-            case MouseAxisBinding::Axis::Y:
-                value = Input::getMouseDelta().y;
-                break;
-            case MouseAxisBinding::Axis::ScrollX:
-                value = Input::getScrollDelta().x;
-                break;
-            case MouseAxisBinding::Axis::ScrollY:
-                value = Input::getScrollDelta().y;
-                break;
+        case MouseAxisBinding::Axis::X:
+            value = Input::getMouseDelta().x;
+            break;
+        case MouseAxisBinding::Axis::Y:
+            value = Input::getMouseDelta().y;
+            break;
+        case MouseAxisBinding::Axis::ScrollX:
+            value = Input::getScrollDelta().x;
+            break;
+        case MouseAxisBinding::Axis::ScrollY:
+            value = Input::getScrollDelta().y;
+            break;
         }
         value *= mouseAxis->sensitivity;
         if (mouseAxis->inverted) {
@@ -304,18 +304,18 @@ MouseButton stringToMouseButton(const String& str) {
 
 String mouseButtonToString(MouseButton button) {
     switch (button) {
-        case MouseButton::Left:
-            return "Left";
-        case MouseButton::Right:
-            return "Right";
-        case MouseButton::Middle:
-            return "Middle";
-        case MouseButton::Button4:
-            return "Button4";
-        case MouseButton::Button5:
-            return "Button5";
-        default:
-            return "Unknown";
+    case MouseButton::Left:
+        return "Left";
+    case MouseButton::Right:
+        return "Right";
+    case MouseButton::Middle:
+        return "Middle";
+    case MouseButton::Button4:
+        return "Button4";
+    case MouseButton::Button5:
+        return "Button5";
+    default:
+        return "Unknown";
     }
 }
 
@@ -333,14 +333,14 @@ InputContext stringToContext(const String& str) {
 
 String contextToString(InputContext context) {
     switch (context) {
-        case InputContext::Game:
-            return "Game";
-        case InputContext::Editor:
-            return "Editor";
-        case InputContext::Menu:
-            return "Menu";
-        case InputContext::Cutscene:
-            return "Cutscene";
+    case InputContext::Game:
+        return "Game";
+    case InputContext::Editor:
+        return "Editor";
+    case InputContext::Menu:
+        return "Menu";
+    case InputContext::Cutscene:
+        return "Cutscene";
     }
     return "Game";
 }
@@ -781,18 +781,18 @@ bool InputManager::saveConfig(const std::filesystem::path& path) {
                 } else if (const auto* mouseAxis = std::get_if<MouseAxisBinding>(&binding)) {
                     bindingJson["type"] = "mouse";
                     switch (mouseAxis->axis) {
-                        case MouseAxisBinding::Axis::X:
-                            bindingJson["axis"] = "X";
-                            break;
-                        case MouseAxisBinding::Axis::Y:
-                            bindingJson["axis"] = "Y";
-                            break;
-                        case MouseAxisBinding::Axis::ScrollX:
-                            bindingJson["axis"] = "ScrollX";
-                            break;
-                        case MouseAxisBinding::Axis::ScrollY:
-                            bindingJson["axis"] = "ScrollY";
-                            break;
+                    case MouseAxisBinding::Axis::X:
+                        bindingJson["axis"] = "X";
+                        break;
+                    case MouseAxisBinding::Axis::Y:
+                        bindingJson["axis"] = "Y";
+                        break;
+                    case MouseAxisBinding::Axis::ScrollX:
+                        bindingJson["axis"] = "ScrollX";
+                        break;
+                    case MouseAxisBinding::Axis::ScrollY:
+                        bindingJson["axis"] = "ScrollY";
+                        break;
                     }
                     bindingJson["sensitivity"] = mouseAxis->sensitivity;
                     bindingJson["inverted"] = mouseAxis->inverted;

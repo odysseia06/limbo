@@ -25,10 +25,8 @@ TEST_CASE("TransformComponent position-only construction", "[math][transform]") 
 }
 
 TEST_CASE("TransformComponent full construction", "[math][transform]") {
-    limbo::TransformComponent transform(
-        glm::vec3(1.0f, 2.0f, 3.0f),
-        glm::vec3(0.1f, 0.2f, 0.3f),
-        glm::vec3(2.0f, 2.0f, 2.0f));
+    limbo::TransformComponent transform(glm::vec3(1.0f, 2.0f, 3.0f), glm::vec3(0.1f, 0.2f, 0.3f),
+                                        glm::vec3(2.0f, 2.0f, 2.0f));
 
     REQUIRE(transform.position == glm::vec3(1.0f, 2.0f, 3.0f));
     REQUIRE(transform.rotation == glm::vec3(0.1f, 0.2f, 0.3f));
