@@ -143,7 +143,8 @@ ImportResult SpriteAtlasImporter::import(const ImportContext& context) {
     // Load the atlas definition JSON
     std::ifstream file(context.sourcePath);
     if (!file.is_open()) {
-        return ImportResult::fail("Failed to open atlas definition: " + context.sourcePath.string());
+        return ImportResult::fail("Failed to open atlas definition: " +
+                                  context.sourcePath.string());
     }
 
     json atlasDefn;

@@ -28,17 +28,24 @@ u64 fnv1aHash(const u8* data, usize size) {
 
 String assetTypeToString(AssetType type) {
     switch (type) {
-        case AssetType::Texture: return "texture";
-        case AssetType::Shader: return "shader";
-        case AssetType::Audio: return "audio";
-        default: return "unknown";
+    case AssetType::Texture:
+        return "texture";
+    case AssetType::Shader:
+        return "shader";
+    case AssetType::Audio:
+        return "audio";
+    default:
+        return "unknown";
     }
 }
 
 AssetType stringToAssetType(const String& str) {
-    if (str == "texture") return AssetType::Texture;
-    if (str == "shader") return AssetType::Shader;
-    if (str == "audio") return AssetType::Audio;
+    if (str == "texture")
+        return AssetType::Texture;
+    if (str == "shader")
+        return AssetType::Shader;
+    if (str == "audio")
+        return AssetType::Audio;
     return AssetType::Unknown;
 }
 
@@ -50,8 +57,7 @@ u64 getCurrentTimestamp() {
 
 }  // namespace
 
-void AssetRegistry::init(const std::filesystem::path& projectRoot,
-                         const String& sourceDir,
+void AssetRegistry::init(const std::filesystem::path& projectRoot, const String& sourceDir,
                          const String& importedDir) {
     m_projectRoot = projectRoot;
     m_sourceDir = sourceDir;
@@ -493,8 +499,8 @@ usize AssetRegistry::scanSourceDirectory() {
     usize totalChanges = m_newAssets.size() + m_deletedAssets.size() + m_modifiedAssets.size();
 
     if (totalChanges > 0) {
-        spdlog::info("Asset scan: {} new, {} deleted, {} modified",
-                     m_newAssets.size(), m_deletedAssets.size(), m_modifiedAssets.size());
+        spdlog::info("Asset scan: {} new, {} deleted, {} modified", m_newAssets.size(),
+                     m_deletedAssets.size(), m_modifiedAssets.size());
     }
 
     return totalChanges;
@@ -505,20 +511,19 @@ AssetType AssetRegistry::detectAssetType(const std::filesystem::path& path) {
     std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
     // Textures
-    if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" ||
-        ext == ".bmp" || ext == ".tga" || ext == ".gif") {
+    if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".tga" ||
+        ext == ".gif") {
         return AssetType::Texture;
     }
 
     // Shaders
-    if (ext == ".glsl" || ext == ".vert" || ext == ".frag" ||
-        ext == ".vs" || ext == ".fs" || ext == ".shader") {
+    if (ext == ".glsl" || ext == ".vert" || ext == ".frag" || ext == ".vs" || ext == ".fs" ||
+        ext == ".shader") {
         return AssetType::Shader;
     }
 
     // Audio
-    if (ext == ".wav" || ext == ".mp3" || ext == ".ogg" ||
-        ext == ".flac" || ext == ".aiff") {
+    if (ext == ".wav" || ext == ".mp3" || ext == ".ogg" || ext == ".flac" || ext == ".aiff") {
         return AssetType::Audio;
     }
 

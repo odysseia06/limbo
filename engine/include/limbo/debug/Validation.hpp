@@ -54,16 +54,16 @@ private:
 };
 
 #define LIMBO_VALIDATE_RENDERER_BEGIN_SCENE() ::limbo::validation::RendererValidation::beginScene()
-#define LIMBO_VALIDATE_RENDERER_END_SCENE()   ::limbo::validation::RendererValidation::endScene()
-#define LIMBO_VALIDATE_RENDERER_DRAW()        ::limbo::validation::RendererValidation::draw()
-#define LIMBO_VALIDATE_RENDERER_RESET()       ::limbo::validation::RendererValidation::reset()
+#define LIMBO_VALIDATE_RENDERER_END_SCENE() ::limbo::validation::RendererValidation::endScene()
+#define LIMBO_VALIDATE_RENDERER_DRAW() ::limbo::validation::RendererValidation::draw()
+#define LIMBO_VALIDATE_RENDERER_RESET() ::limbo::validation::RendererValidation::reset()
 
 #else
 
 #define LIMBO_VALIDATE_RENDERER_BEGIN_SCENE() ((void)0)
-#define LIMBO_VALIDATE_RENDERER_END_SCENE()   ((void)0)
-#define LIMBO_VALIDATE_RENDERER_DRAW()        ((void)0)
-#define LIMBO_VALIDATE_RENDERER_RESET()       ((void)0)
+#define LIMBO_VALIDATE_RENDERER_END_SCENE() ((void)0)
+#define LIMBO_VALIDATE_RENDERER_DRAW() ((void)0)
+#define LIMBO_VALIDATE_RENDERER_RESET() ((void)0)
 
 #endif
 
@@ -75,7 +75,7 @@ private:
 
 class ECSValidation {
 public:
-    template<typename Registry>
+    template <typename Registry>
     static bool validateEntity(Registry& registry, auto entity, const char* operation) {
         if (!registry.valid(entity)) {
             LIMBO_LOG_ECS_ERROR("{}: Invalid entity handle", operation);
@@ -84,7 +84,7 @@ public:
         return true;
     }
 
-    template<typename Registry, typename Component>
+    template <typename Registry, typename Component>
     static bool validateHasComponent(Registry& registry, auto entity, const char* operation) {
         if (!registry.valid(entity)) {
             LIMBO_LOG_ECS_ERROR("{}: Invalid entity handle", operation);
@@ -107,8 +107,8 @@ public:
 
 #else
 
-#define LIMBO_VALIDATE_ENTITY(registry, entity, operation)                     true
-#define LIMBO_VALIDATE_HAS_COMPONENT(registry, entity, Component, operation)   true
+#define LIMBO_VALIDATE_ENTITY(registry, entity, operation) true
+#define LIMBO_VALIDATE_HAS_COMPONENT(registry, entity, Component, operation) true
 
 #endif
 
@@ -120,7 +120,7 @@ public:
 
 class AssetValidation {
 public:
-    template<typename T>
+    template <typename T>
     static bool validateHandle(const T& handle, const char* operation) {
         if (!handle) {
             LIMBO_LOG_ASSET_ERROR("{}: Invalid or null asset handle", operation);
@@ -147,7 +147,7 @@ public:
 #else
 
 #define LIMBO_VALIDATE_ASSET_HANDLE(handle, operation) true
-#define LIMBO_VALIDATE_ASSET_PATH(path, operation)     true
+#define LIMBO_VALIDATE_ASSET_PATH(path, operation) true
 
 #endif
 
@@ -183,14 +183,14 @@ private:
 };
 
 #define LIMBO_VALIDATE_PHYSICS_BEGIN_STEP() ::limbo::validation::PhysicsValidation::beginStep()
-#define LIMBO_VALIDATE_PHYSICS_END_STEP()   ::limbo::validation::PhysicsValidation::endStep()
-#define LIMBO_VALIDATE_PHYSICS_RESET()      ::limbo::validation::PhysicsValidation::reset()
+#define LIMBO_VALIDATE_PHYSICS_END_STEP() ::limbo::validation::PhysicsValidation::endStep()
+#define LIMBO_VALIDATE_PHYSICS_RESET() ::limbo::validation::PhysicsValidation::reset()
 
 #else
 
 #define LIMBO_VALIDATE_PHYSICS_BEGIN_STEP() ((void)0)
-#define LIMBO_VALIDATE_PHYSICS_END_STEP()   ((void)0)
-#define LIMBO_VALIDATE_PHYSICS_RESET()      ((void)0)
+#define LIMBO_VALIDATE_PHYSICS_END_STEP() ((void)0)
+#define LIMBO_VALIDATE_PHYSICS_RESET() ((void)0)
 
 #endif
 
@@ -216,8 +216,8 @@ private:
 
 #else
 
-#define LIMBO_VALIDATE(condition, category, message)   ((void)0)
-#define LIMBO_VALIDATE_NOT_NULL(ptr, category, name)   ((void)0)
+#define LIMBO_VALIDATE(condition, category, message) ((void)0)
+#define LIMBO_VALIDATE_NOT_NULL(ptr, category, name) ((void)0)
 
 #endif
 

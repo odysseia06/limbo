@@ -17,10 +17,10 @@ namespace limbo {
  * Input context for switching between editor and game input
  */
 enum class InputContext : u8 {
-    Game,    // Normal gameplay input
-    Editor,  // Editor UI input (may block game input)
-    Menu,    // Menu/pause input
-    Cutscene // Cutscene input (limited player control)
+    Game,     // Normal gameplay input
+    Editor,   // Editor UI input (may block game input)
+    Menu,     // Menu/pause input
+    Cutscene  // Cutscene input (limited player control)
 };
 
 /**

@@ -30,7 +30,7 @@ struct AudioImportSettings {
 };
 
 struct SpriteSheetImportSettings {
-    i32 spriteWidth = 0;   // 0 = auto-detect or manual regions
+    i32 spriteWidth = 0;  // 0 = auto-detect or manual regions
     i32 spriteHeight = 0;
     i32 padding = 0;
     i32 spacing = 0;
@@ -40,14 +40,14 @@ struct SpriteSheetImportSettings {
  * AssetMetadata - Stores metadata about a source asset
  */
 struct AssetMetadata {
-    AssetId id;                        // Stable UUID
-    String sourcePath;                 // Relative path to source file
-    String importedPath;               // Relative path to imported/cooked file
+    AssetId id;           // Stable UUID
+    String sourcePath;    // Relative path to source file
+    String importedPath;  // Relative path to imported/cooked file
     AssetType type = AssetType::Unknown;
-    u64 sourceHash = 0;                // Hash of source file for change detection
-    u64 importedTimestamp = 0;         // When the asset was last imported
-    std::vector<AssetId> dependencies; // Assets this asset depends on
-    std::vector<AssetId> dependents;   // Assets that depend on this asset
+    u64 sourceHash = 0;                 // Hash of source file for change detection
+    u64 importedTimestamp = 0;          // When the asset was last imported
+    std::vector<AssetId> dependencies;  // Assets this asset depends on
+    std::vector<AssetId> dependents;    // Assets that depend on this asset
 
     // Type-specific import settings (stored as variant or JSON)
     String importSettingsJson;
@@ -87,8 +87,7 @@ public:
      * @param sourceDir Source assets directory (relative to projectRoot)
      * @param importedDir Imported/cooked assets directory (relative to projectRoot)
      */
-    void init(const std::filesystem::path& projectRoot,
-              const String& sourceDir = "assets",
+    void init(const std::filesystem::path& projectRoot, const String& sourceDir = "assets",
               const String& importedDir = "build/imported");
 
     /**
@@ -182,9 +181,7 @@ public:
     /**
      * Get the source assets directory
      */
-    [[nodiscard]] std::filesystem::path getSourceDir() const {
-        return m_projectRoot / m_sourceDir;
-    }
+    [[nodiscard]] std::filesystem::path getSourceDir() const { return m_projectRoot / m_sourceDir; }
 
     /**
      * Get the imported assets directory

@@ -68,7 +68,7 @@ UUID UUID::fromString(StringView str) {
 
     for (size_t i = 0; i < 16; ++i) {
         u8 byte = static_cast<u8>((hexCharToNibble(compact[i * 2]) << 4) |
-                                   hexCharToNibble(compact[i * 2 + 1]));
+                                  hexCharToNibble(compact[i * 2 + 1]));
         if (i < 8) {
             high = (high << 8) | byte;
         } else {

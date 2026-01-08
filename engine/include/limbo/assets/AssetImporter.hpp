@@ -19,13 +19,9 @@ struct ImportResult {
     String error;
     String importedPath;  // Relative path to imported file
 
-    static ImportResult ok(const String& path) {
-        return {true, "", path};
-    }
+    static ImportResult ok(const String& path) { return {true, "", path}; }
 
-    static ImportResult fail(const String& error) {
-        return {false, error, ""};
-    }
+    static ImportResult fail(const String& error) { return {false, error, ""}; }
 };
 
 /**
@@ -34,8 +30,8 @@ struct ImportResult {
 struct ImportContext {
     AssetRegistry* registry = nullptr;
     AssetId assetId;
-    std::filesystem::path sourcePath;      // Absolute path to source file
-    std::filesystem::path importedDir;     // Absolute path to imported directory
+    std::filesystem::path sourcePath;   // Absolute path to source file
+    std::filesystem::path importedDir;  // Absolute path to imported directory
     const AssetMetadata* metadata = nullptr;
 };
 
@@ -191,8 +187,11 @@ public:
     /**
      * Callback for import progress
      */
-    using ProgressCallback = std::function<void(usize current, usize total, const String& assetPath)>;
-    void setProgressCallback(ProgressCallback callback) { m_progressCallback = std::move(callback); }
+    using ProgressCallback =
+        std::function<void(usize current, usize total, const String& assetPath)>;
+    void setProgressCallback(ProgressCallback callback) {
+        m_progressCallback = std::move(callback);
+    }
 
 private:
     AssetRegistry* m_registry = nullptr;

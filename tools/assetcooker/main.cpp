@@ -112,7 +112,8 @@ int cmdScan(AssetRegistry& registry) {
             std::string ext = fullPath.extension().string();
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".tga") {
+            if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" ||
+                ext == ".tga") {
                 type = AssetType::Texture;
             } else if (ext == ".glsl" || ext == ".vert" || ext == ".frag" || ext == ".shader") {
                 type = AssetType::Shader;
@@ -225,14 +226,25 @@ int cmdStatus(AssetRegistry& registry) {
 
     for (AssetId id : allAssets) {
         const AssetMetadata* meta = registry.getMetadata(id);
-        if (!meta) continue;
+        if (!meta)
+            continue;
 
         switch (meta->type) {
-            case AssetType::Texture: ++textureCount; break;
-            case AssetType::SpriteAtlas: ++textureCount; break;  // Count with textures
-            case AssetType::Shader: ++shaderCount; break;
-            case AssetType::Audio: ++audioCount; break;
-            default: ++unknownCount; break;
+        case AssetType::Texture:
+            ++textureCount;
+            break;
+        case AssetType::SpriteAtlas:
+            ++textureCount;
+            break;  // Count with textures
+        case AssetType::Shader:
+            ++shaderCount;
+            break;
+        case AssetType::Audio:
+            ++audioCount;
+            break;
+        default:
+            ++unknownCount;
+            break;
         }
 
         if (meta->importedPath.empty()) {

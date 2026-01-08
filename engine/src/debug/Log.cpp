@@ -27,7 +27,7 @@ std::vector<LogCallback> s_logCallbacks;
 std::mutex s_callbackMutex;
 
 // Custom sink that forwards to callbacks
-template<typename Mutex>
+template <typename Mutex>
 class CallbackSink : public spdlog::sinks::base_sink<Mutex> {
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override {
@@ -56,7 +56,7 @@ using CallbackSinkMt = CallbackSink<std::mutex>;
 std::shared_ptr<CallbackSinkMt> s_callbackSink;
 
 std::shared_ptr<spdlog::logger> createLogger(const std::string& name,
-                                              std::vector<spdlog::sink_ptr>& sinks) {
+                                             std::vector<spdlog::sink_ptr>& sinks) {
     auto logger = std::make_shared<spdlog::logger>(name, sinks.begin(), sinks.end());
 
 #ifdef LIMBO_DEBUG

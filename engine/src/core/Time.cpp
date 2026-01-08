@@ -139,7 +139,8 @@ f32 Time::beginFrame() {
     // Add to smoothing buffer
     state.deltaSamples[state.sampleIndex] = state.rawDeltaTime;
     state.sampleIndex = (state.sampleIndex + 1) % state.deltaSamples.size();
-    state.sampleCount = std::min(state.sampleCount + 1, static_cast<u32>(state.deltaSamples.size()));
+    state.sampleCount =
+        std::min(state.sampleCount + 1, static_cast<u32>(state.deltaSamples.size()));
 
     // Calculate smoothed delta
     state.smoothedDeltaTime = calculateSmoothedDelta(state);

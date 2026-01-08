@@ -148,9 +148,7 @@ public:
      * Get the hot reload manager
      */
     [[nodiscard]] HotReloadManager& getHotReloadManager() { return m_hotReloadManager; }
-    [[nodiscard]] const HotReloadManager& getHotReloadManager() const {
-        return m_hotReloadManager;
-    }
+    [[nodiscard]] const HotReloadManager& getHotReloadManager() const { return m_hotReloadManager; }
 
     /**
      * Register a dependency between assets for hot-reload propagation
