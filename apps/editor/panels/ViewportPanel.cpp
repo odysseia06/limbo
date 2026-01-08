@@ -287,8 +287,7 @@ void ViewportPanel::handleGizmoInput() {
     glm::vec2 worldMousePos = screenToWorld(viewportMousePos);
 
     // Check for snapping toggle (hold Ctrl for snap)
-    bool snapEnabled =
-        Input::isKeyDown(Key::LeftControl) || Input::isKeyDown(Key::RightControl);
+    bool snapEnabled = Input::isKeyDown(Key::LeftControl) || Input::isKeyDown(Key::RightControl);
     m_gizmo.setSnapEnabled(snapEnabled);
 
     if (Input::isMouseButtonPressed(MouseButton::Left)) {
@@ -311,15 +310,15 @@ void ViewportPanel::handleGizmoInput() {
 
             // Apply transform changes
             switch (m_gizmo.getMode()) {
-                case GizmoMode::Translate:
-                    transform.position = m_gizmo.getCurrentPosition();
-                    break;
-                case GizmoMode::Rotate:
-                    transform.rotation = m_gizmo.getCurrentRotation();
-                    break;
-                case GizmoMode::Scale:
-                    transform.scale = m_gizmo.getCurrentScale();
-                    break;
+            case GizmoMode::Translate:
+                transform.position = m_gizmo.getCurrentPosition();
+                break;
+            case GizmoMode::Rotate:
+                transform.rotation = m_gizmo.getCurrentRotation();
+                break;
+            case GizmoMode::Scale:
+                transform.scale = m_gizmo.getCurrentScale();
+                break;
             }
         } else {
             // Mouse released - end manipulation and create undo command
@@ -330,8 +329,8 @@ void ViewportPanel::handleGizmoInput() {
                 TransformComponent newTransform = transform;
                 transform = m_gizmoStartTransform;  // Restore original for command
 
-                auto cmd = std::make_unique<SetTransformCommand>(
-                    m_editor.getWorld(), selectedEntity.id(), newTransform);
+                auto cmd = std::make_unique<SetTransformCommand>(m_editor.getWorld(),
+                                                                 selectedEntity.id(), newTransform);
                 m_editor.executeCommand(std::move(cmd));
 
                 m_gizmoWasManipulating = false;

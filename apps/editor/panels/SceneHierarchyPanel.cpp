@@ -43,8 +43,7 @@ void SceneHierarchyPanel::render() {
                                            ImGuiPopupFlags_MouseButtonRight)) {
         if (ImGui::MenuItem("Create Empty Entity")) {
             auto cmd = std::make_unique<CreateEntityCommand>(
-                m_editor.getWorld(), "New Entity",
-                [this](Entity e) { m_editor.selectEntity(e); });
+                m_editor.getWorld(), "New Entity", [this](Entity e) { m_editor.selectEntity(e); });
             m_editor.executeCommand(std::move(cmd));
         }
         if (ImGui::MenuItem("Create Sprite")) {
@@ -183,11 +182,11 @@ void SceneHierarchyPanel::duplicateEntity(Entity entity) {
         return;
     }
 
-    auto cmd = std::make_unique<DuplicateEntityCommand>(
-        m_editor.getWorld(), entity.id(), [this](Entity newEntity) {
-            m_selectedEntity = newEntity;
-            m_editor.selectEntity(newEntity);
-        });
+    auto cmd = std::make_unique<DuplicateEntityCommand>(m_editor.getWorld(), entity.id(),
+                                                        [this](Entity newEntity) {
+                                                            m_selectedEntity = newEntity;
+                                                            m_editor.selectEntity(newEntity);
+                                                        });
     m_editor.executeCommand(std::move(cmd));
 }
 

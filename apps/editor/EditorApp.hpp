@@ -117,7 +117,7 @@ private:
     bool m_sceneModified = false;
 
     // Play mode state preservation
-    String m_savedSceneState;       // Serialized scene before play
+    String m_savedSceneState;  // Serialized scene before play
     bool m_wasModifiedBeforePlay = false;
 
     // Command history for undo/redo

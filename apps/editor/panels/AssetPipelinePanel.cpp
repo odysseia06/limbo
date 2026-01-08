@@ -124,8 +124,7 @@ void AssetPipelinePanel::renderRegistryTab() {
         ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.3f, 1.0f), "Modified: %zu",
                            m_modifiedAssets.size());
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.8f, 0.3f, 0.3f, 1.0f), "Deleted: %zu",
-                           m_deletedAssets.size());
+        ImGui::TextColored(ImVec4(0.8f, 0.3f, 0.3f, 1.0f), "Deleted: %zu", m_deletedAssets.size());
         ImGui::Separator();
     }
 
@@ -205,12 +204,12 @@ void AssetPipelinePanel::renderImportTab() {
     // Import progress
     if (m_importing) {
         ImGui::Text("Importing: %s", m_importCurrentAsset.c_str());
-        float progress = m_importTotal > 0
-                             ? static_cast<float>(m_importCurrent) / static_cast<float>(m_importTotal)
-                             : 0.0f;
-        ImGui::ProgressBar(progress, ImVec2(-1, 0),
-                           (std::to_string(m_importCurrent) + "/" + std::to_string(m_importTotal))
-                               .c_str());
+        float progress = m_importTotal > 0 ? static_cast<float>(m_importCurrent) /
+                                                 static_cast<float>(m_importTotal)
+                                           : 0.0f;
+        ImGui::ProgressBar(
+            progress, ImVec2(-1, 0),
+            (std::to_string(m_importCurrent) + "/" + std::to_string(m_importTotal)).c_str());
     }
 
     ImGui::Separator();
@@ -300,8 +299,8 @@ void AssetPipelinePanel::renderHotReloadTab() {
     if (ImGui::BeginChild("ReloadHistory", ImVec2(0, 200), true)) {
         for (auto it = m_reloadHistory.rbegin(); it != m_reloadHistory.rend(); ++it) {
             const ReloadEvent& event = *it;
-            ImVec4 color = event.success ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f)
-                                         : ImVec4(0.8f, 0.3f, 0.3f, 1.0f);
+            ImVec4 color =
+                event.success ? ImVec4(0.3f, 0.8f, 0.3f, 1.0f) : ImVec4(0.8f, 0.3f, 0.3f, 1.0f);
             String status = event.success ? "OK" : "FAIL";
 
             ImGui::TextColored(color, "[%s] %s", status.c_str(),
@@ -422,12 +421,11 @@ void AssetPipelinePanel::importAllAssets() {
     m_importCurrent = 0;
     m_importing = true;
 
-    m_importer.setProgressCallback(
-        [this](usize current, usize total, const String& path) {
-            m_importCurrent = current;
-            m_importTotal = total;
-            m_importCurrentAsset = path;
-        });
+    m_importer.setProgressCallback([this](usize current, usize total, const String& path) {
+        m_importCurrent = current;
+        m_importTotal = total;
+        m_importCurrentAsset = path;
+    });
 
     usize imported = m_importer.importAll();
 
@@ -481,8 +479,8 @@ void AssetPipelinePanel::modifyTestAsset() {
     static int modifyCount = 1;
     std::ofstream file(m_testAssetPath);
     if (file.is_open()) {
-        file << "{\n  \"version\": " << modifyCount
-             << ",\n  \"message\": \"Modified content #" << modifyCount << "\"\n}\n";
+        file << "{\n  \"version\": " << modifyCount << ",\n  \"message\": \"Modified content #"
+             << modifyCount << "\"\n}\n";
         file.close();
         modifyCount++;
 
@@ -492,31 +490,31 @@ void AssetPipelinePanel::modifyTestAsset() {
 
 String AssetPipelinePanel::assetTypeToString(AssetType type) const {
     switch (type) {
-        case AssetType::Texture:
-            return "Texture";
-        case AssetType::SpriteAtlas:
-            return "SpriteAtlas";
-        case AssetType::Shader:
-            return "Shader";
-        case AssetType::Audio:
-            return "Audio";
-        default:
-            return "Unknown";
+    case AssetType::Texture:
+        return "Texture";
+    case AssetType::SpriteAtlas:
+        return "SpriteAtlas";
+    case AssetType::Shader:
+        return "Shader";
+    case AssetType::Audio:
+        return "Audio";
+    default:
+        return "Unknown";
     }
 }
 
 ImVec4 AssetPipelinePanel::assetTypeToColor(AssetType type) const {
     switch (type) {
-        case AssetType::Texture:
-            return ImVec4(0.3f, 0.8f, 0.3f, 1.0f);  // Green
-        case AssetType::SpriteAtlas:
-            return ImVec4(0.3f, 0.8f, 0.8f, 1.0f);  // Cyan
-        case AssetType::Shader:
-            return ImVec4(0.9f, 0.5f, 0.3f, 1.0f);  // Orange
-        case AssetType::Audio:
-            return ImVec4(0.9f, 0.3f, 0.6f, 1.0f);  // Pink
-        default:
-            return ImVec4(0.5f, 0.5f, 0.5f, 1.0f);  // Gray
+    case AssetType::Texture:
+        return ImVec4(0.3f, 0.8f, 0.3f, 1.0f);  // Green
+    case AssetType::SpriteAtlas:
+        return ImVec4(0.3f, 0.8f, 0.8f, 1.0f);  // Cyan
+    case AssetType::Shader:
+        return ImVec4(0.9f, 0.5f, 0.3f, 1.0f);  // Orange
+    case AssetType::Audio:
+        return ImVec4(0.9f, 0.3f, 0.6f, 1.0f);  // Pink
+    default:
+        return ImVec4(0.5f, 0.5f, 0.5f, 1.0f);  // Gray
     }
 }
 

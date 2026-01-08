@@ -21,8 +21,7 @@ public:
         : m_world(world), m_entityId(entity), m_newValue(newValue), m_property(property) {}
 
     bool execute() override {
-        if (!m_world.isValid(m_entityId) ||
-            !m_world.hasComponent<TransformComponent>(m_entityId)) {
+        if (!m_world.isValid(m_entityId) || !m_world.hasComponent<TransformComponent>(m_entityId)) {
             return false;
         }
 
@@ -30,44 +29,43 @@ public:
         m_oldValue = transform;
 
         switch (m_property) {
-            case Property::Position:
-                transform.position = m_newValue.position;
-                break;
-            case Property::Rotation:
-                transform.rotation = m_newValue.rotation;
-                break;
-            case Property::Scale:
-                transform.scale = m_newValue.scale;
-                break;
-            case Property::All:
-                transform = m_newValue;
-                break;
+        case Property::Position:
+            transform.position = m_newValue.position;
+            break;
+        case Property::Rotation:
+            transform.rotation = m_newValue.rotation;
+            break;
+        case Property::Scale:
+            transform.scale = m_newValue.scale;
+            break;
+        case Property::All:
+            transform = m_newValue;
+            break;
         }
 
         return true;
     }
 
     bool undo() override {
-        if (!m_world.isValid(m_entityId) ||
-            !m_world.hasComponent<TransformComponent>(m_entityId)) {
+        if (!m_world.isValid(m_entityId) || !m_world.hasComponent<TransformComponent>(m_entityId)) {
             return false;
         }
 
         auto& transform = m_world.getComponent<TransformComponent>(m_entityId);
 
         switch (m_property) {
-            case Property::Position:
-                transform.position = m_oldValue.position;
-                break;
-            case Property::Rotation:
-                transform.rotation = m_oldValue.rotation;
-                break;
-            case Property::Scale:
-                transform.scale = m_oldValue.scale;
-                break;
-            case Property::All:
-                transform = m_oldValue;
-                break;
+        case Property::Position:
+            transform.position = m_oldValue.position;
+            break;
+        case Property::Rotation:
+            transform.rotation = m_oldValue.rotation;
+            break;
+        case Property::Scale:
+            transform.scale = m_oldValue.scale;
+            break;
+        case Property::All:
+            transform = m_oldValue;
+            break;
         }
 
         return true;
@@ -75,14 +73,14 @@ public:
 
     [[nodiscard]] String getDescription() const override {
         switch (m_property) {
-            case Property::Position:
-                return "Set Position";
-            case Property::Rotation:
-                return "Set Rotation";
-            case Property::Scale:
-                return "Set Scale";
-            default:
-                return "Set Transform";
+        case Property::Position:
+            return "Set Position";
+        case Property::Rotation:
+            return "Set Rotation";
+        case Property::Scale:
+            return "Set Scale";
+        default:
+            return "Set Transform";
         }
     }
 
@@ -244,8 +242,7 @@ private:
  */
 class SetCameraPropertyCommand : public Command {
 public:
-    SetCameraPropertyCommand(World& world, World::EntityId entity,
-                             const CameraComponent& newValue)
+    SetCameraPropertyCommand(World& world, World::EntityId entity, const CameraComponent& newValue)
         : m_world(world), m_entityId(entity), m_newValue(newValue) {}
 
     bool execute() override {

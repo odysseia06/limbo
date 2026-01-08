@@ -33,8 +33,10 @@ private:
     void drawAssetGrid();
     void refreshDirectory();
     [[nodiscard]] bool matchesFilter(const std::string& filename) const;
-    [[nodiscard]] const char* getAssetIcon(const std::filesystem::path& path, bool isDirectory) const;
-    [[nodiscard]] glm::vec4 getAssetColor(const std::filesystem::path& path, bool isDirectory) const;
+    [[nodiscard]] const char* getAssetIcon(const std::filesystem::path& path,
+                                           bool isDirectory) const;
+    [[nodiscard]] glm::vec4 getAssetColor(const std::filesystem::path& path,
+                                          bool isDirectory) const;
 
 private:
     EditorApp& m_editor;

@@ -71,7 +71,7 @@ void AssetBrowserPanel::drawToolbar() {
     // Search box
     ImGui::SetNextItemWidth(200.0f);
     if (ImGui::InputTextWithHint("##Search", "Search assets...", m_searchBuffer,
-                                  sizeof(m_searchBuffer))) {
+                                 sizeof(m_searchBuffer))) {
         m_searchFilter = m_searchBuffer;
         // Convert to lowercase for case-insensitive search
         std::transform(m_searchFilter.begin(), m_searchFilter.end(), m_searchFilter.begin(),
@@ -272,7 +272,7 @@ bool AssetBrowserPanel::matchesFilter(const std::string& filename) const {
 }
 
 const char* AssetBrowserPanel::getAssetIcon(const std::filesystem::path& path,
-                                             bool isDirectory) const {
+                                            bool isDirectory) const {
     if (isDirectory) {
         return "[D]";
     }
@@ -304,7 +304,7 @@ const char* AssetBrowserPanel::getAssetIcon(const std::filesystem::path& path,
 }
 
 glm::vec4 AssetBrowserPanel::getAssetColor(const std::filesystem::path& path,
-                                            bool isDirectory) const {
+                                           bool isDirectory) const {
     if (isDirectory) {
         return glm::vec4(0.9f, 0.8f, 0.3f, 1.0f);  // Yellow
     }

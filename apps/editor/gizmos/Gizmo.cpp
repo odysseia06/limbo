@@ -59,103 +59,103 @@ bool Gizmo::update(const glm::vec2& mousePos, const glm::vec2& viewportSize,
     glm::vec2 delta = worldPos - startWorld;
 
     switch (m_mode) {
-        case GizmoMode::Translate: {
-            glm::vec3 translation(0.0f);
+    case GizmoMode::Translate: {
+        glm::vec3 translation(0.0f);
 
-            switch (m_activeAxis) {
-                case GizmoAxis::X:
-                    translation.x = delta.x;
-                    break;
-                case GizmoAxis::Y:
-                    translation.y = delta.y;
-                    break;
-                case GizmoAxis::XY:
-                    translation.x = delta.x;
-                    translation.y = delta.y;
-                    break;
-                default:
-                    break;
-            }
-
-            if (m_snapEnabled) {
-                translation.x = snapValue(translation.x, m_translateSnap);
-                translation.y = snapValue(translation.y, m_translateSnap);
-                translation.z = snapValue(translation.z, m_translateSnap);
-            }
-
-            glm::vec3 newPosition = m_startPosition + translation;
-            m_positionDelta = newPosition - m_currentPosition;
-            m_currentPosition = newPosition;
+        switch (m_activeAxis) {
+        case GizmoAxis::X:
+            translation.x = delta.x;
+            break;
+        case GizmoAxis::Y:
+            translation.y = delta.y;
+            break;
+        case GizmoAxis::XY:
+            translation.x = delta.x;
+            translation.y = delta.y;
+            break;
+        default:
             break;
         }
 
-        case GizmoMode::Rotate: {
-            // For 2D, we only rotate around Z axis
-            // Calculate angle from center to mouse
-            glm::vec2 toMouse = worldPos - glm::vec2(m_startPosition);
-            glm::vec2 toStart = startWorld - glm::vec2(m_startPosition);
+        if (m_snapEnabled) {
+            translation.x = snapValue(translation.x, m_translateSnap);
+            translation.y = snapValue(translation.y, m_translateSnap);
+            translation.z = snapValue(translation.z, m_translateSnap);
+        }
 
-            f32 currentAngle = std::atan2(toMouse.y, toMouse.x);
-            f32 startAngle = std::atan2(toStart.y, toStart.x);
-            f32 angleDelta = currentAngle - startAngle;
+        glm::vec3 newPosition = m_startPosition + translation;
+        m_positionDelta = newPosition - m_currentPosition;
+        m_currentPosition = newPosition;
+        break;
+    }
 
-            if (m_snapEnabled) {
-                f32 snapRad = glm::radians(m_rotateSnap);
-                angleDelta = snapValue(angleDelta, snapRad);
-            }
+    case GizmoMode::Rotate: {
+        // For 2D, we only rotate around Z axis
+        // Calculate angle from center to mouse
+        glm::vec2 toMouse = worldPos - glm::vec2(m_startPosition);
+        glm::vec2 toStart = startWorld - glm::vec2(m_startPosition);
 
-            glm::vec3 newRotation = m_startRotation;
-            newRotation.z += angleDelta;
+        f32 currentAngle = std::atan2(toMouse.y, toMouse.x);
+        f32 startAngle = std::atan2(toStart.y, toStart.x);
+        f32 angleDelta = currentAngle - startAngle;
 
-            m_rotationDelta = newRotation - m_currentRotation;
-            m_currentRotation = newRotation;
+        if (m_snapEnabled) {
+            f32 snapRad = glm::radians(m_rotateSnap);
+            angleDelta = snapValue(angleDelta, snapRad);
+        }
+
+        glm::vec3 newRotation = m_startRotation;
+        newRotation.z += angleDelta;
+
+        m_rotationDelta = newRotation - m_currentRotation;
+        m_currentRotation = newRotation;
+        break;
+    }
+
+    case GizmoMode::Scale: {
+        // Calculate scale based on distance from center
+        glm::vec2 toMouse = worldPos - glm::vec2(m_startPosition);
+        glm::vec2 toStart = startWorld - glm::vec2(m_startPosition);
+
+        f32 currentDist = glm::length(toMouse);
+        f32 startDist = glm::length(toStart);
+
+        f32 scaleFactor = 1.0f;
+        if (startDist > 0.001f) {
+            scaleFactor = currentDist / startDist;
+        }
+
+        glm::vec3 scaleMultiplier(1.0f);
+
+        switch (m_activeAxis) {
+        case GizmoAxis::X:
+            scaleMultiplier.x = scaleFactor;
+            break;
+        case GizmoAxis::Y:
+            scaleMultiplier.y = scaleFactor;
+            break;
+        case GizmoAxis::XY:
+        case GizmoAxis::XYZ:
+            scaleMultiplier = glm::vec3(scaleFactor);
+            break;
+        default:
             break;
         }
 
-        case GizmoMode::Scale: {
-            // Calculate scale based on distance from center
-            glm::vec2 toMouse = worldPos - glm::vec2(m_startPosition);
-            glm::vec2 toStart = startWorld - glm::vec2(m_startPosition);
-
-            f32 currentDist = glm::length(toMouse);
-            f32 startDist = glm::length(toStart);
-
-            f32 scaleFactor = 1.0f;
-            if (startDist > 0.001f) {
-                scaleFactor = currentDist / startDist;
-            }
-
-            glm::vec3 scaleMultiplier(1.0f);
-
-            switch (m_activeAxis) {
-                case GizmoAxis::X:
-                    scaleMultiplier.x = scaleFactor;
-                    break;
-                case GizmoAxis::Y:
-                    scaleMultiplier.y = scaleFactor;
-                    break;
-                case GizmoAxis::XY:
-                case GizmoAxis::XYZ:
-                    scaleMultiplier = glm::vec3(scaleFactor);
-                    break;
-                default:
-                    break;
-            }
-
-            if (m_snapEnabled) {
-                scaleMultiplier.x = snapValue(scaleMultiplier.x, m_scaleSnap);
-                scaleMultiplier.y = snapValue(scaleMultiplier.y, m_scaleSnap);
-                scaleMultiplier.z = snapValue(scaleMultiplier.z, m_scaleSnap);
-            }
-
-            glm::vec3 newScale = m_startScale * scaleMultiplier;
-            // Prevent negative or zero scale
-            newScale = glm::max(newScale, glm::vec3(0.01f));
-
-            m_scaleDelta = newScale - m_currentScale;
-            m_currentScale = newScale;
-            break;
+        if (m_snapEnabled) {
+            scaleMultiplier.x = snapValue(scaleMultiplier.x, m_scaleSnap);
+            scaleMultiplier.y = snapValue(scaleMultiplier.y, m_scaleSnap);
+            scaleMultiplier.z = snapValue(scaleMultiplier.z, m_scaleSnap);
         }
+
+        glm::vec3 newScale = m_startScale * scaleMultiplier;
+        // Prevent negative or zero scale
+        newScale = glm::max(newScale, glm::vec3(0.01f));
+
+        m_scaleDelta = newScale - m_currentScale;
+        m_currentScale = newScale;
+        break;
+    }
     }
 
     return true;
@@ -171,15 +171,15 @@ void Gizmo::draw(const glm::vec3& position, [[maybe_unused]] const glm::vec3& ro
     f32 size = m_gizmoSize * cameraZoom;
 
     switch (m_mode) {
-        case GizmoMode::Translate:
-            drawTranslateGizmo(position, size);
-            break;
-        case GizmoMode::Rotate:
-            drawRotateGizmo(position, size);
-            break;
-        case GizmoMode::Scale:
-            drawScaleGizmo(position, size);
-            break;
+    case GizmoMode::Translate:
+        drawTranslateGizmo(position, size);
+        break;
+    case GizmoMode::Rotate:
+        drawRotateGizmo(position, size);
+        break;
+    case GizmoMode::Scale:
+        drawScaleGizmo(position, size);
+        break;
     }
 }
 
@@ -222,7 +222,8 @@ void Gizmo::drawTranslateGizmo(const glm::vec3& position, f32 size) {
         glm::vec2(planeSize, planeSize), colorXY);
 
     // Center point
-    Renderer2D::drawQuad(position + glm::vec3(0.0f, 0.0f, 0.5f), glm::vec2(size * 0.3f), kCenterColor);
+    Renderer2D::drawQuad(position + glm::vec3(0.0f, 0.0f, 0.5f), glm::vec2(size * 0.3f),
+                         kCenterColor);
 }
 
 void Gizmo::drawRotateGizmo(const glm::vec3& position, f32 size) {
@@ -247,8 +248,7 @@ void Gizmo::drawRotateGizmo(const glm::vec3& position, f32 size) {
         // Calculate rotation angle for this segment
         f32 segAngle = std::atan2(p2.y - p1.y, p2.x - p1.x);
 
-        glm::mat4 transform = glm::translate(glm::mat4(1.0f),
-                                             position + glm::vec3(mid, 0.5f));
+        glm::mat4 transform = glm::translate(glm::mat4(1.0f), position + glm::vec3(mid, 0.5f));
         transform = glm::rotate(transform, segAngle, glm::vec3(0.0f, 0.0f, 1.0f));
         transform = glm::scale(transform, glm::vec3(segLength, thickness, 1.0f));
 
@@ -256,7 +256,8 @@ void Gizmo::drawRotateGizmo(const glm::vec3& position, f32 size) {
     }
 
     // Center point
-    Renderer2D::drawQuad(position + glm::vec3(0.0f, 0.0f, 0.5f), glm::vec2(size * 0.3f), kCenterColor);
+    Renderer2D::drawQuad(position + glm::vec3(0.0f, 0.0f, 0.5f), glm::vec2(size * 0.3f),
+                         kCenterColor);
 }
 
 void Gizmo::drawScaleGizmo(const glm::vec3& position, f32 size) {
@@ -292,7 +293,8 @@ void Gizmo::drawScaleGizmo(const glm::vec3& position, f32 size) {
                          glm::vec2(boxSize, boxSize), colorY);
 
     // Center box (uniform scale)
-    Renderer2D::drawQuad(position + glm::vec3(0.0f, 0.0f, 0.5f), glm::vec2(boxSize * 1.2f), colorXY);
+    Renderer2D::drawQuad(position + glm::vec3(0.0f, 0.0f, 0.5f), glm::vec2(boxSize * 1.2f),
+                         colorXY);
 }
 
 GizmoAxis Gizmo::hitTest(const glm::vec2& mousePos, const glm::vec3& position, f32 cameraZoom) {
@@ -303,80 +305,80 @@ GizmoAxis Gizmo::hitTest(const glm::vec2& mousePos, const glm::vec3& position, f
     f32 hitRadius = size * 0.8f;
 
     switch (m_mode) {
-        case GizmoMode::Translate: {
-            f32 axisLength = size * 6.0f;
-            f32 planeSize = size * 1.5f;
+    case GizmoMode::Translate: {
+        f32 axisLength = size * 6.0f;
+        f32 planeSize = size * 1.5f;
 
-            // Check XY plane first (center square)
-            if (std::abs(toMouse.x) < planeSize && std::abs(toMouse.y) < planeSize &&
-                toMouse.x > 0 && toMouse.y > 0) {
-                m_hoveredAxis = GizmoAxis::XY;
-                return GizmoAxis::XY;
-            }
-
-            // Check X axis
-            if (toMouse.x > 0 && toMouse.x < axisLength + hitRadius &&
-                std::abs(toMouse.y) < hitRadius) {
-                m_hoveredAxis = GizmoAxis::X;
-                return GizmoAxis::X;
-            }
-
-            // Check Y axis
-            if (toMouse.y > 0 && toMouse.y < axisLength + hitRadius &&
-                std::abs(toMouse.x) < hitRadius) {
-                m_hoveredAxis = GizmoAxis::Y;
-                return GizmoAxis::Y;
-            }
-            break;
+        // Check XY plane first (center square)
+        if (std::abs(toMouse.x) < planeSize && std::abs(toMouse.y) < planeSize && toMouse.x > 0 &&
+            toMouse.y > 0) {
+            m_hoveredAxis = GizmoAxis::XY;
+            return GizmoAxis::XY;
         }
 
-        case GizmoMode::Rotate: {
-            f32 radius = size * 5.0f;
-            f32 dist = glm::length(toMouse);
-
-            // Check if near the rotation circle
-            if (std::abs(dist - radius) < hitRadius * 2.0f) {
-                m_hoveredAxis = GizmoAxis::Z;
-                return GizmoAxis::Z;
-            }
-            break;
+        // Check X axis
+        if (toMouse.x > 0 && toMouse.x < axisLength + hitRadius &&
+            std::abs(toMouse.y) < hitRadius) {
+            m_hoveredAxis = GizmoAxis::X;
+            return GizmoAxis::X;
         }
 
-        case GizmoMode::Scale: {
-            f32 axisLength = size * 5.0f;
-            f32 boxSize = size * 0.5f;
-
-            // Check center (uniform scale)
-            if (std::abs(toMouse.x) < boxSize && std::abs(toMouse.y) < boxSize) {
-                m_hoveredAxis = GizmoAxis::XYZ;
-                return GizmoAxis::XYZ;
-            }
-
-            // Check X axis handle
-            if (std::abs(toMouse.x - axisLength) < boxSize && std::abs(toMouse.y) < boxSize) {
-                m_hoveredAxis = GizmoAxis::X;
-                return GizmoAxis::X;
-            }
-
-            // Check Y axis handle
-            if (std::abs(toMouse.y - axisLength) < boxSize && std::abs(toMouse.x) < boxSize) {
-                m_hoveredAxis = GizmoAxis::Y;
-                return GizmoAxis::Y;
-            }
-
-            // Check X axis line
-            if (toMouse.x > 0 && toMouse.x < axisLength && std::abs(toMouse.y) < hitRadius) {
-                m_hoveredAxis = GizmoAxis::X;
-                return GizmoAxis::X;
-            }
-
-            // Check Y axis line
-            if (toMouse.y > 0 && toMouse.y < axisLength && std::abs(toMouse.x) < hitRadius) {
-                m_hoveredAxis = GizmoAxis::Y;
-                return GizmoAxis::Y;
-            }
-            break;
+        // Check Y axis
+        if (toMouse.y > 0 && toMouse.y < axisLength + hitRadius &&
+            std::abs(toMouse.x) < hitRadius) {
+            m_hoveredAxis = GizmoAxis::Y;
+            return GizmoAxis::Y;
         }
+        break;
+    }
+
+    case GizmoMode::Rotate: {
+        f32 radius = size * 5.0f;
+        f32 dist = glm::length(toMouse);
+
+        // Check if near the rotation circle
+        if (std::abs(dist - radius) < hitRadius * 2.0f) {
+            m_hoveredAxis = GizmoAxis::Z;
+            return GizmoAxis::Z;
+        }
+        break;
+    }
+
+    case GizmoMode::Scale: {
+        f32 axisLength = size * 5.0f;
+        f32 boxSize = size * 0.5f;
+
+        // Check center (uniform scale)
+        if (std::abs(toMouse.x) < boxSize && std::abs(toMouse.y) < boxSize) {
+            m_hoveredAxis = GizmoAxis::XYZ;
+            return GizmoAxis::XYZ;
+        }
+
+        // Check X axis handle
+        if (std::abs(toMouse.x - axisLength) < boxSize && std::abs(toMouse.y) < boxSize) {
+            m_hoveredAxis = GizmoAxis::X;
+            return GizmoAxis::X;
+        }
+
+        // Check Y axis handle
+        if (std::abs(toMouse.y - axisLength) < boxSize && std::abs(toMouse.x) < boxSize) {
+            m_hoveredAxis = GizmoAxis::Y;
+            return GizmoAxis::Y;
+        }
+
+        // Check X axis line
+        if (toMouse.x > 0 && toMouse.x < axisLength && std::abs(toMouse.y) < hitRadius) {
+            m_hoveredAxis = GizmoAxis::X;
+            return GizmoAxis::X;
+        }
+
+        // Check Y axis line
+        if (toMouse.y > 0 && toMouse.y < axisLength && std::abs(toMouse.x) < hitRadius) {
+            m_hoveredAxis = GizmoAxis::Y;
+            return GizmoAxis::Y;
+        }
+        break;
+    }
     }
 
     m_hoveredAxis = GizmoAxis::None;

@@ -43,7 +43,9 @@ public:
         return true;
     }
 
-    [[nodiscard]] String getDescription() const override { return "Create Entity '" + m_name + "'"; }
+    [[nodiscard]] String getDescription() const override {
+        return "Create Entity '" + m_name + "'";
+    }
 
     [[nodiscard]] Entity getCreatedEntity() const { return m_entity; }
 

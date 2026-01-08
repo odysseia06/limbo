@@ -186,16 +186,16 @@ void EditorApp::renderMenuBar() {
                 executeCommand(std::move(cmd));
             }
             if (ImGui::MenuItem("Create Sprite")) {
-                auto cmd = std::make_unique<CreateEntityCommand>(
-                    getWorld(), "Sprite", [this](Entity e) {
+                auto cmd =
+                    std::make_unique<CreateEntityCommand>(getWorld(), "Sprite", [this](Entity e) {
                         e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
                         selectEntity(e);
                     });
                 executeCommand(std::move(cmd));
             }
             if (ImGui::MenuItem("Create Camera")) {
-                auto cmd = std::make_unique<CreateEntityCommand>(
-                    getWorld(), "Camera", [this](Entity e) {
+                auto cmd =
+                    std::make_unique<CreateEntityCommand>(getWorld(), "Camera", [this](Entity e) {
                         e.addComponent<CameraComponent>();
                         selectEntity(e);
                     });
