@@ -107,12 +107,12 @@ private:
     bool m_drawCenterOfMass = false;
 
     // Default colors (RGBA)
-    glm::vec4 m_staticBodyColor{0.5f, 0.5f, 0.5f, 1.0f};      // Gray
-    glm::vec4 m_kinematicBodyColor{0.5f, 0.5f, 0.9f, 1.0f};   // Light blue
-    glm::vec4 m_dynamicBodyColor{0.0f, 1.0f, 0.0f, 1.0f};     // Green
-    glm::vec4 m_sensorColor{1.0f, 1.0f, 0.0f, 0.5f};          // Yellow (transparent)
-    glm::vec4 m_aabbColor{1.0f, 0.0f, 1.0f, 0.5f};            // Magenta (transparent)
-    glm::vec4 m_centerOfMassColor{1.0f, 0.0f, 0.0f, 1.0f};    // Red
+    glm::vec4 m_staticBodyColor{0.5f, 0.5f, 0.5f, 1.0f};     // Gray
+    glm::vec4 m_kinematicBodyColor{0.5f, 0.5f, 0.9f, 1.0f};  // Light blue
+    glm::vec4 m_dynamicBodyColor{0.0f, 1.0f, 0.0f, 1.0f};    // Green
+    glm::vec4 m_sensorColor{1.0f, 1.0f, 0.0f, 0.5f};         // Yellow (transparent)
+    glm::vec4 m_aabbColor{1.0f, 0.0f, 1.0f, 0.5f};           // Magenta (transparent)
+    glm::vec4 m_centerOfMassColor{1.0f, 0.0f, 0.0f, 1.0f};   // Red
 };
 
 }  // namespace limbo

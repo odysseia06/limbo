@@ -19,7 +19,7 @@ struct FramebufferSpec {
 
 /**
  * Framebuffer - Offscreen render target
- * 
+ *
  * Used for rendering scenes to textures for display in ImGui viewports,
  * post-processing, or other offscreen rendering needs.
  */

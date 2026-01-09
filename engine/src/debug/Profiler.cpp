@@ -214,8 +214,7 @@ void Profiler::captureFrame() {
     std::lock_guard<std::mutex> lock(state.mutex);
 
     // Get the most recent completed frame from history
-    u32 const lastIndex =
-        (state.historyIndex + state.historySize - 1) % state.historySize;
+    u32 const lastIndex = (state.historyIndex + state.historySize - 1) % state.historySize;
     state.capturedFrame = state.history[lastIndex];
     state.hasCapturedFrame = true;
 }
@@ -239,8 +238,7 @@ const FrameData* Profiler::getLastFrame() {
 
     std::lock_guard<std::mutex> lock(state.mutex);
 
-    u32 const lastIndex =
-        (state.historyIndex + state.historySize - 1) % state.historySize;
+    u32 const lastIndex = (state.historyIndex + state.historySize - 1) % state.historySize;
     return &state.history[lastIndex];
 }
 
@@ -271,18 +269,15 @@ bool Profiler::exportToCSV(const char* filepath) {
 
     // Write samples
     for (const auto& sample : state.capturedFrame.samples) {
-        f64 const startUs = static_cast<f64>(sample.startTime - state.capturedFrame.frameStartTime) / 1000.0;
-        f64 const endUs = static_cast<f64>(sample.endTime - state.capturedFrame.frameStartTime) / 1000.0;
+        f64 const startUs =
+            static_cast<f64>(sample.startTime - state.capturedFrame.frameStartTime) / 1000.0;
+        f64 const endUs =
+            static_cast<f64>(sample.endTime - state.capturedFrame.frameStartTime) / 1000.0;
         f64 const durationUs = sample.getDurationUs();
         f64 const durationMs = sample.getDurationMs();
 
-        file << sample.name << ","
-             << sample.depth << ","
-             << sample.parentIndex << ","
-             << startUs << ","
-             << endUs << ","
-             << durationUs << ","
-             << durationMs << "\n";
+        file << sample.name << "," << sample.depth << "," << sample.parentIndex << "," << startUs
+             << "," << endUs << "," << durationUs << "," << durationMs << "\n";
     }
 
     file.close();

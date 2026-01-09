@@ -429,7 +429,8 @@ void InspectorPanel::drawScriptFilePicker(ScriptComponent& component) {
         ImGui::Separator();
 
         // Look for .lua files in assets/scripts/
-        std::filesystem::path const scriptsDir = std::filesystem::current_path() / "assets" / "scripts";
+        std::filesystem::path const scriptsDir =
+            std::filesystem::current_path() / "assets" / "scripts";
 
         if (std::filesystem::exists(scriptsDir)) {
             bool foundAny = false;

@@ -14,10 +14,8 @@ Framebuffer::~Framebuffer() {
 }
 
 Framebuffer::Framebuffer(Framebuffer&& other) noexcept
-    : m_framebufferId(other.m_framebufferId),
-      m_colorAttachment(other.m_colorAttachment),
-      m_depthAttachment(other.m_depthAttachment),
-      m_spec(other.m_spec) {
+    : m_framebufferId(other.m_framebufferId), m_colorAttachment(other.m_colorAttachment),
+      m_depthAttachment(other.m_depthAttachment), m_spec(other.m_spec) {
     other.m_framebufferId = 0;
     other.m_colorAttachment = 0;
     other.m_depthAttachment = 0;

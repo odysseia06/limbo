@@ -156,10 +156,10 @@ void PhysicsSystem2D::interpolateRenderState(World& world, f32 alpha) {
         const auto& state = it->second;
 
         // Interpolate position: lerp(previous, current, alpha)
-        transform.position.x = state.previousPosition.x +
-                               alpha * (state.currentPosition.x - state.previousPosition.x);
-        transform.position.y = state.previousPosition.y +
-                               alpha * (state.currentPosition.y - state.previousPosition.y);
+        transform.position.x =
+            state.previousPosition.x + alpha * (state.currentPosition.x - state.previousPosition.x);
+        transform.position.y =
+            state.previousPosition.y + alpha * (state.currentPosition.y - state.previousPosition.y);
 
         // Interpolate rotation (simple lerp for small angles)
         // For large angle differences, should use proper angle interpolation

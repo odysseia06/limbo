@@ -166,22 +166,26 @@ void ConsolePanel::drawLogEntries() {
 bool ConsolePanel::matchesFilter(const log::LogEntry& entry) const {
     // Check level filter
     switch (entry.level) {
-        case spdlog::level::debug:
-        case spdlog::level::trace:
-            if (!m_showDebug) return false;
-            break;
-        case spdlog::level::info:
-            if (!m_showInfo) return false;
-            break;
-        case spdlog::level::warn:
-            if (!m_showWarn) return false;
-            break;
-        case spdlog::level::err:
-        case spdlog::level::critical:
-            if (!m_showError) return false;
-            break;
-        default:
-            break;
+    case spdlog::level::debug:
+    case spdlog::level::trace:
+        if (!m_showDebug)
+            return false;
+        break;
+    case spdlog::level::info:
+        if (!m_showInfo)
+            return false;
+        break;
+    case spdlog::level::warn:
+        if (!m_showWarn)
+            return false;
+        break;
+    case spdlog::level::err:
+    case spdlog::level::critical:
+        if (!m_showError)
+            return false;
+        break;
+    default:
+        break;
     }
 
     // Check category filter
@@ -207,37 +211,37 @@ bool ConsolePanel::matchesFilter(const log::LogEntry& entry) const {
 
 glm::vec4 ConsolePanel::getLevelColor(spdlog::level::level_enum level) const {
     switch (level) {
-        case spdlog::level::trace:
-        case spdlog::level::debug:
-            return {0.6f, 0.6f, 0.6f, 1.0f};  // Gray
-        case spdlog::level::info:
-            return {0.4f, 0.8f, 1.0f, 1.0f};  // Cyan
-        case spdlog::level::warn:
-            return {1.0f, 0.8f, 0.2f, 1.0f};  // Yellow
-        case spdlog::level::err:
-            return {1.0f, 0.3f, 0.3f, 1.0f};  // Red
-        case spdlog::level::critical:
-            return {1.0f, 0.0f, 0.0f, 1.0f};  // Bright red
-        default:
-            return {1.0f, 1.0f, 1.0f, 1.0f};  // White
+    case spdlog::level::trace:
+    case spdlog::level::debug:
+        return {0.6f, 0.6f, 0.6f, 1.0f};  // Gray
+    case spdlog::level::info:
+        return {0.4f, 0.8f, 1.0f, 1.0f};  // Cyan
+    case spdlog::level::warn:
+        return {1.0f, 0.8f, 0.2f, 1.0f};  // Yellow
+    case spdlog::level::err:
+        return {1.0f, 0.3f, 0.3f, 1.0f};  // Red
+    case spdlog::level::critical:
+        return {1.0f, 0.0f, 0.0f, 1.0f};  // Bright red
+    default:
+        return {1.0f, 1.0f, 1.0f, 1.0f};  // White
     }
 }
 
 const char* ConsolePanel::getLevelIcon(spdlog::level::level_enum level) const {
     switch (level) {
-        case spdlog::level::trace:
-        case spdlog::level::debug:
-            return "[D]";
-        case spdlog::level::info:
-            return "[I]";
-        case spdlog::level::warn:
-            return "[W]";
-        case spdlog::level::err:
-            return "[E]";
-        case spdlog::level::critical:
-            return "[!]";
-        default:
-            return "[ ]";
+    case spdlog::level::trace:
+    case spdlog::level::debug:
+        return "[D]";
+    case spdlog::level::info:
+        return "[I]";
+    case spdlog::level::warn:
+        return "[W]";
+    case spdlog::level::err:
+        return "[E]";
+    case spdlog::level::critical:
+        return "[!]";
+    default:
+        return "[ ]";
     }
 }
 

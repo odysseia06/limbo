@@ -94,9 +94,9 @@ void PhysicsDebug2D::draw(const b2World* world) {
 
                 // Draw a line to show rotation
                 b2Vec2 const axis = b2Mul(xf.q, b2Vec2(1.0f, 0.0f));
-                Renderer2D::drawLine(glm::vec2{center.x, center.y},
-                                     glm::vec2{center.x + radius * axis.x, center.y + radius * axis.y},
-                                     color);
+                Renderer2D::drawLine(
+                    glm::vec2{center.x, center.y},
+                    glm::vec2{center.x + radius * axis.x, center.y + radius * axis.y}, color);
                 break;
             }
             case b2Shape::e_polygon: {

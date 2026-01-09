@@ -36,9 +36,7 @@ FrameAllocator::~FrameAllocator() {
 }
 
 FrameAllocator::FrameAllocator(FrameAllocator&& other) noexcept
-    : m_buffer(other.m_buffer),
-      m_capacity(other.m_capacity),
-      m_offset(other.m_offset),
+    : m_buffer(other.m_buffer), m_capacity(other.m_capacity), m_offset(other.m_offset),
       m_peakUsage(other.m_peakUsage) {
     other.m_buffer = nullptr;
     other.m_capacity = 0;
@@ -89,7 +87,7 @@ void* FrameAllocator::allocate(usize size, usize alignment) {
     usize totalSize = alignmentPadding + size;
     if (m_offset + totalSize > m_capacity) {
         LIMBO_LOG_CORE_WARN("FrameAllocator: Out of memory! Requested {} bytes, have {} remaining",
-                           size, getRemainingBytes());
+                            size, getRemainingBytes());
         return nullptr;
     }
 
@@ -146,7 +144,7 @@ void init(usize capacityBytes) {
 void shutdown() {
     if (g_globalFrameAllocator) {
         LIMBO_LOG_CORE_DEBUG("FrameAllocator: Peak usage was {} KB",
-                            g_globalFrameAllocator->getPeakUsage() / 1024);
+                             g_globalFrameAllocator->getPeakUsage() / 1024);
         delete g_globalFrameAllocator;
         g_globalFrameAllocator = nullptr;
     }

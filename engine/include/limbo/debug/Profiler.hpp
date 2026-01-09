@@ -13,12 +13,12 @@ namespace limbo::profiler {
  * ProfilerSample - A single timing measurement
  */
 struct ProfilerSample {
-    const char* name = nullptr;    // Static string (no allocation)
-    u64 startTime = 0;             // Nanoseconds since epoch
-    u64 endTime = 0;               // Nanoseconds since epoch
-    u32 depth = 0;                 // Nesting level (0 = top-level)
-    u32 parentIndex = 0;           // Index of parent sample (0 = none)
-    std::thread::id threadId;      // Thread that recorded this sample
+    const char* name = nullptr;  // Static string (no allocation)
+    u64 startTime = 0;           // Nanoseconds since epoch
+    u64 endTime = 0;             // Nanoseconds since epoch
+    u32 depth = 0;               // Nesting level (0 = top-level)
+    u32 parentIndex = 0;         // Index of parent sample (0 = none)
+    std::thread::id threadId;    // Thread that recorded this sample
 
     [[nodiscard]] f64 getDurationMs() const {
         return static_cast<f64>(endTime - startTime) / 1'000'000.0;
@@ -186,21 +186,21 @@ public:
 // These compile away in release builds when LIMBO_PROFILING_ENABLED is not defined
 
 #if defined(LIMBO_DEBUG) || defined(LIMBO_PROFILING_ENABLED)
-    #define LIMBO_PROFILING_ENABLED 1
+#define LIMBO_PROFILING_ENABLED 1
 
-    // Profile a named scope
-    #define LIMBO_PROFILE_SCOPE(name)                                                              \
-        ::limbo::profiler::ScopedSample LIMBO_CONCAT(_profiler_sample_, __LINE__)(name)
+// Profile a named scope
+#define LIMBO_PROFILE_SCOPE(name)                                                                  \
+    ::limbo::profiler::ScopedSample LIMBO_CONCAT(_profiler_sample_, __LINE__)(name)
 
-    // Profile a function (uses function name)
-    #define LIMBO_PROFILE_FUNCTION() LIMBO_PROFILE_SCOPE(__FUNCTION__)
+// Profile a function (uses function name)
+#define LIMBO_PROFILE_FUNCTION() LIMBO_PROFILE_SCOPE(__FUNCTION__)
 
-    // Profile with custom category prefix
-    #define LIMBO_PROFILE_CATEGORY(category, name)                                                 \
-        ::limbo::profiler::ScopedSample LIMBO_CONCAT(_profiler_sample_, __LINE__)("[" category     \
-                                                                                  "] " name)
+// Profile with custom category prefix
+#define LIMBO_PROFILE_CATEGORY(category, name)                                                     \
+    ::limbo::profiler::ScopedSample LIMBO_CONCAT(_profiler_sample_,                                \
+                                                 __LINE__)("[" category "] " name)
 #else
-    #define LIMBO_PROFILE_SCOPE(name) ((void)0)
-    #define LIMBO_PROFILE_FUNCTION() ((void)0)
-    #define LIMBO_PROFILE_CATEGORY(category, name) ((void)0)
+#define LIMBO_PROFILE_SCOPE(name) ((void)0)
+#define LIMBO_PROFILE_FUNCTION() ((void)0)
+#define LIMBO_PROFILE_CATEGORY(category, name) ((void)0)
 #endif

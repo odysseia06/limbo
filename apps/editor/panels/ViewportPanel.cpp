@@ -104,13 +104,13 @@ void ViewportPanel::render() {
     m_viewportHovered = ImGui::IsWindowHovered();
 
     ImVec2 const viewportPanelSize = ImGui::GetContentRegionAvail();
-    
+
     // Resize framebuffer if viewport size changed
-    if (m_framebuffer && (viewportPanelSize.x != m_viewportSize.x || 
-                          viewportPanelSize.y != m_viewportSize.y)) {
+    if (m_framebuffer &&
+        (viewportPanelSize.x != m_viewportSize.x || viewportPanelSize.y != m_viewportSize.y)) {
         m_viewportSize = {viewportPanelSize.x, viewportPanelSize.y};
         if (m_viewportSize.x > 0 && m_viewportSize.y > 0) {
-            m_framebuffer->resize(static_cast<u32>(m_viewportSize.x), 
+            m_framebuffer->resize(static_cast<u32>(m_viewportSize.x),
                                   static_cast<u32>(m_viewportSize.y));
         }
     } else {
@@ -121,16 +121,16 @@ void ViewportPanel::render() {
     if (m_framebuffer && m_viewportSize.x > 0 && m_viewportSize.y > 0) {
         m_framebuffer->bind();
         m_framebuffer->clear(0.1f, 0.1f, 0.1f, 1.0f);
-        
+
         renderScene();
-        
+
         m_framebuffer->unbind();
 
         // Display the framebuffer texture in ImGui
         u64 textureId = m_framebuffer->getColorAttachmentId();
-        ImGui::Image(reinterpret_cast<ImTextureID>(textureId), 
-                     ImVec2(m_viewportSize.x, m_viewportSize.y),
-                     ImVec2(0, 1), ImVec2(1, 0));  // Flip Y for OpenGL
+        ImGui::Image(reinterpret_cast<ImTextureID>(textureId),
+                     ImVec2(m_viewportSize.x, m_viewportSize.y), ImVec2(0, 1),
+                     ImVec2(1, 0));  // Flip Y for OpenGL
     }
 
     // Viewport bounds for mouse picking
@@ -433,8 +433,7 @@ void ViewportPanel::drawPhysicsShapes() {
             }
 
             // Calculate world position with offset
-            glm::vec2 pos{transform.position.x + box.offset.x,
-                          transform.position.y + box.offset.y};
+            glm::vec2 pos{transform.position.x + box.offset.x, transform.position.y + box.offset.y};
             glm::vec2 size{box.size.x * 2.0f * transform.scale.x,
                            box.size.y * 2.0f * transform.scale.y};
 

@@ -436,11 +436,8 @@ void ScriptEngine::bindPhysicsTypes() {
 
     // RaycastHit2D result type
     m_lua.new_usertype<RaycastHit2D>(
-        "RaycastHit2D", sol::no_constructor,
-        "hit", &RaycastHit2D::hit,
-        "point", &RaycastHit2D::point,
-        "normal", &RaycastHit2D::normal,
-        "distance", &RaycastHit2D::distance,
+        "RaycastHit2D", sol::no_constructor, "hit", &RaycastHit2D::hit, "point",
+        &RaycastHit2D::point, "normal", &RaycastHit2D::normal, "distance", &RaycastHit2D::distance,
         "getEntity", [world, &lua](const RaycastHit2D& hit) -> sol::object {
             if (!hit.hit || !hit.body) {
                 return sol::nil;
@@ -450,14 +447,14 @@ void ScriptEngine::bindPhysicsTypes() {
                 return sol::make_object(lua, Entity(entityId, world));
             }
             return sol::nil;
-        }
-    );
+        });
 
     // Physics table with query functions
     m_lua["Physics"] = m_lua.create_table_with(
         "raycast",
         [physics, world, &lua](const glm::vec2& origin, const glm::vec2& direction,
-                               float maxDistance, sol::optional<bool> includeTriggers) -> sol::object {
+                               float maxDistance,
+                               sol::optional<bool> includeTriggers) -> sol::object {
             if (!physics->isInitialized()) {
                 return sol::nil;
             }
@@ -469,8 +466,8 @@ void ScriptEngine::bindPhysicsTypes() {
             return sol::nil;
         },
         "raycastAll",
-        [physics, &lua](const glm::vec2& origin, const glm::vec2& direction,
-                        float maxDistance, sol::optional<bool> includeTriggers) -> sol::table {
+        [physics, &lua](const glm::vec2& origin, const glm::vec2& direction, float maxDistance,
+                        sol::optional<bool> includeTriggers) -> sol::table {
             sol::table results = lua.create_table();
             if (!physics->isInitialized()) {
                 return results;
@@ -517,8 +514,7 @@ void ScriptEngine::bindPhysicsTypes() {
                 }
             }
             return results;
-        }
-    );
+        });
 
     // Entity physics methods
     m_lua["Entity"]["getVelocity"] = &entityGetVelocity;

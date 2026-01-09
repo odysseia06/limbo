@@ -59,8 +59,7 @@ glm::vec4 deserializeVec4(const json& j) {
         return glm::vec4(j[0].get<float>(), j[1].get<float>(), j[2].get<float>(),
                          j[3].get<float>());
     }
-    if (j.is_object() && j.contains("r") && j.contains("g") && j.contains("b") &&
-        j.contains("a")) {
+    if (j.is_object() && j.contains("r") && j.contains("g") && j.contains("b") && j.contains("a")) {
         return glm::vec4(j["r"].get<float>(), j["g"].get<float>(), j["b"].get<float>(),
                          j["a"].get<float>());
     }

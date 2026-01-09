@@ -174,9 +174,8 @@ RaycastHit2D Physics2D::raycast(const glm::vec2& origin, const glm::vec2& direct
     return result;
 }
 
-std::vector<RaycastHit2D> Physics2D::raycastAll(const glm::vec2& origin,
-                                                const glm::vec2& direction, f32 maxDistance,
-                                                bool includeTriggers) const {
+std::vector<RaycastHit2D> Physics2D::raycastAll(const glm::vec2& origin, const glm::vec2& direction,
+                                                f32 maxDistance, bool includeTriggers) const {
     std::vector<RaycastHit2D> results;
     if (!m_world || maxDistance <= 0.0f) {
         return results;

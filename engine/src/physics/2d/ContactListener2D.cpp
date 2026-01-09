@@ -32,8 +32,12 @@ void ContactListener2D::enqueueEvent(b2Contact* contact, CollisionEventType type
     }
 
     // Get entity IDs from body user data
-    void* userDataA = bodyA->GetUserData().pointer ? reinterpret_cast<void*>(bodyA->GetUserData().pointer) : nullptr;
-    void* userDataB = bodyB->GetUserData().pointer ? reinterpret_cast<void*>(bodyB->GetUserData().pointer) : nullptr;
+    void* userDataA = bodyA->GetUserData().pointer
+                          ? reinterpret_cast<void*>(bodyA->GetUserData().pointer)
+                          : nullptr;
+    void* userDataB = bodyB->GetUserData().pointer
+                          ? reinterpret_cast<void*>(bodyB->GetUserData().pointer)
+                          : nullptr;
 
     // Both bodies must have entity associations
     if (!userDataA || !userDataB) {

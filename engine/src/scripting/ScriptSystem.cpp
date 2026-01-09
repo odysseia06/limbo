@@ -73,14 +73,13 @@ void ScriptSystem::onAttach(World& world) {
     m_engine.bindWorld(&world);
 
     // Set up hot reload callback for logging
-    m_hotReloadManager.setReloadCallback(
-        [](const std::filesystem::path& path, bool success) {
-            if (success) {
-                spdlog::info("Script reloaded successfully: {}", path.string());
-            } else {
-                spdlog::error("Script reload failed: {}", path.string());
-            }
-        });
+    m_hotReloadManager.setReloadCallback([](const std::filesystem::path& path, bool success) {
+        if (success) {
+            spdlog::info("Script reloaded successfully: {}", path.string());
+        } else {
+            spdlog::error("Script reload failed: {}", path.string());
+        }
+    });
 
     spdlog::debug("ScriptSystem initialized with hot reload support");
 }
@@ -249,12 +248,12 @@ void ScriptSystem::dispatchCollisionEvent(World& world, const CollisionEvent2D& 
 
     if (event.isTrigger) {
         // Trigger events
-        callback = (type == CollisionEventType::Begin) ? &script.onTriggerEnter
-                                                       : &script.onTriggerExit;
+        callback =
+            (type == CollisionEventType::Begin) ? &script.onTriggerEnter : &script.onTriggerExit;
     } else {
         // Collision events
-        callback = (type == CollisionEventType::Begin) ? &script.onCollisionBegin
-                                                       : &script.onCollisionEnd;
+        callback =
+            (type == CollisionEventType::Begin) ? &script.onCollisionBegin : &script.onCollisionEnd;
         includeNormal = (type == CollisionEventType::Begin);  // Only Begin has meaningful normal
     }
 

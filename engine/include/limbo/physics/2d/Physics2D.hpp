@@ -108,8 +108,7 @@ public:
      * @return Vector of hits sorted by distance (closest first)
      */
     [[nodiscard]] std::vector<RaycastHit2D> raycastAll(const glm::vec2& origin,
-                                                       const glm::vec2& direction,
-                                                       f32 maxDistance,
+                                                       const glm::vec2& direction, f32 maxDistance,
                                                        bool includeTriggers = false) const;
 
     /**

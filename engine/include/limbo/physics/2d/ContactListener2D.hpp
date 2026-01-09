@@ -21,11 +21,11 @@ namespace limbo {
 struct LIMBO_API CollisionEvent2D {
     World::EntityId self = World::kNullEntity;
     World::EntityId other = World::kNullEntity;
-    glm::vec2 normal{0.0f};           // Points from self toward other
-    glm::vec2 contactPoint{0.0f};     // World-space contact point
-    i32 selfFixtureIndex = 0;         // Which collider on self
-    i32 otherFixtureIndex = 0;        // Which collider on other
-    bool isTrigger = false;           // True if either fixture is a sensor
+    glm::vec2 normal{0.0f};        // Points from self toward other
+    glm::vec2 contactPoint{0.0f};  // World-space contact point
+    i32 selfFixtureIndex = 0;      // Which collider on self
+    i32 otherFixtureIndex = 0;     // Which collider on other
+    bool isTrigger = false;        // True if either fixture is a sensor
 };
 
 /**
@@ -41,7 +41,8 @@ enum class CollisionEventType : u8 {
  * @param event The collision event with self-relative data
  * @param type Begin or End
  */
-using CollisionCallback = std::function<void(const CollisionEvent2D& event, CollisionEventType type)>;
+using CollisionCallback =
+    std::function<void(const CollisionEvent2D& event, CollisionEventType type)>;
 
 /**
  * ContactListener2D - Box2D contact listener that buffers events
@@ -97,7 +98,7 @@ private:
     struct PendingEvent {
         World::EntityId entityA = World::kNullEntity;
         World::EntityId entityB = World::kNullEntity;
-        glm::vec2 normal{0.0f};       // From A toward B
+        glm::vec2 normal{0.0f};  // From A toward B
         glm::vec2 contactPoint{0.0f};
         i32 fixtureIndexA = 0;
         i32 fixtureIndexB = 0;

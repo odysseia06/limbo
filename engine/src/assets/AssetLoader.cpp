@@ -42,7 +42,8 @@ bool AssetLoader::isInitialized() {
 
 usize AssetLoader::processMainThreadWork() {
     if (!ThreadPool::isMainThread()) {
-        LIMBO_LOG_ASSET_ERROR("AssetLoader::processMainThreadWork() must be called from main thread");
+        LIMBO_LOG_ASSET_ERROR(
+            "AssetLoader::processMainThreadWork() must be called from main thread");
         return 0;
     }
 

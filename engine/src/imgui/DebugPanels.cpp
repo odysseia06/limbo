@@ -366,13 +366,13 @@ namespace {
 
 // Colors for profiler bars (cycle through these)
 const ImVec4 PROFILER_COLORS[] = {
-    ImVec4(0.4f, 0.6f, 0.9f, 1.0f),   // Blue
-    ImVec4(0.5f, 0.8f, 0.5f, 1.0f),   // Green
-    ImVec4(0.9f, 0.7f, 0.4f, 1.0f),   // Orange
-    ImVec4(0.8f, 0.5f, 0.8f, 1.0f),   // Purple
-    ImVec4(0.9f, 0.5f, 0.5f, 1.0f),   // Red
-    ImVec4(0.5f, 0.8f, 0.8f, 1.0f),   // Cyan
-    ImVec4(0.8f, 0.8f, 0.5f, 1.0f),   // Yellow
+    ImVec4(0.4f, 0.6f, 0.9f, 1.0f),  // Blue
+    ImVec4(0.5f, 0.8f, 0.5f, 1.0f),  // Green
+    ImVec4(0.9f, 0.7f, 0.4f, 1.0f),  // Orange
+    ImVec4(0.8f, 0.5f, 0.8f, 1.0f),  // Purple
+    ImVec4(0.9f, 0.5f, 0.5f, 1.0f),  // Red
+    ImVec4(0.5f, 0.8f, 0.8f, 1.0f),  // Cyan
+    ImVec4(0.8f, 0.8f, 0.5f, 1.0f),  // Yellow
 };
 constexpr size_t PROFILER_COLOR_COUNT = sizeof(PROFILER_COLORS) / sizeof(PROFILER_COLORS[0]);
 
@@ -528,7 +528,8 @@ void showProfilerPanel() {
         ImDrawList* drawList = ImGui::GetWindowDrawList();
 
         // Background
-        drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y),
+        drawList->AddRectFilled(canvasPos,
+                                ImVec2(canvasPos.x + canvasSize.x, canvasPos.y + canvasSize.y),
                                 IM_COL32(30, 30, 30, 255));
 
         // Scale factor: pixels per microsecond
@@ -606,8 +607,9 @@ void showProfilerPanel() {
                                          : frameData->getFrameDurationMs();
 
             // Use smoothed samples if available, otherwise use raw data
-            bool const useSmoothed = !s_profilerState.smoothedSamples.empty() &&
-                                     s_profilerState.smoothedSamples.size() == frameData->samples.size();
+            bool const useSmoothed =
+                !s_profilerState.smoothedSamples.empty() &&
+                s_profilerState.smoothedSamples.size() == frameData->samples.size();
 
             for (size_t i = 0; i < frameData->samples.size(); ++i) {
                 const auto& sample = frameData->samples[i];
