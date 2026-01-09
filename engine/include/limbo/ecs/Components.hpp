@@ -4,6 +4,7 @@
 #include "limbo/core/Types.hpp"
 #include "limbo/assets/AssetId.hpp"
 
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -50,6 +51,10 @@ struct TransformComponent {
 struct SpriteRendererComponent {
     glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
     AssetId textureId = AssetId::invalid();
+
+    // Sorting: layer takes priority, then order within layer
+    // Lower values render first (behind higher values)
+    i32 sortingLayer = 0;
     i32 sortingOrder = 0;
 
     // UV coordinates for sprite sheet support
@@ -102,5 +107,25 @@ struct CameraComponent {
 struct ActiveComponent {};  // Entity is active/enabled
 
 struct StaticComponent {};  // Entity doesn't move (optimization hint)
+
+// Forward declaration for PrefabInstanceComponent
+struct PrefabInstanceComponent;  // Defined in limbo/scene/Prefab.hpp
+
+// Hierarchy component - defines parent/child relationships between entities
+// Uses a linked list structure for efficient sibling traversal
+struct HierarchyComponent {
+    entt::entity parent = entt::null;       // Parent entity (null if root)
+    entt::entity firstChild = entt::null;   // First child in linked list
+    entt::entity nextSibling = entt::null;  // Next sibling in linked list
+    entt::entity prevSibling = entt::null;  // Previous sibling in linked list
+    u32 childCount = 0;                     // Number of direct children
+    u32 depth = 0;                          // Depth in hierarchy (0 = root)
+
+    HierarchyComponent() = default;
+
+    [[nodiscard]] bool hasParent() const { return parent != entt::null; }
+    [[nodiscard]] bool hasChildren() const { return firstChild != entt::null; }
+    [[nodiscard]] bool isRoot() const { return parent == entt::null; }
+};
 
 }  // namespace limbo

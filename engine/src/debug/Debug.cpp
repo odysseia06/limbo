@@ -1,29 +1,16 @@
 #include "limbo/debug/Debug.hpp"
-
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo::debug {
 
 void init() {
-    // Configure spdlog
-    auto console = spdlog::stdout_color_mt("limbo");
-    spdlog::set_default_logger(console);
-
-#ifdef LIMBO_DEBUG
-    spdlog::set_level(spdlog::level::debug);
-    spdlog::set_pattern("[%H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
-#else
-    spdlog::set_level(spdlog::level::info);
-    spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
-#endif
-
-    spdlog::info("Debug system initialized");
+    // Initialize the logging system with categories
+    limbo::log::init();
 }
 
 void shutdown() {
-    spdlog::info("Debug system shutdown");
-    spdlog::shutdown();
+    // Shutdown the logging system
+    limbo::log::shutdown();
 }
 
 }  // namespace limbo::debug

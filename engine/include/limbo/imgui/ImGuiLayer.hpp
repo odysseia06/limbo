@@ -38,9 +38,10 @@ public:
     /**
      * Initialize ImGui with GLFW window and OpenGL context
      * @param window GLFW window handle
+     * @param iniFilePath Optional path for layout persistence (nullptr to disable)
      * @return true on success
      */
-    bool init(GLFWwindow* window);
+    bool init(GLFWwindow* window, const char* iniFilePath = nullptr);
 
     /**
      * Shutdown ImGui and free resources

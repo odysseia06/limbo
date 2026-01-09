@@ -21,10 +21,16 @@ struct LIMBO_API ScriptComponent {
     /// Script environment (sandboxed per-entity)
     sol::environment environment;
 
-    /// Cached function references
+    /// Cached function references - lifecycle
     sol::protected_function onStart;
     sol::protected_function onUpdate;
     sol::protected_function onDestroy;
+
+    /// Cached function references - collision callbacks
+    sol::protected_function onCollisionBegin;  // (other: Entity, normal: Vec2)
+    sol::protected_function onCollisionEnd;    // (other: Entity)
+    sol::protected_function onTriggerEnter;    // (other: Entity)
+    sol::protected_function onTriggerExit;     // (other: Entity)
 
     /// Whether the script has been initialized
     bool initialized = false;
@@ -35,8 +41,23 @@ struct LIMBO_API ScriptComponent {
     /// Whether the script is enabled
     bool enabled = true;
 
+    /// Last error message (empty if no error)
+    String lastError;
+
+    /// Line number of last error (0 if unknown)
+    i32 lastErrorLine = 0;
+
     ScriptComponent() = default;
     explicit ScriptComponent(const std::filesystem::path& path) : scriptPath(path) {}
+
+    /// Clear error state
+    void clearError() {
+        lastError.clear();
+        lastErrorLine = 0;
+    }
+
+    /// Check if there's an error
+    [[nodiscard]] bool hasError() const { return !lastError.empty(); }
 };
 
 }  // namespace limbo

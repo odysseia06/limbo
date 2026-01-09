@@ -6,7 +6,22 @@
 #include <glm/glm.hpp>
 #include <box2d/box2d.h>
 
+#include <vector>
+
 namespace limbo {
+
+/**
+ * RaycastHit2D - Result of a physics raycast query
+ */
+struct LIMBO_API RaycastHit2D {
+    bool hit = false;
+    glm::vec2 point{0.0f};
+    glm::vec2 normal{0.0f};
+    f32 distance = 0.0f;
+    f32 fraction = 0.0f;
+    b2Body* body = nullptr;
+    b2Fixture* fixture = nullptr;
+};
 
 /**
  * Physics2D - 2D Physics world wrapper around Box2D
@@ -68,6 +83,54 @@ public:
      * Check if physics is initialized
      */
     [[nodiscard]] bool isInitialized() const { return m_world != nullptr; }
+
+    // ========================================================================
+    // Physics Queries
+    // ========================================================================
+
+    /**
+     * Cast a ray and return the first hit
+     * @param origin Ray start point
+     * @param direction Ray direction (will be normalized)
+     * @param maxDistance Maximum ray distance
+     * @param includeTriggers Include sensor fixtures in results
+     * @return RaycastHit2D with hit information (check .hit for success)
+     */
+    [[nodiscard]] RaycastHit2D raycast(const glm::vec2& origin, const glm::vec2& direction,
+                                       f32 maxDistance, bool includeTriggers = false) const;
+
+    /**
+     * Cast a ray and return all hits, sorted by distance
+     * @param origin Ray start point
+     * @param direction Ray direction (will be normalized)
+     * @param maxDistance Maximum ray distance
+     * @param includeTriggers Include sensor fixtures in results
+     * @return Vector of hits sorted by distance (closest first)
+     */
+    [[nodiscard]] std::vector<RaycastHit2D> raycastAll(const glm::vec2& origin,
+                                                       const glm::vec2& direction, f32 maxDistance,
+                                                       bool includeTriggers = false) const;
+
+    /**
+     * Find all bodies overlapping a circle (with narrow-phase test)
+     * @param center Circle center
+     * @param radius Circle radius
+     * @param includeTriggers Include sensor fixtures in results
+     * @return Vector of bodies that overlap
+     */
+    [[nodiscard]] std::vector<b2Body*> overlapCircle(const glm::vec2& center, f32 radius,
+                                                     bool includeTriggers = false) const;
+
+    /**
+     * Find all bodies overlapping a box (with narrow-phase test)
+     * @param center Box center
+     * @param halfExtents Half-width and half-height
+     * @param includeTriggers Include sensor fixtures in results
+     * @return Vector of bodies that overlap
+     */
+    [[nodiscard]] std::vector<b2Body*> overlapBox(const glm::vec2& center,
+                                                  const glm::vec2& halfExtents,
+                                                  bool includeTriggers = false) const;
 
     /**
      * Set velocity iterations for constraint solver

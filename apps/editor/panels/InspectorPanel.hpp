@@ -1,6 +1,7 @@
 #pragma once
 
 #include <limbo/Limbo.hpp>
+#include <limbo/scripting/ScriptComponent.hpp>
 
 namespace limbo::editor {
 
@@ -32,6 +33,10 @@ private:
     void drawRigidbody2DComponent(Rigidbody2DComponent& component);
     void drawBoxCollider2DComponent(BoxCollider2DComponent& component);
     void drawCircleCollider2DComponent(CircleCollider2DComponent& component);
+    void drawScriptComponent(ScriptComponent& component);
+
+    // Helper to list available script files
+    void drawScriptFilePicker(ScriptComponent& component);
 
     template <typename T>
     void drawComponentHeader(const char* name, bool removable = true);

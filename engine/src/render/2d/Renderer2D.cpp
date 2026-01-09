@@ -5,12 +5,14 @@
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/constants.hpp>
 
-#include <array>
-#include <memory>
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace limbo {
 
@@ -20,6 +22,10 @@ static constexpr u32 MaxVertices = MaxQuads * 4;
 static constexpr u32 MaxIndices = MaxQuads * 6;
 static u32 s_MaxTextureSlots = 0;
 
+// Maximum lines per batch
+static constexpr u32 MaxLines = 10000;
+static constexpr u32 MaxLineVertices = MaxLines * 2;
+
 struct QuadVertex {
     glm::vec3 position;
     glm::vec4 color;
@@ -28,7 +34,13 @@ struct QuadVertex {
     f32 tilingFactor;
 };
 
+struct LineVertex {
+    glm::vec3 position;
+    glm::vec4 color;
+};
+
 struct Renderer2DData {
+    // Quad batch data
     Unique<VertexArray> quadVAO;
     Unique<VertexBuffer> quadVBO;
     Unique<IndexBuffer> quadIBO;
@@ -43,6 +55,15 @@ struct Renderer2DData {
     u32 textureSlotIndex = 1;  // 0 = white texture
 
     glm::vec4 quadVertexPositions[4];
+
+    // Line batch data
+    Unique<VertexArray> lineVAO;
+    Unique<VertexBuffer> lineVBO;
+    Unique<Shader> lineShader;
+
+    u32 lineVertexCount = 0;
+    LineVertex* lineVertexBufferBase = nullptr;
+    LineVertex* lineVertexBufferPtr = nullptr;
 
     Renderer2D::Statistics stats;
 };
@@ -174,6 +195,60 @@ void Renderer2D::init() {
     s_data.quadVertexPositions[1] = {0.5f, -0.5f, 0.0f, 1.0f};
     s_data.quadVertexPositions[2] = {0.5f, 0.5f, 0.0f, 1.0f};
     s_data.quadVertexPositions[3] = {-0.5f, 0.5f, 0.0f, 1.0f};
+
+    // ========================================================================
+    // Line Rendering Setup
+    // ========================================================================
+
+    // Create line VAO
+    s_data.lineVAO = make_unique<VertexArray>();
+    s_data.lineVAO->create();
+
+    // Create line VBO
+    s_data.lineVBO = make_unique<VertexBuffer>();
+    s_data.lineVBO->create(nullptr, MaxLineVertices * sizeof(LineVertex));
+    s_data.lineVBO->setLayout(
+        {{ShaderDataType::Float3, "a_Position"}, {ShaderDataType::Float4, "a_Color"}});
+    s_data.lineVAO->addVertexBuffer(std::move(*s_data.lineVBO));
+
+    // Allocate CPU-side line vertex buffer
+    s_data.lineVertexBufferBase = new LineVertex[MaxLineVertices];
+
+    // Create line shader
+    s_data.lineShader = make_unique<Shader>();
+
+    const char* lineVertexSource = R"(
+        #version 450 core
+
+        layout(location = 0) in vec3 a_Position;
+        layout(location = 1) in vec4 a_Color;
+
+        uniform mat4 u_ViewProjection;
+
+        out vec4 v_Color;
+
+        void main() {
+            v_Color = a_Color;
+            gl_Position = u_ViewProjection * vec4(a_Position, 1.0);
+        }
+    )";
+
+    const char* lineFragmentSource = R"(
+        #version 450 core
+
+        in vec4 v_Color;
+
+        out vec4 o_Color;
+
+        void main() {
+            o_Color = v_Color;
+        }
+    )";
+
+    auto lineResult = s_data.lineShader->loadFromSource(lineVertexSource, lineFragmentSource);
+    if (!lineResult) {
+        // Log error but continue
+    }
 }
 
 void Renderer2D::shutdown() {
@@ -181,16 +256,27 @@ void Renderer2D::shutdown() {
     s_data.quadVertexBufferBase = nullptr;
     s_data.quadVertexBufferPtr = nullptr;
 
+    delete[] s_data.lineVertexBufferBase;
+    s_data.lineVertexBufferBase = nullptr;
+    s_data.lineVertexBufferPtr = nullptr;
+
     s_data.quadVAO.reset();
     s_data.quadVBO.reset();
     s_data.quadIBO.reset();
     s_data.quadShader.reset();
     s_data.whiteTexture.reset();
+
+    s_data.lineVAO.reset();
+    s_data.lineVBO.reset();
+    s_data.lineShader.reset();
 }
 
 void Renderer2D::beginScene(const OrthographicCamera& camera) {
     s_data.quadShader->bind();
     s_data.quadShader->setMat4("u_ViewProjection", camera.getViewProjectionMatrix());
+
+    s_data.lineShader->bind();
+    s_data.lineShader->setMat4("u_ViewProjection", camera.getViewProjectionMatrix());
 
     startBatch();
 }
@@ -203,6 +289,11 @@ void Renderer2D::startBatch() {
     s_data.quadIndexCount = 0;
     s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
     s_data.textureSlotIndex = 1;
+
+    s_data.lineVertexCount = 0;
+    s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
+
+    s_data.stats.batchCount++;
 }
 
 void Renderer2D::nextBatch() {
@@ -211,28 +302,47 @@ void Renderer2D::nextBatch() {
 }
 
 void Renderer2D::flush() {
-    if (s_data.quadIndexCount == 0) {
-        return;  // Nothing to draw
+    // Flush quads
+    if (s_data.quadIndexCount > 0) {
+        // Calculate data size
+        u32 const dataSize = static_cast<u32>(reinterpret_cast<u8*>(s_data.quadVertexBufferPtr) -
+                                              reinterpret_cast<u8*>(s_data.quadVertexBufferBase));
+
+        // Upload vertex data
+        s_data.quadVAO->bind();
+        glBindBuffer(GL_ARRAY_BUFFER, s_data.quadVAO->getVertexBuffers()[0].getNativeHandle());
+        glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, s_data.quadVertexBufferBase);
+
+        // Bind textures
+        for (u32 i = 0; i < s_data.textureSlotIndex; ++i) {
+            s_data.textureSlots[i]->bind(i);
+            s_data.stats.textureBinds++;
+        }
+
+        // Draw quads
+        s_data.quadShader->bind();
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_data.quadIndexCount), GL_UNSIGNED_INT,
+                       nullptr);
+        s_data.stats.drawCalls++;
     }
 
-    // Calculate data size
-    u32 const dataSize = static_cast<u32>(reinterpret_cast<u8*>(s_data.quadVertexBufferPtr) -
-                                          reinterpret_cast<u8*>(s_data.quadVertexBufferBase));
+    // Flush lines
+    if (s_data.lineVertexCount > 0) {
+        // Calculate data size
+        u32 const lineDataSize =
+            static_cast<u32>(reinterpret_cast<u8*>(s_data.lineVertexBufferPtr) -
+                             reinterpret_cast<u8*>(s_data.lineVertexBufferBase));
 
-    // Upload vertex data
-    s_data.quadVAO->bind();
-    glBindBuffer(GL_ARRAY_BUFFER, s_data.quadVAO->getVertexBuffers()[0].getNativeHandle());
-    glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, s_data.quadVertexBufferBase);
+        // Upload vertex data
+        s_data.lineVAO->bind();
+        glBindBuffer(GL_ARRAY_BUFFER, s_data.lineVAO->getVertexBuffers()[0].getNativeHandle());
+        glBufferSubData(GL_ARRAY_BUFFER, 0, lineDataSize, s_data.lineVertexBufferBase);
 
-    // Bind textures
-    for (u32 i = 0; i < s_data.textureSlotIndex; ++i) {
-        s_data.textureSlots[i]->bind(i);
+        // Draw lines
+        s_data.lineShader->bind();
+        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(s_data.lineVertexCount));
+        s_data.stats.drawCalls++;
     }
-
-    // Draw
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_data.quadIndexCount), GL_UNSIGNED_INT,
-                   nullptr);
-    s_data.stats.drawCalls++;
 }
 
 // ============================================================================
@@ -432,6 +542,167 @@ Renderer2D::Statistics Renderer2D::getStats() {
 void Renderer2D::resetStats() {
     s_data.stats.drawCalls = 0;
     s_data.stats.quadCount = 0;
+    s_data.stats.lineCount = 0;
+    s_data.stats.textureBinds = 0;
+    s_data.stats.batchCount = 0;
+}
+
+// ============================================================================
+// Draw Lines
+// ============================================================================
+
+void Renderer2D::drawLine(const glm::vec2& p0, const glm::vec2& p1, const glm::vec4& color) {
+    drawLine(glm::vec3(p0, 0.0f), glm::vec3(p1, 0.0f), color);
+}
+
+void Renderer2D::drawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color) {
+    if (s_data.lineVertexCount >= MaxLineVertices) {
+        nextBatch();
+    }
+
+    s_data.lineVertexBufferPtr->position = p0;
+    s_data.lineVertexBufferPtr->color = color;
+    s_data.lineVertexBufferPtr++;
+
+    s_data.lineVertexBufferPtr->position = p1;
+    s_data.lineVertexBufferPtr->color = color;
+    s_data.lineVertexBufferPtr++;
+
+    s_data.lineVertexCount += 2;
+    s_data.stats.lineCount++;
+}
+
+// ============================================================================
+// Draw Shapes (Wireframe)
+// ============================================================================
+
+void Renderer2D::drawRect(const glm::vec2& position, const glm::vec2& size,
+                          const glm::vec4& color) {
+    drawRect(position, size, 0.0f, color);
+}
+
+void Renderer2D::drawRect(const glm::vec2& position, const glm::vec2& size, f32 rotation,
+                          const glm::vec4& color) {
+    glm::vec2 const halfSize = size * 0.5f;
+
+    // Calculate corners
+    glm::vec2 corners[4] = {{-halfSize.x, -halfSize.y},
+                            {halfSize.x, -halfSize.y},
+                            {halfSize.x, halfSize.y},
+                            {-halfSize.x, halfSize.y}};
+
+    // Apply rotation if needed
+    if (rotation != 0.0f) {
+        f32 const c = std::cos(rotation);
+        f32 const s = std::sin(rotation);
+        for (auto& corner : corners) {
+            f32 const x = corner.x * c - corner.y * s;
+            f32 const y = corner.x * s + corner.y * c;
+            corner = {x, y};
+        }
+    }
+
+    // Offset by position
+    for (auto& corner : corners) {
+        corner += position;
+    }
+
+    // Draw four lines
+    drawLine(corners[0], corners[1], color);
+    drawLine(corners[1], corners[2], color);
+    drawLine(corners[2], corners[3], color);
+    drawLine(corners[3], corners[0], color);
+}
+
+void Renderer2D::drawCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
+                            i32 segments) {
+    if (segments < 3) {
+        segments = 3;
+    }
+
+    f32 const angleStep = glm::two_pi<f32>() / static_cast<f32>(segments);
+
+    glm::vec2 prevPoint = center + glm::vec2(radius, 0.0f);
+
+    for (i32 i = 1; i <= segments; ++i) {
+        f32 const angle = angleStep * static_cast<f32>(i);
+        glm::vec2 const currentPoint =
+            center + glm::vec2(std::cos(angle), std::sin(angle)) * radius;
+        drawLine(prevPoint, currentPoint, color);
+        prevPoint = currentPoint;
+    }
+}
+
+void Renderer2D::drawCircle(const glm::vec2& center, f32 radius, f32 thickness,
+                            const glm::vec4& color, i32 segments) {
+    // Draw as a thick ring using quads
+    if (segments < 3) {
+        segments = 3;
+    }
+
+    f32 const innerRadius = radius - thickness * 0.5f;
+    f32 const outerRadius = radius + thickness * 0.5f;
+    f32 const angleStep = glm::two_pi<f32>() / static_cast<f32>(segments);
+
+    for (i32 i = 0; i < segments; ++i) {
+        f32 const angle0 = angleStep * static_cast<f32>(i);
+        f32 const angle1 = angleStep * static_cast<f32>(i + 1);
+
+        glm::vec2 const inner0 =
+            center + glm::vec2(std::cos(angle0), std::sin(angle0)) * innerRadius;
+        glm::vec2 const outer0 =
+            center + glm::vec2(std::cos(angle0), std::sin(angle0)) * outerRadius;
+        glm::vec2 const inner1 =
+            center + glm::vec2(std::cos(angle1), std::sin(angle1)) * innerRadius;
+        glm::vec2 const outer1 =
+            center + glm::vec2(std::cos(angle1), std::sin(angle1)) * outerRadius;
+
+        // Draw as two triangles (using quads)
+        // For now, approximate with lines on inner and outer edges
+        drawLine(inner0, inner1, color);
+        drawLine(outer0, outer1, color);
+    }
+}
+
+// ============================================================================
+// Draw Filled Shapes
+// ============================================================================
+
+void Renderer2D::drawFilledCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
+                                  i32 segments) {
+    if (segments < 3) {
+        segments = 3;
+    }
+
+    f32 const angleStep = glm::two_pi<f32>() / static_cast<f32>(segments);
+
+    // Draw as triangle fan using quads
+    // Each segment is a triangle from center to two adjacent edge points
+    for (i32 i = 0; i < segments; ++i) {
+        f32 const angle0 = angleStep * static_cast<f32>(i);
+        f32 const angle1 = angleStep * static_cast<f32>(i + 1);
+
+        glm::vec2 const p0 = center + glm::vec2(std::cos(angle0), std::sin(angle0)) * radius;
+        glm::vec2 const p1 = center + glm::vec2(std::cos(angle1), std::sin(angle1)) * radius;
+
+        // Draw triangle as a very thin quad from center to edge
+        // For a proper filled circle, we'd need triangle primitives
+        // Approximate by drawing many thin quads radiating from center
+        glm::vec2 const mid = (p0 + p1) * 0.5f;
+        glm::vec2 const dir = glm::normalize(mid - center);
+        glm::vec2 const size = glm::vec2(glm::length(p1 - p0), radius);
+
+        f32 const rotation = std::atan2(dir.y, dir.x);
+        glm::vec2 const quadCenter = center + dir * (radius * 0.5f);
+
+        // Use rotated quad
+        glm::mat4 const transform =
+            glm::translate(glm::mat4(1.0f), glm::vec3(quadCenter, 0.0f)) *
+            glm::rotate(glm::mat4(1.0f), rotation, glm::vec3(0.0f, 0.0f, 1.0f)) *
+            glm::scale(glm::mat4(1.0f), glm::vec3(radius, size.x, 1.0f));
+
+        drawQuad(transform, color);
+    }
 }
 
 }  // namespace limbo

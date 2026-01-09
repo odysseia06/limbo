@@ -1,5 +1,12 @@
 #include "limbo/runtime/Application.hpp"
+#include "limbo/core/Time.hpp"
+#include "limbo/core/FrameAllocator.hpp"
+#include "limbo/core/ThreadPool.hpp"
+#include "limbo/core/MainThreadQueue.hpp"
+#include "limbo/assets/AssetLoader.hpp"
 #include "limbo/platform/Input.hpp"
+#include "limbo/input/InputManager.hpp"
+#include "limbo/debug/Profiler.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -35,6 +42,22 @@ Result<void> Application::init(const ApplicationConfig& config) {
 
     // Initialize input system
     Input::init(*m_window);
+    InputManager::init();
+
+    // Initialize time system
+    Time::init(config.time);
+
+    // Initialize profiler
+    profiler::Profiler::init();
+
+    // Initialize frame allocator (1MB default)
+    frame::init();
+
+    // Initialize thread pool
+    ThreadPool::init();
+
+    // Initialize async asset loader
+    AssetLoader::init();
 
     onInit();
 
@@ -47,32 +70,73 @@ Result<void> Application::init(const ApplicationConfig& config) {
 
 void Application::run() {
     m_running = true;
-    m_lastFrameTime = platform::getTime();
 
     spdlog::info("Entering main loop");
 
     while (m_running && !m_window->shouldClose()) {
-        f64 const currentTime = platform::getTime();
-        f32 const deltaTime = static_cast<f32>(currentTime - m_lastFrameTime);
-        m_lastFrameTime = currentTime;
+        // Begin frame timing and profiling
+        Time::beginFrame();
+        profiler::Profiler::beginFrame();
+        frame::reset();  // Reset frame allocator for new frame
 
-        // Update input state before polling events
-        Input::update();
+        f32 const deltaTime = Time::getDeltaTime();
+        f32 const fixedDeltaTime = Time::getFixedDeltaTime();
 
-        m_window->pollEvents();
+        {
+            LIMBO_PROFILE_SCOPE("Input");
+            // Update input state before polling events
+            Input::update();
+            InputManager::update();
+            m_window->pollEvents();
+        }
 
         // Handle escape key to close
         if (Input::isKeyPressed(Key::Escape)) {
             m_window->setShouldClose(true);
         }
 
-        // Update all systems
-        m_systems.update(m_world, deltaTime);
+        // Fixed timestep updates (physics, deterministic logic)
+        {
+            LIMBO_PROFILE_SCOPE("FixedUpdate");
+            while (Time::shouldFixedUpdate()) {
+                m_systems.fixedUpdate(m_world, fixedDeltaTime);
+                onFixedUpdate(fixedDeltaTime);
+            }
+        }
 
-        onUpdate(deltaTime);
-        onRender();
+        // Variable timestep update (animations, AI, etc.)
+        {
+            LIMBO_PROFILE_SCOPE("Update");
+            m_systems.update(m_world, deltaTime);
+            onUpdate(deltaTime);
+        }
 
-        m_window->swapBuffers();
+        // Render with interpolation alpha for smooth visuals
+        // Process main thread queue (GPU uploads, etc. from worker threads)
+        {
+            LIMBO_PROFILE_SCOPE("MainThreadQueue");
+            MainThreadQueue::processAll();
+        }
+
+        // Process async asset loading (GPU uploads)
+        {
+            LIMBO_PROFILE_SCOPE("AssetLoader");
+            AssetLoader::processMainThreadWork();
+        }
+
+        // Render with interpolation alpha for smooth visuals
+        {
+            LIMBO_PROFILE_SCOPE("Render");
+            f32 const alpha = Time::getInterpolationAlpha();
+            onRender(alpha);
+        }
+
+        {
+            LIMBO_PROFILE_SCOPE("SwapBuffers");
+            m_window->swapBuffers();
+        }
+
+        profiler::Profiler::endFrame();
     }
 
     spdlog::info("Exiting main loop");
@@ -88,6 +152,24 @@ void Application::shutdown() {
 
     // Clear all entities
     m_world.clear();
+
+    // Shutdown async asset loader
+    AssetLoader::shutdown();
+
+    // Shutdown thread pool (wait for all jobs to complete)
+    ThreadPool::shutdown();
+
+    // Process any remaining main thread tasks
+    MainThreadQueue::processAll();
+
+    // Shutdown frame allocator
+    frame::shutdown();
+
+    // Shutdown profiler
+    profiler::Profiler::shutdown();
+
+    // Shutdown input manager
+    InputManager::shutdown();
 
     m_window.reset();
     platform::shutdown();

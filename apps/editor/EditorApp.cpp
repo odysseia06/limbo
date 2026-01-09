@@ -1,4 +1,6 @@
 #include "EditorApp.hpp"
+#include "commands/EntityCommands.hpp"
+#include "commands/PropertyCommands.hpp"
 
 #include <imgui.h>
 #include <spdlog/spdlog.h>
@@ -7,7 +9,7 @@ namespace limbo::editor {
 
 EditorApp::EditorApp()
     : m_hierarchyPanel(*this), m_inspectorPanel(*this), m_viewportPanel(*this),
-      m_assetBrowserPanel(*this) {}
+      m_assetBrowserPanel(*this), m_assetPipelinePanel(*this), m_consolePanel(*this) {}
 
 void EditorApp::onInit() {
     spdlog::info("Limbo Editor initialized");
@@ -23,8 +25,12 @@ void EditorApp::onInit() {
     // Initialize Renderer2D
     Renderer2D::init();
 
-    // Initialize ImGui
-    if (!m_imguiLayer.init(getWindow().getNativeHandle())) {
+    // Setup layout persistence path
+    std::filesystem::path const layoutPath = std::filesystem::current_path() / "limbo_editor.ini";
+    m_layoutIniPath = layoutPath.string();
+
+    // Initialize ImGui with layout persistence
+    if (!m_imguiLayer.init(getWindow().getNativeHandle(), m_layoutIniPath.c_str())) {
         spdlog::error("Failed to initialize ImGui");
     }
 
@@ -36,6 +42,11 @@ void EditorApp::onInit() {
 
     // Initialize physics (for play mode)
     m_physics.init({0.0f, -9.81f});
+    m_physicsSystem = std::make_unique<PhysicsSystem2D>(m_physics);
+
+    // Initialize scripting (for play mode)
+    m_scriptEngine.init();
+    m_scriptSystem = std::make_unique<ScriptSystem>(m_scriptEngine);
 
     // Setup default asset path
     std::filesystem::path const assetsPath = std::filesystem::current_path() / "assets";
@@ -48,6 +59,8 @@ void EditorApp::onInit() {
     m_inspectorPanel.init();
     m_viewportPanel.init();
     m_assetBrowserPanel.init();
+    m_assetPipelinePanel.init();
+    m_consolePanel.init();
 
     // Start with a new scene
     newScene();
@@ -73,22 +86,36 @@ void EditorApp::onUpdate(f32 deltaTime) {
                 saveScene();
             }
         }
+        if (Input::isKeyPressed(Key::Z)) {
+            if (Input::isKeyDown(Key::LeftShift) || Input::isKeyDown(Key::RightShift)) {
+                redo();
+            } else {
+                undo();
+            }
+        }
+        if (Input::isKeyPressed(Key::Y)) {
+            redo();
+        }
     }
 
     // Update based on editor state
     if (m_editorState == EditorState::Play) {
-        // Run physics and systems
-        getSystems().update(getWorld(), deltaTime);
+        // Run script system (handles onStart, onUpdate)
+        m_scriptSystem->update(getWorld(), deltaTime);
+
+        // Run physics system
+        m_physicsSystem->update(getWorld(), deltaTime);
     }
 
     // Update panels
     m_viewportPanel.update(deltaTime);
+    m_assetPipelinePanel.update(deltaTime);
 
     // Reset renderer stats
     Renderer2D::resetStats();
 }
 
-void EditorApp::onRender() {
+void EditorApp::onRender([[maybe_unused]] f32 interpolationAlpha) {
     // Clear to dark gray
     m_renderContext->clear(0.15f, 0.15f, 0.15f, 1.0f);
 
@@ -104,6 +131,39 @@ void EditorApp::onRender() {
     }
     if (m_showDemoWindow) {
         ImGui::ShowDemoWindow(&m_showDemoWindow);
+    }
+
+    // Scene select popup
+    if (m_showSceneSelectPopup) {
+        ImGui::OpenPopup("Open Scene");
+        m_showSceneSelectPopup = false;
+    }
+
+    if (ImGui::BeginPopupModal("Open Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Select a scene to open:");
+        ImGui::Separator();
+
+        // List available scenes
+        std::filesystem::path const scenesDir = m_assetManager.getAssetRoot() / "scenes";
+        if (std::filesystem::exists(scenesDir)) {
+            for (const auto& entry : std::filesystem::directory_iterator(scenesDir)) {
+                if (entry.path().extension() == ".json") {
+                    std::string const filename = entry.path().filename().string();
+                    if (ImGui::Selectable(filename.c_str())) {
+                        loadSceneFromPath(entry.path());
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+            }
+        } else {
+            ImGui::TextDisabled("No scenes directory found");
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     // End ImGui frame
@@ -134,12 +194,27 @@ void EditorApp::renderMenuBar() {
         }
 
         if (ImGui::BeginMenu("Edit")) {
-            if (ImGui::MenuItem("Undo", "Ctrl+Z", false, false)) {}
-            if (ImGui::MenuItem("Redo", "Ctrl+Y", false, false)) {}
+            String undoLabel = "Undo";
+            if (m_commandHistory.canUndo()) {
+                undoLabel += " " + m_commandHistory.getUndoDescription();
+            }
+            if (ImGui::MenuItem(undoLabel.c_str(), "Ctrl+Z", false, m_commandHistory.canUndo())) {
+                undo();
+            }
+
+            String redoLabel = "Redo";
+            if (m_commandHistory.canRedo()) {
+                redoLabel += " " + m_commandHistory.getRedoDescription();
+            }
+            if (ImGui::MenuItem(redoLabel.c_str(), "Ctrl+Y", false, m_commandHistory.canRedo())) {
+                redo();
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Delete", "Delete", false, m_selectedEntity.isValid())) {
                 if (m_selectedEntity.isValid()) {
-                    getWorld().destroyEntity(m_selectedEntity.id());
+                    auto cmd =
+                        std::make_unique<DeleteEntityCommand>(getWorld(), m_selectedEntity.id());
+                    executeCommand(std::move(cmd));
                     deselectAll();
                 }
             }
@@ -148,21 +223,25 @@ void EditorApp::renderMenuBar() {
 
         if (ImGui::BeginMenu("Entity")) {
             if (ImGui::MenuItem("Create Empty")) {
-                auto entity = getWorld().createEntity("New Entity");
-                entity.addComponent<TransformComponent>();
-                selectEntity(entity);
+                auto cmd = std::make_unique<CreateEntityCommand>(
+                    getWorld(), "New Entity", [this](Entity e) { selectEntity(e); });
+                executeCommand(std::move(cmd));
             }
             if (ImGui::MenuItem("Create Sprite")) {
-                auto entity = getWorld().createEntity("Sprite");
-                entity.addComponent<TransformComponent>();
-                entity.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
-                selectEntity(entity);
+                auto cmd =
+                    std::make_unique<CreateEntityCommand>(getWorld(), "Sprite", [this](Entity e) {
+                        e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                        selectEntity(e);
+                    });
+                executeCommand(std::move(cmd));
             }
             if (ImGui::MenuItem("Create Camera")) {
-                auto entity = getWorld().createEntity("Camera");
-                entity.addComponent<TransformComponent>();
-                // TODO: Add CameraComponent when implemented
-                selectEntity(entity);
+                auto cmd =
+                    std::make_unique<CreateEntityCommand>(getWorld(), "Camera", [this](Entity e) {
+                        e.addComponent<CameraComponent>();
+                        selectEntity(e);
+                    });
+                executeCommand(std::move(cmd));
             }
             ImGui::EndMenu();
         }
@@ -172,6 +251,10 @@ void EditorApp::renderMenuBar() {
             ImGui::MenuItem("Inspector", nullptr, &m_inspectorPanel.isOpen());
             ImGui::MenuItem("Viewport", nullptr, &m_viewportPanel.isOpen());
             ImGui::MenuItem("Asset Browser", nullptr, &m_assetBrowserPanel.isOpen());
+            ImGui::MenuItem("Asset Pipeline", nullptr, &m_assetPipelinePanel.isOpen());
+            ImGui::MenuItem("Console", nullptr, &m_consolePanel.isOpen());
+            ImGui::Separator();
+            ImGui::MenuItem("Physics Debug", nullptr, &m_showPhysicsDebug);
             ImGui::Separator();
             ImGui::MenuItem("ImGui Demo", "F1", &m_showDemoWindow);
             ImGui::EndMenu();
@@ -288,6 +371,8 @@ void EditorApp::renderDockspace() {
     m_inspectorPanel.render();
     m_viewportPanel.render();
     m_assetBrowserPanel.render();
+    m_assetPipelinePanel.render();
+    m_consolePanel.render();
 
     // Status bar
     renderStatusBar();
@@ -307,16 +392,39 @@ void EditorApp::newScene() {
     getWorld().clear();
     m_currentScenePath.clear();
     m_sceneModified = false;
+    m_commandHistory.clear();
     deselectAll();
     spdlog::info("New scene created");
 }
 
-void EditorApp::openScene() {
-    // TODO: Open file dialog
-    // For now, try to load a default scene
-    std::filesystem::path const scenePath =
-        m_assetManager.getAssetRoot() / "scenes" / "default.json";
+bool EditorApp::executeCommand(Unique<Command> command) {
+    if (m_commandHistory.execute(std::move(command))) {
+        markSceneModified();
+        return true;
+    }
+    return false;
+}
 
+void EditorApp::undo() {
+    if (m_commandHistory.undo()) {
+        markSceneModified();
+        spdlog::debug("Undo: {}", m_commandHistory.getRedoDescription());
+    }
+}
+
+void EditorApp::redo() {
+    if (m_commandHistory.redo()) {
+        markSceneModified();
+        spdlog::debug("Redo: {}", m_commandHistory.getUndoDescription());
+    }
+}
+
+void EditorApp::openScene() {
+    // Show scene selection popup
+    m_showSceneSelectPopup = true;
+}
+
+void EditorApp::loadSceneFromPath(const std::filesystem::path& scenePath) {
     if (std::filesystem::exists(scenePath)) {
         SceneSerializer serializer(getWorld());
         if (serializer.loadFromFile(scenePath)) {
@@ -366,7 +474,29 @@ void EditorApp::saveSceneAs() {
 
 void EditorApp::onPlay() {
     if (m_editorState == EditorState::Edit) {
-        // TODO: Save scene state for restoration on stop
+        // Save scene state for restoration on stop
+        SceneSerializer serializer(getWorld());
+        m_savedSceneState = serializer.serialize();
+        m_wasModifiedBeforePlay = m_sceneModified;
+
+        // Clear undo history (play mode changes shouldn't be undone in edit mode)
+        m_commandHistory.clear();
+
+        // Deselect entity (selection may become invalid during play)
+        deselectAll();
+
+        // Attach physics system to create bodies from components
+        m_physicsSystem->onAttach(getWorld());
+
+        // Attach script system
+        m_scriptSystem->onAttach(getWorld());
+
+        // Wire collision events to script callbacks
+        m_physicsSystem->setCollisionCallback(
+            [this](const CollisionEvent2D& event, CollisionEventType type) {
+                m_scriptSystem->dispatchCollisionEvent(getWorld(), event, type);
+            });
+
         m_editorState = EditorState::Play;
         spdlog::info("Play mode started");
     }
@@ -384,7 +514,29 @@ void EditorApp::onPause() {
 
 void EditorApp::onStop() {
     if (m_editorState != EditorState::Edit) {
-        // TODO: Restore scene state
+        // Detach script system first (calls onDestroy callbacks)
+        m_scriptSystem->onDetach(getWorld());
+
+        // Detach physics system to destroy bodies
+        m_physicsSystem->onDetach(getWorld());
+
+        // Restore scene state from before play
+        if (!m_savedSceneState.empty()) {
+            SceneSerializer serializer(getWorld());
+            if (serializer.deserialize(m_savedSceneState)) {
+                spdlog::info("Scene state restored");
+            } else {
+                spdlog::error("Failed to restore scene state: {}", serializer.getError());
+            }
+            m_savedSceneState.clear();
+        }
+
+        // Restore modification flag
+        m_sceneModified = m_wasModifiedBeforePlay;
+
+        // Deselect entity (entity IDs may have changed)
+        deselectAll();
+
         m_editorState = EditorState::Edit;
         spdlog::info("Play mode stopped");
     }
@@ -403,6 +555,8 @@ void EditorApp::deselectAll() {
 }
 
 void EditorApp::onShutdown() {
+    m_consolePanel.shutdown();
+    m_assetPipelinePanel.shutdown();
     m_assetBrowserPanel.shutdown();
     m_viewportPanel.shutdown();
     m_inspectorPanel.shutdown();

@@ -15,7 +15,7 @@ ImGuiLayer::~ImGuiLayer() {
     }
 }
 
-bool ImGuiLayer::init(GLFWwindow* window) {
+bool ImGuiLayer::init(GLFWwindow* window, const char* iniFilePath) {
     if (m_initialized) {
         spdlog::warn("ImGuiLayer already initialized");
         return true;
@@ -29,6 +29,14 @@ bool ImGuiLayer::init(GLFWwindow* window) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;      // Enable Docking
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;    // Enable Multi-Viewport
+
+    // Set ini file for layout persistence
+    if (iniFilePath != nullptr) {
+        io.IniFilename = iniFilePath;
+        spdlog::info("ImGui layout will be saved to: {}", iniFilePath);
+    } else {
+        io.IniFilename = nullptr;  // Disable automatic ini saving
+    }
 
     // When viewports are enabled, tweak WindowRounding/WindowBg so platform windows
     // can look identical to regular ones

@@ -3,6 +3,8 @@
 #include "limbo/ecs/Entity.hpp"
 #include "limbo/ecs/Components.hpp"
 #include "limbo/platform/Input.hpp"
+#include "limbo/physics/2d/Physics2D.hpp"
+#include "limbo/physics/2d/PhysicsComponents2D.hpp"
 
 #include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
@@ -349,6 +351,179 @@ void ScriptEngine::bindUtilityFunctions() {
         return glm::clamp(value, min, max);
     };
     m_lua["math"]["lerp"] = [](float a, float b, float t) { return glm::mix(a, b, t); };
+}
+
+void ScriptEngine::bindPhysics(Physics2D* physics) {
+    m_boundPhysics = physics;
+    bindPhysicsTypes();
+}
+
+// Static helper functions for physics access
+static glm::vec2 entityGetVelocity(Entity& e) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            b2Vec2 const vel = rb.runtimeBody->GetLinearVelocity();
+            return {vel.x, vel.y};
+        }
+    }
+    return {0.0f, 0.0f};
+}
+
+static void entitySetVelocity(Entity& e, const glm::vec2& vel) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            rb.runtimeBody->SetLinearVelocity(b2Vec2(vel.x, vel.y));
+        }
+    }
+}
+
+static float entityGetAngularVelocity(Entity& e) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            return rb.runtimeBody->GetAngularVelocity();
+        }
+    }
+    return 0.0f;
+}
+
+static void entitySetAngularVelocity(Entity& e, float angVel) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            rb.runtimeBody->SetAngularVelocity(angVel);
+        }
+    }
+}
+
+static void entityApplyForce(Entity& e, const glm::vec2& force) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            rb.runtimeBody->ApplyForceToCenter(b2Vec2(force.x, force.y), true);
+        }
+    }
+}
+
+static void entityApplyImpulse(Entity& e, const glm::vec2& impulse) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            rb.runtimeBody->ApplyLinearImpulseToCenter(b2Vec2(impulse.x, impulse.y), true);
+        }
+    }
+}
+
+static void entityApplyTorque(Entity& e, float torque) {
+    if (e.hasComponent<Rigidbody2DComponent>()) {
+        auto& rb = e.getComponent<Rigidbody2DComponent>();
+        if (rb.runtimeBody) {
+            rb.runtimeBody->ApplyTorque(torque, true);
+        }
+    }
+}
+
+void ScriptEngine::bindPhysicsTypes() {
+    if (!m_boundPhysics || !m_boundWorld) {
+        return;
+    }
+
+    Physics2D* physics = m_boundPhysics;
+    World* world = m_boundWorld;
+    sol::state& lua = m_lua;
+
+    // RaycastHit2D result type
+    m_lua.new_usertype<RaycastHit2D>(
+        "RaycastHit2D", sol::no_constructor, "hit", &RaycastHit2D::hit, "point",
+        &RaycastHit2D::point, "normal", &RaycastHit2D::normal, "distance", &RaycastHit2D::distance,
+        "getEntity", [world, &lua](const RaycastHit2D& hit) -> sol::object {
+            if (!hit.hit || !hit.body) {
+                return sol::nil;
+            }
+            auto entityId = static_cast<World::EntityId>(hit.body->GetUserData().pointer);
+            if (world->isValid(entityId)) {
+                return sol::make_object(lua, Entity(entityId, world));
+            }
+            return sol::nil;
+        });
+
+    // Physics table with query functions
+    m_lua["Physics"] = m_lua.create_table_with(
+        "raycast",
+        [physics, world, &lua](const glm::vec2& origin, const glm::vec2& direction,
+                               float maxDistance,
+                               sol::optional<bool> includeTriggers) -> sol::object {
+            if (!physics->isInitialized()) {
+                return sol::nil;
+            }
+            bool const triggers = includeTriggers.value_or(false);
+            RaycastHit2D hit = physics->raycast(origin, direction, maxDistance, triggers);
+            if (hit.hit) {
+                return sol::make_object(lua, hit);
+            }
+            return sol::nil;
+        },
+        "raycastAll",
+        [physics, &lua](const glm::vec2& origin, const glm::vec2& direction, float maxDistance,
+                        sol::optional<bool> includeTriggers) -> sol::table {
+            sol::table results = lua.create_table();
+            if (!physics->isInitialized()) {
+                return results;
+            }
+            bool const triggers = includeTriggers.value_or(false);
+            auto hits = physics->raycastAll(origin, direction, maxDistance, triggers);
+            for (size_t i = 0; i < hits.size(); ++i) {
+                results[i + 1] = hits[i];  // Lua arrays are 1-indexed
+            }
+            return results;
+        },
+        "overlapCircle",
+        [physics, world, &lua](const glm::vec2& center, float radius,
+                               sol::optional<bool> includeTriggers) -> sol::table {
+            sol::table results = lua.create_table();
+            if (!physics->isInitialized()) {
+                return results;
+            }
+            bool const triggers = includeTriggers.value_or(false);
+            auto bodies = physics->overlapCircle(center, radius, triggers);
+            size_t index = 1;
+            for (b2Body* body : bodies) {
+                auto entityId = static_cast<World::EntityId>(body->GetUserData().pointer);
+                if (world->isValid(entityId)) {
+                    results[index++] = Entity(entityId, world);
+                }
+            }
+            return results;
+        },
+        "overlapBox",
+        [physics, world, &lua](const glm::vec2& center, const glm::vec2& halfExtents,
+                               sol::optional<bool> includeTriggers) -> sol::table {
+            sol::table results = lua.create_table();
+            if (!physics->isInitialized()) {
+                return results;
+            }
+            bool const triggers = includeTriggers.value_or(false);
+            auto bodies = physics->overlapBox(center, halfExtents, triggers);
+            size_t index = 1;
+            for (b2Body* body : bodies) {
+                auto entityId = static_cast<World::EntityId>(body->GetUserData().pointer);
+                if (world->isValid(entityId)) {
+                    results[index++] = Entity(entityId, world);
+                }
+            }
+            return results;
+        });
+
+    // Entity physics methods
+    m_lua["Entity"]["getVelocity"] = &entityGetVelocity;
+    m_lua["Entity"]["setVelocity"] = &entitySetVelocity;
+    m_lua["Entity"]["getAngularVelocity"] = &entityGetAngularVelocity;
+    m_lua["Entity"]["setAngularVelocity"] = &entitySetAngularVelocity;
+    m_lua["Entity"]["applyForce"] = &entityApplyForce;
+    m_lua["Entity"]["applyImpulse"] = &entityApplyImpulse;
+    m_lua["Entity"]["applyTorque"] = &entityApplyTorque;
 }
 
 }  // namespace limbo

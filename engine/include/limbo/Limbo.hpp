@@ -24,6 +24,9 @@
 
 // Render - 2D
 #include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/render/2d/Font.hpp"
+#include "limbo/render/2d/TextRenderer.hpp"
+#include "limbo/render/2d/SpriteMaterial.hpp"
 
 // Render - 3D (skeleton)
 #include "limbo/render/3d/Renderer3D.hpp"

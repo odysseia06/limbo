@@ -10,6 +10,11 @@ namespace limbo {
 PhysicsSystem2D::PhysicsSystem2D(Physics2D& physics) : m_physics(physics) {}
 
 void PhysicsSystem2D::onAttach(World& world) {
+    // Register contact listener with Box2D world
+    if (m_physics.isInitialized()) {
+        m_physics.getWorld()->SetContactListener(&m_contactListener);
+    }
+
     // Create bodies for all existing entities with physics components
     auto view = world.view<TransformComponent, Rigidbody2DComponent>();
     for (auto entity : view) {
@@ -31,30 +36,149 @@ void PhysicsSystem2D::update(World& world, f32 deltaTime) {
             auto& rb = view.get<Rigidbody2DComponent>(entity);
             if (rb.runtimeBody == nullptr) {
                 createBody(world, entity);
+
+                // Initialize physics state for new entity
+                const b2Vec2& pos = rb.runtimeBody->GetPosition();
+                PhysicsState state;
+                state.previousPosition = {pos.x, pos.y};
+                state.previousRotation = rb.runtimeBody->GetAngle();
+                state.currentPosition = state.previousPosition;
+                state.currentRotation = state.previousRotation;
+                m_physicsStates[entity] = state;
             }
         }
     }
 
-    // Step the physics simulation
-    m_physics.step(deltaTime);
+    // Fixed timestep accumulator
+    m_accumulator += deltaTime;
 
-    // Sync physics bodies back to transforms
-    {
-        auto view = world.view<TransformComponent, Rigidbody2DComponent>();
-        for (auto entity : view) {
-            syncBodyToTransform(world, entity);
-        }
+    // Spiral-of-death protection: clamp to max updates
+    i32 updateCount = 0;
+    if (m_accumulator > m_fixedTimestep * static_cast<f32>(m_maxFixedUpdatesPerFrame)) {
+        spdlog::warn("Physics: clamping {} accumulated updates to max {}",
+                     static_cast<i32>(m_accumulator / m_fixedTimestep), m_maxFixedUpdatesPerFrame);
+        m_accumulator = m_fixedTimestep * static_cast<f32>(m_maxFixedUpdatesPerFrame);
+    }
+
+    // Run fixed updates
+    while (m_accumulator >= m_fixedTimestep) {
+        fixedUpdate(world);
+        m_accumulator -= m_fixedTimestep;
+        updateCount++;
+    }
+
+    // Calculate interpolation alpha (how far we are between physics states)
+    f32 const alpha = m_accumulator / m_fixedTimestep;
+
+    // Write interpolated render state to TransformComponent
+    // Note: This NEVER affects simulation - it's purely for rendering
+    if (m_interpolationEnabled) {
+        interpolateRenderState(world, alpha);
+    } else {
+        // No interpolation: just copy current state to transform
+        interpolateRenderState(world, 1.0f);
     }
 }
 
 void PhysicsSystem2D::onDetach(World& world) {
+    // Clear contact listener
+    if (m_physics.isInitialized()) {
+        m_physics.getWorld()->SetContactListener(nullptr);
+    }
+
     // Destroy all physics bodies
     auto view = world.view<Rigidbody2DComponent>();
     for (auto entity : view) {
         destroyBody(world, entity);
     }
 
+    // Clear physics state cache
+    m_physicsStates.clear();
+
     spdlog::debug("PhysicsSystem shutdown");
+}
+
+void PhysicsSystem2D::fixedUpdate(World& world) {
+    // 1. Snapshot previous = current
+    snapshotPreviousState(world);
+
+    // 2. Step Box2D
+    m_physics.step(m_fixedTimestep);
+
+    // 3. Dispatch collision events AFTER step completes (safe to modify world now)
+    m_contactListener.dispatchEvents();
+
+    // 4. Read current from bodies (do NOT write to TransformComponent)
+    readCurrentStateFromBodies(world);
+}
+
+void PhysicsSystem2D::snapshotPreviousState(World& world) {
+    for (auto& [entity, state] : m_physicsStates) {
+        state.previousPosition = state.currentPosition;
+        state.previousRotation = state.currentRotation;
+    }
+}
+
+void PhysicsSystem2D::readCurrentStateFromBodies(World& world) {
+    auto view = world.view<Rigidbody2DComponent>();
+    for (auto entity : view) {
+        auto& rb = view.get<Rigidbody2DComponent>(entity);
+        if (!rb.runtimeBody || rb.type == BodyType::Static) {
+            continue;
+        }
+
+        auto it = m_physicsStates.find(entity);
+        if (it == m_physicsStates.end()) {
+            continue;
+        }
+
+        const b2Vec2& pos = rb.runtimeBody->GetPosition();
+        it->second.currentPosition = {pos.x, pos.y};
+        it->second.currentRotation = rb.runtimeBody->GetAngle();
+    }
+}
+
+void PhysicsSystem2D::interpolateRenderState(World& world, f32 alpha) {
+    auto view = world.view<TransformComponent, Rigidbody2DComponent>();
+    for (auto entity : view) {
+        auto& transform = view.get<TransformComponent>(entity);
+        auto& rb = view.get<Rigidbody2DComponent>(entity);
+
+        if (!rb.runtimeBody || rb.type == BodyType::Static) {
+            continue;
+        }
+
+        auto it = m_physicsStates.find(entity);
+        if (it == m_physicsStates.end()) {
+            continue;
+        }
+
+        const auto& state = it->second;
+
+        // Interpolate position: lerp(previous, current, alpha)
+        transform.position.x =
+            state.previousPosition.x + alpha * (state.currentPosition.x - state.previousPosition.x);
+        transform.position.y =
+            state.previousPosition.y + alpha * (state.currentPosition.y - state.previousPosition.y);
+
+        // Interpolate rotation (simple lerp for small angles)
+        // For large angle differences, should use proper angle interpolation
+        f32 rotDiff = state.currentRotation - state.previousRotation;
+
+        // Normalize angle difference to [-PI, PI]
+        while (rotDiff > glm::pi<f32>()) {
+            rotDiff -= 2.0f * glm::pi<f32>();
+        }
+        while (rotDiff < -glm::pi<f32>()) {
+            rotDiff += 2.0f * glm::pi<f32>();
+        }
+
+        transform.rotation.z = state.previousRotation + alpha * rotDiff;
+    }
+}
+
+void PhysicsSystem2D::setCollisionCallback(CollisionCallback callback) {
+    m_contactListener.setCallback(std::move(callback));
 }
 
 void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
@@ -99,6 +223,12 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
     // Create the body
     rb.runtimeBody = b2world->CreateBody(&bodyDef);
 
+    // Store entity ID in body user data for collision callbacks
+    rb.runtimeBody->GetUserData().pointer = static_cast<uintptr_t>(entity);
+
+    // Track fixture index for multiple colliders per entity
+    i32 fixtureIndex = 0;
+
     // Create fixtures for colliders
     // Box collider
     if (world.hasComponent<BoxCollider2DComponent>(entity)) {
@@ -117,6 +247,10 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
         fixtureDef.isSensor = box.isTrigger;
 
         box.runtimeFixture = rb.runtimeBody->CreateFixture(&fixtureDef);
+
+        // Store fixture index in fixture user data
+        box.runtimeFixture->GetUserData().pointer = static_cast<uintptr_t>(fixtureIndex);
+        fixtureIndex++;
     }
 
     // Circle collider
@@ -136,6 +270,10 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
         fixtureDef.isSensor = circle.isTrigger;
 
         circle.runtimeFixture = rb.runtimeBody->CreateFixture(&fixtureDef);
+
+        // Store fixture index in fixture user data
+        circle.runtimeFixture->GetUserData().pointer = static_cast<uintptr_t>(fixtureIndex);
+        fixtureIndex++;
     }
 }
 
@@ -157,6 +295,9 @@ void PhysicsSystem2D::destroyBody(World& world, World::EntityId entity) {
     if (world.hasComponent<CircleCollider2DComponent>(entity)) {
         world.getComponent<CircleCollider2DComponent>(entity).runtimeFixture = nullptr;
     }
+
+    // Remove physics state
+    m_physicsStates.erase(entity);
 }
 
 void PhysicsSystem2D::syncTransformToBody(World& world, World::EntityId entity) {
@@ -166,18 +307,6 @@ void PhysicsSystem2D::syncTransformToBody(World& world, World::EntityId entity) 
     if (rb.runtimeBody) {
         rb.runtimeBody->SetTransform(b2Vec2(transform.position.x, transform.position.y),
                                      transform.rotation.z);
-    }
-}
-
-void PhysicsSystem2D::syncBodyToTransform(World& world, World::EntityId entity) {
-    auto& transform = world.getComponent<TransformComponent>(entity);
-    auto& rb = world.getComponent<Rigidbody2DComponent>(entity);
-
-    if (rb.runtimeBody && rb.type != BodyType::Static) {
-        const b2Vec2& position = rb.runtimeBody->GetPosition();
-        transform.position.x = position.x;
-        transform.position.y = position.y;
-        transform.rotation.z = rb.runtimeBody->GetAngle();
     }
 }
 

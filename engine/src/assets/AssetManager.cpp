@@ -13,6 +13,29 @@ void AssetManager::setAssetRoot(const std::filesystem::path& root) {
     spdlog::info("Asset root set to: {}", m_assetRoot.string());
 }
 
+void AssetManager::setupHotReloadManager() {
+    // Set the reload handler to call our reload method
+    m_hotReloadManager.setReloadHandler([this](AssetId id) { return reload(id); });
+
+    // Forward the after-reload callback
+    m_hotReloadManager.setAfterReloadCallback([this](const ReloadEvent& event) {
+        if (m_reloadCallback) {
+            m_reloadCallback(event);
+        }
+    });
+
+    m_hotReloadManager.setEnabled(true);
+    spdlog::info("Hot reload manager initialized");
+}
+
+void AssetManager::addAssetDependency(AssetId assetId, AssetId dependencyId) {
+    m_hotReloadManager.addDependency(assetId, dependencyId);
+}
+
+void AssetManager::setReloadCallback(ReloadCallback callback) {
+    m_reloadCallback = std::move(callback);
+}
+
 bool AssetManager::isLoaded(AssetId id) const {
     return m_assets.contains(id);
 }
@@ -75,8 +98,16 @@ std::filesystem::path AssetManager::resolvePath(const std::filesystem::path& rel
 
 void AssetManager::pollHotReload() {
     if (m_hotReloadEnabled) {
-        m_fileWatcher.poll();
+        m_hotReloadManager.poll();
     }
+}
+
+void AssetManager::setHotReloadEnabled(bool enabled) {
+    m_hotReloadEnabled = enabled;
+    if (enabled && !m_hotReloadManager.isEnabled()) {
+        setupHotReloadManager();
+    }
+    m_hotReloadManager.setEnabled(enabled);
 }
 
 }  // namespace limbo

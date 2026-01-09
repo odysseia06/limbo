@@ -888,7 +888,7 @@ protected:
         }
     }
 
-    void onRender() override {
+    void onRender([[maybe_unused]] limbo::f32 interpolationAlpha) override {
         // Clear to a nice dark blue color
         m_renderContext->clear(0.1f, 0.1f, 0.2f, 1.0f);
 
@@ -911,6 +911,9 @@ protected:
 
             // Asset browser
             limbo::DebugPanels::showAssetBrowser(m_assetManager);
+
+            // Profiler panel
+            limbo::DebugPanels::showProfilerPanel();
 
             // Scene panel
             showScenePanel();
