@@ -53,27 +53,26 @@ void AssetBrowserPanel::render() {
     }
 
     if (ImGui::BeginPopupModal("Rename Asset", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        static std::string errorMessage;
-
         ImGui::Text("Enter new name:");
         bool triggerRename = ImGui::InputText("##rename", m_renameBuffer, sizeof(m_renameBuffer),
                                               ImGuiInputTextFlags_EnterReturnsTrue);
 
-        if (triggerRename || ImGui::Button("Rename")) {
+        bool buttonRename = ImGui::Button("Rename");
+        if (triggerRename || buttonRename) {
             if (m_renameBuffer[0] != '\0') {
                 std::filesystem::path newPath = m_itemToRename.parent_path() / m_renameBuffer;
 
                 if (std::filesystem::exists(newPath)) {
-                    errorMessage = "Name already exists!";
+                    m_renameErrorMessage = "Name already exists!";
                 } else {
                     std::error_code ec;
                     std::filesystem::rename(m_itemToRename, newPath, ec);
 
                     if (ec) {
-                        errorMessage = "Error: " + ec.message();
+                        m_renameErrorMessage = "Error: " + ec.message();
                         spdlog::error("Failed to rename asset: {}", ec.message());
                     } else {
-                        errorMessage.clear();
+                        m_renameErrorMessage.clear();
                         ImGui::CloseCurrentPopup();
                     }
                 }
@@ -82,12 +81,12 @@ void AssetBrowserPanel::render() {
 
         ImGui::SameLine();
         if (ImGui::Button("Cancel")) {
-            errorMessage.clear();
+            m_renameErrorMessage.clear();
             ImGui::CloseCurrentPopup();
         }
 
-        if (!errorMessage.empty()) {
-            ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", errorMessage.c_str());
+        if (!m_renameErrorMessage.empty()) {
+            ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "%s", m_renameErrorMessage.c_str());
         }
 
         ImGui::EndPopup();

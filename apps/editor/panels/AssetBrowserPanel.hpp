@@ -40,6 +40,7 @@ private:
     bool m_openRenamePopup = false;
     std::filesystem::path m_itemToRename;
     char m_renameBuffer[256] = {0};
+    std::string m_renameErrorMessage;
 };
 
 }  // namespace limbo::editor
