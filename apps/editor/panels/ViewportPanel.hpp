@@ -1,7 +1,10 @@
 #pragma once
 
 #include <limbo/Limbo.hpp>
+#include <limbo/graphics/Framebuffer.hpp>
 #include "../gizmos/Gizmo.hpp"
+
+#include <memory>
 
 namespace limbo::editor {
 
@@ -34,6 +37,7 @@ private:
     void renderScene();
     void drawGrid();
     void drawGizmos();
+    void drawPhysicsShapes();
 
     [[nodiscard]] glm::vec2 screenToWorld(const glm::vec2& screenPos) const;
 
@@ -60,6 +64,9 @@ private:
     Gizmo m_gizmo;
     bool m_gizmoWasManipulating = false;
     TransformComponent m_gizmoStartTransform;
+
+    // Framebuffer for offscreen rendering
+    std::unique_ptr<Framebuffer> m_framebuffer;
 };
 
 }  // namespace limbo::editor

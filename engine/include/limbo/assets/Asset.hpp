@@ -12,10 +12,13 @@ namespace limbo {
  * Asset loading state
  */
 enum class AssetState : u8 {
-    Unloaded,  // Asset not yet loaded
-    Loading,   // Asset currently loading (async)
-    Loaded,    // Asset loaded and ready to use
-    Failed     // Asset failed to load
+    Unloaded,    // Asset not yet loaded
+    Queued,      // Asset queued for async loading
+    LoadingIO,   // Asset loading from disk (can be off main thread)
+    LoadingGPU,  // Asset uploading to GPU (must be on main thread)
+    Loading,     // Asset currently loading (legacy/sync)
+    Loaded,      // Asset loaded and ready to use
+    Failed       // Asset failed to load
 };
 
 /**
@@ -97,6 +100,7 @@ public:
 
 protected:
     friend class AssetManager;
+    friend class AssetLoader;
 
     /**
      * Load the asset from disk

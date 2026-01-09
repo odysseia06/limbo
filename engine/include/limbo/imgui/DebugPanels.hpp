@@ -49,6 +49,12 @@ LIMBO_API void showDemoWindow();
  */
 LIMBO_API void showLogConsole();
 
+/**
+ * Render the profiler panel
+ * Shows hierarchical CPU timing breakdown and frame history
+ */
+LIMBO_API void showProfilerPanel();
+
 }  // namespace DebugPanels
 
 }  // namespace limbo

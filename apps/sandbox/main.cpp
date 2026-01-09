@@ -912,6 +912,9 @@ protected:
             // Asset browser
             limbo::DebugPanels::showAssetBrowser(m_assetManager);
 
+            // Profiler panel
+            limbo::DebugPanels::showProfilerPanel();
+
             // Scene panel
             showScenePanel();
 

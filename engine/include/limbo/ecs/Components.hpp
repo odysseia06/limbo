@@ -51,6 +51,10 @@ struct TransformComponent {
 struct SpriteRendererComponent {
     glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
     AssetId textureId = AssetId::invalid();
+
+    // Sorting: layer takes priority, then order within layer
+    // Lower values render first (behind higher values)
+    i32 sortingLayer = 0;
     i32 sortingOrder = 0;
 
     // UV coordinates for sprite sheet support

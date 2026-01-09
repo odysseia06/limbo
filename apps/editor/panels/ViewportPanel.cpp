@@ -16,6 +16,12 @@ void ViewportPanel::init() {
     float const aspect = m_viewportSize.x / m_viewportSize.y;
     m_camera = OrthographicCamera(-aspect * m_cameraZoom, aspect * m_cameraZoom, -m_cameraZoom,
                                   m_cameraZoom);
+
+    // Initialize framebuffer
+    FramebufferSpec spec;
+    spec.width = static_cast<u32>(m_viewportSize.x);
+    spec.height = static_cast<u32>(m_viewportSize.y);
+    m_framebuffer = std::make_unique<Framebuffer>(spec);
 }
 
 void ViewportPanel::shutdown() {}
@@ -98,10 +104,34 @@ void ViewportPanel::render() {
     m_viewportHovered = ImGui::IsWindowHovered();
 
     ImVec2 const viewportPanelSize = ImGui::GetContentRegionAvail();
-    m_viewportSize = {viewportPanelSize.x, viewportPanelSize.y};
+    
+    // Resize framebuffer if viewport size changed
+    if (m_framebuffer && (viewportPanelSize.x != m_viewportSize.x || 
+                          viewportPanelSize.y != m_viewportSize.y)) {
+        m_viewportSize = {viewportPanelSize.x, viewportPanelSize.y};
+        if (m_viewportSize.x > 0 && m_viewportSize.y > 0) {
+            m_framebuffer->resize(static_cast<u32>(m_viewportSize.x), 
+                                  static_cast<u32>(m_viewportSize.y));
+        }
+    } else {
+        m_viewportSize = {viewportPanelSize.x, viewportPanelSize.y};
+    }
 
-    // Render scene to viewport
-    renderScene();
+    // Render scene to framebuffer
+    if (m_framebuffer && m_viewportSize.x > 0 && m_viewportSize.y > 0) {
+        m_framebuffer->bind();
+        m_framebuffer->clear(0.1f, 0.1f, 0.1f, 1.0f);
+        
+        renderScene();
+        
+        m_framebuffer->unbind();
+
+        // Display the framebuffer texture in ImGui
+        u64 textureId = m_framebuffer->getColorAttachmentId();
+        ImGui::Image(reinterpret_cast<ImTextureID>(textureId), 
+                     ImVec2(m_viewportSize.x, m_viewportSize.y),
+                     ImVec2(0, 1), ImVec2(1, 0));  // Flip Y for OpenGL
+    }
 
     // Viewport bounds for mouse picking
     ImVec2 const minBound = ImGui::GetWindowContentRegionMin();
@@ -186,6 +216,19 @@ void ViewportPanel::renderScene() {
 
     // Draw gizmos for selected entity
     drawGizmos();
+
+    // Draw physics debug visualization
+    // In Play mode: draws actual Box2D world state
+    // In Edit mode: draws collider shapes from components (for scene setup)
+    if (m_editor.isPhysicsDebugEnabled()) {
+        if (m_editor.getEditorState() == EditorState::Play) {
+            // Draw from actual physics world
+            m_editor.getPhysicsDebug().draw(m_editor.getPhysics());
+        } else {
+            // Draw from components in edit mode
+            drawPhysicsShapes();
+        }
+    }
 
     Renderer2D::endScene();
 }
@@ -354,6 +397,80 @@ glm::vec2 ViewportPanel::screenToWorld(const glm::vec2& screenPos) const {
     glm::vec4 worldPos4 = invViewProj * glm::vec4(normalizedPos, 0.0f, 1.0f);
 
     return glm::vec2(worldPos4.x, worldPos4.y);
+}
+
+void ViewportPanel::drawPhysicsShapes() {
+    // Draw physics collider shapes from ECS components (for edit mode visualization)
+    auto& world = m_editor.getWorld();
+
+    // Colors for different states
+    glm::vec4 const staticColor{0.5f, 0.5f, 0.5f, 1.0f};
+    glm::vec4 const kinematicColor{0.5f, 0.5f, 0.9f, 1.0f};
+    glm::vec4 const dynamicColor{0.0f, 1.0f, 0.0f, 1.0f};
+    glm::vec4 const triggerColor{1.0f, 1.0f, 0.0f, 0.7f};
+
+    // Draw box colliders
+    world.each<TransformComponent, BoxCollider2DComponent>(
+        [&](World::EntityId id, TransformComponent& transform, BoxCollider2DComponent& box) {
+            // Determine color based on body type
+            glm::vec4 color = dynamicColor;
+            if (world.hasComponent<Rigidbody2DComponent>(id)) {
+                auto& rb = world.getComponent<Rigidbody2DComponent>(id);
+                switch (rb.type) {
+                case BodyType::Static:
+                    color = staticColor;
+                    break;
+                case BodyType::Kinematic:
+                    color = kinematicColor;
+                    break;
+                case BodyType::Dynamic:
+                    color = dynamicColor;
+                    break;
+                }
+            }
+            if (box.isTrigger) {
+                color = triggerColor;
+            }
+
+            // Calculate world position with offset
+            glm::vec2 pos{transform.position.x + box.offset.x,
+                          transform.position.y + box.offset.y};
+            glm::vec2 size{box.size.x * 2.0f * transform.scale.x,
+                           box.size.y * 2.0f * transform.scale.y};
+
+            Renderer2D::drawRect(pos, size, transform.rotation.z, color);
+        });
+
+    // Draw circle colliders
+    world.each<TransformComponent, CircleCollider2DComponent>(
+        [&](World::EntityId id, TransformComponent& transform, CircleCollider2DComponent& circle) {
+            // Determine color based on body type
+            glm::vec4 color = dynamicColor;
+            if (world.hasComponent<Rigidbody2DComponent>(id)) {
+                auto& rb = world.getComponent<Rigidbody2DComponent>(id);
+                switch (rb.type) {
+                case BodyType::Static:
+                    color = staticColor;
+                    break;
+                case BodyType::Kinematic:
+                    color = kinematicColor;
+                    break;
+                case BodyType::Dynamic:
+                    color = dynamicColor;
+                    break;
+                }
+            }
+            if (circle.isTrigger) {
+                color = triggerColor;
+            }
+
+            // Calculate world position with offset
+            glm::vec2 pos{transform.position.x + circle.offset.x,
+                          transform.position.y + circle.offset.y};
+            f32 radius = circle.radius * glm::max(transform.scale.x, transform.scale.y);
+
+            Renderer2D::drawCircle(pos, radius, color);
+        });
 }
 
 }  // namespace limbo::editor

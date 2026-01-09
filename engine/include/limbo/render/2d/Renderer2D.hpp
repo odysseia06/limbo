@@ -211,14 +211,94 @@ public:
                                 const glm::vec4& tintColor = glm::vec4(1.0f));
 
     // ========================================================================
+    // Debug Primitives - Lines
+    // ========================================================================
+
+    /**
+     * Draw a line between two points
+     * @param p0 Start point
+     * @param p1 End point
+     * @param color Line color
+     */
+    static void drawLine(const glm::vec2& p0, const glm::vec2& p1, const glm::vec4& color);
+
+    /**
+     * Draw a line between two 3D points
+     * @param p0 Start point
+     * @param p1 End point
+     * @param color Line color
+     */
+    static void drawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color);
+
+    // ========================================================================
+    // Debug Primitives - Shapes (Wireframe)
+    // ========================================================================
+
+    /**
+     * Draw a wireframe rectangle
+     * @param position Center position
+     * @param size Width and height
+     * @param color Line color
+     */
+    static void drawRect(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
+
+    /**
+     * Draw a wireframe rectangle with rotation
+     * @param position Center position
+     * @param size Width and height
+     * @param rotation Rotation in radians
+     * @param color Line color
+     */
+    static void drawRect(const glm::vec2& position, const glm::vec2& size, f32 rotation,
+                         const glm::vec4& color);
+
+    /**
+     * Draw a wireframe circle
+     * @param center Circle center
+     * @param radius Circle radius
+     * @param color Line color
+     * @param segments Number of segments (default 32)
+     */
+    static void drawCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
+                           i32 segments = 32);
+
+    /**
+     * Draw a wireframe circle with thickness (filled ring)
+     * @param center Circle center
+     * @param radius Circle radius
+     * @param thickness Ring thickness
+     * @param color Color
+     * @param segments Number of segments (default 32)
+     */
+    static void drawCircle(const glm::vec2& center, f32 radius, f32 thickness,
+                           const glm::vec4& color, i32 segments = 32);
+
+    // ========================================================================
+    // Debug Primitives - Filled Shapes
+    // ========================================================================
+
+    /**
+     * Draw a filled circle
+     * @param center Circle center
+     * @param radius Circle radius
+     * @param color Fill color
+     * @param segments Number of segments (default 32)
+     */
+    static void drawFilledCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
+                                 i32 segments = 32);
+
+    // ========================================================================
     // Statistics
     // ========================================================================
 
     struct Statistics {
         u32 drawCalls = 0;
         u32 quadCount = 0;
+        u32 lineCount = 0;
+        u32 textureBinds = 0;
+        u32 batchCount = 0;
 
-        [[nodiscard]] u32 vertexCount() const { return quadCount * 4; }
+        [[nodiscard]] u32 vertexCount() const { return quadCount * 4 + lineCount * 2; }
         [[nodiscard]] u32 indexCount() const { return quadCount * 6; }
     };
 

@@ -1,0 +1,127 @@
+#include "limbo/physics/2d/ContactListener2D.hpp"
+
+#include <spdlog/spdlog.h>
+
+namespace limbo {
+
+void ContactListener2D::BeginContact(b2Contact* contact) {
+    enqueueEvent(contact, CollisionEventType::Begin);
+}
+
+void ContactListener2D::EndContact(b2Contact* contact) {
+    enqueueEvent(contact, CollisionEventType::End);
+}
+
+void ContactListener2D::enqueueEvent(b2Contact* contact, CollisionEventType type) {
+    if (!contact) {
+        return;
+    }
+
+    b2Fixture* fixtureA = contact->GetFixtureA();
+    b2Fixture* fixtureB = contact->GetFixtureB();
+
+    if (!fixtureA || !fixtureB) {
+        return;
+    }
+
+    b2Body* bodyA = fixtureA->GetBody();
+    b2Body* bodyB = fixtureB->GetBody();
+
+    if (!bodyA || !bodyB) {
+        return;
+    }
+
+    // Get entity IDs from body user data
+    void* userDataA = bodyA->GetUserData().pointer ? reinterpret_cast<void*>(bodyA->GetUserData().pointer) : nullptr;
+    void* userDataB = bodyB->GetUserData().pointer ? reinterpret_cast<void*>(bodyB->GetUserData().pointer) : nullptr;
+
+    // Both bodies must have entity associations
+    if (!userDataA || !userDataB) {
+        return;
+    }
+
+    // Decode entity IDs (stored as uintptr_t)
+    auto entityA = static_cast<World::EntityId>(bodyA->GetUserData().pointer);
+    auto entityB = static_cast<World::EntityId>(bodyB->GetUserData().pointer);
+
+    // Get fixture indices from fixture user data
+    i32 fixtureIndexA = static_cast<i32>(fixtureA->GetUserData().pointer);
+    i32 fixtureIndexB = static_cast<i32>(fixtureB->GetUserData().pointer);
+
+    // Determine if this is a trigger event
+    bool isTrigger = fixtureA->IsSensor() || fixtureB->IsSensor();
+
+    // Get contact normal and point
+    glm::vec2 normal{0.0f};
+    glm::vec2 contactPoint{0.0f};
+
+    if (type == CollisionEventType::Begin) {
+        b2WorldManifold worldManifold;
+        contact->GetWorldManifold(&worldManifold);
+
+        // Normal points from A to B
+        normal = {worldManifold.normal.x, worldManifold.normal.y};
+
+        // Use first contact point if available
+        if (contact->GetManifold()->pointCount > 0) {
+            contactPoint = {worldManifold.points[0].x, worldManifold.points[0].y};
+        }
+    }
+    // For EndContact, normal/point are not meaningful (contact is ending)
+
+    PendingEvent event;
+    event.entityA = entityA;
+    event.entityB = entityB;
+    event.normal = normal;
+    event.contactPoint = contactPoint;
+    event.fixtureIndexA = fixtureIndexA;
+    event.fixtureIndexB = fixtureIndexB;
+    event.isTrigger = isTrigger;
+    event.type = type;
+
+    m_pendingEvents.push_back(event);
+}
+
+void ContactListener2D::dispatchEvents() {
+    if (!m_callback) {
+        m_pendingEvents.clear();
+        return;
+    }
+
+    // Process all pending events
+    // Note: We copy the vector in case callback modifies the listener
+    auto events = std::move(m_pendingEvents);
+    m_pendingEvents.clear();
+
+    for (const auto& pending : events) {
+        // Dispatch to entity A (self=A, other=B, normal from A to B)
+        {
+            CollisionEvent2D eventA;
+            eventA.self = pending.entityA;
+            eventA.other = pending.entityB;
+            eventA.normal = pending.normal;  // Already points from A to B
+            eventA.contactPoint = pending.contactPoint;
+            eventA.selfFixtureIndex = pending.fixtureIndexA;
+            eventA.otherFixtureIndex = pending.fixtureIndexB;
+            eventA.isTrigger = pending.isTrigger;
+
+            m_callback(eventA, pending.type);
+        }
+
+        // Dispatch to entity B (self=B, other=A, normal negated to point from B to A)
+        {
+            CollisionEvent2D eventB;
+            eventB.self = pending.entityB;
+            eventB.other = pending.entityA;
+            eventB.normal = -pending.normal;  // Negate: now points from B to A
+            eventB.contactPoint = pending.contactPoint;
+            eventB.selfFixtureIndex = pending.fixtureIndexB;
+            eventB.otherFixtureIndex = pending.fixtureIndexA;
+            eventB.isTrigger = pending.isTrigger;
+
+            m_callback(eventB, pending.type);
+        }
+    }
+}
+
+}  // namespace limbo

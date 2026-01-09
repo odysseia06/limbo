@@ -9,7 +9,7 @@ namespace limbo::editor {
 
 EditorApp::EditorApp()
     : m_hierarchyPanel(*this), m_inspectorPanel(*this), m_viewportPanel(*this),
-      m_assetBrowserPanel(*this), m_assetPipelinePanel(*this) {}
+      m_assetBrowserPanel(*this), m_assetPipelinePanel(*this), m_consolePanel(*this) {}
 
 void EditorApp::onInit() {
     spdlog::info("Limbo Editor initialized");
@@ -42,6 +42,11 @@ void EditorApp::onInit() {
 
     // Initialize physics (for play mode)
     m_physics.init({0.0f, -9.81f});
+    m_physicsSystem = std::make_unique<PhysicsSystem2D>(m_physics);
+
+    // Initialize scripting (for play mode)
+    m_scriptEngine.init();
+    m_scriptSystem = std::make_unique<ScriptSystem>(m_scriptEngine);
 
     // Setup default asset path
     std::filesystem::path const assetsPath = std::filesystem::current_path() / "assets";
@@ -55,6 +60,7 @@ void EditorApp::onInit() {
     m_viewportPanel.init();
     m_assetBrowserPanel.init();
     m_assetPipelinePanel.init();
+    m_consolePanel.init();
 
     // Start with a new scene
     newScene();
@@ -94,8 +100,11 @@ void EditorApp::onUpdate(f32 deltaTime) {
 
     // Update based on editor state
     if (m_editorState == EditorState::Play) {
-        // Run physics and systems
-        getSystems().update(getWorld(), deltaTime);
+        // Run script system (handles onStart, onUpdate)
+        m_scriptSystem->update(getWorld(), deltaTime);
+
+        // Run physics system
+        m_physicsSystem->update(getWorld(), deltaTime);
     }
 
     // Update panels
@@ -122,6 +131,39 @@ void EditorApp::onRender([[maybe_unused]] f32 interpolationAlpha) {
     }
     if (m_showDemoWindow) {
         ImGui::ShowDemoWindow(&m_showDemoWindow);
+    }
+
+    // Scene select popup
+    if (m_showSceneSelectPopup) {
+        ImGui::OpenPopup("Open Scene");
+        m_showSceneSelectPopup = false;
+    }
+
+    if (ImGui::BeginPopupModal("Open Scene", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Select a scene to open:");
+        ImGui::Separator();
+
+        // List available scenes
+        std::filesystem::path const scenesDir = m_assetManager.getAssetRoot() / "scenes";
+        if (std::filesystem::exists(scenesDir)) {
+            for (const auto& entry : std::filesystem::directory_iterator(scenesDir)) {
+                if (entry.path().extension() == ".json") {
+                    std::string const filename = entry.path().filename().string();
+                    if (ImGui::Selectable(filename.c_str())) {
+                        loadSceneFromPath(entry.path());
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+            }
+        } else {
+            ImGui::TextDisabled("No scenes directory found");
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     // End ImGui frame
@@ -210,6 +252,9 @@ void EditorApp::renderMenuBar() {
             ImGui::MenuItem("Viewport", nullptr, &m_viewportPanel.isOpen());
             ImGui::MenuItem("Asset Browser", nullptr, &m_assetBrowserPanel.isOpen());
             ImGui::MenuItem("Asset Pipeline", nullptr, &m_assetPipelinePanel.isOpen());
+            ImGui::MenuItem("Console", nullptr, &m_consolePanel.isOpen());
+            ImGui::Separator();
+            ImGui::MenuItem("Physics Debug", nullptr, &m_showPhysicsDebug);
             ImGui::Separator();
             ImGui::MenuItem("ImGui Demo", "F1", &m_showDemoWindow);
             ImGui::EndMenu();
@@ -327,6 +372,7 @@ void EditorApp::renderDockspace() {
     m_viewportPanel.render();
     m_assetBrowserPanel.render();
     m_assetPipelinePanel.render();
+    m_consolePanel.render();
 
     // Status bar
     renderStatusBar();
@@ -374,11 +420,11 @@ void EditorApp::redo() {
 }
 
 void EditorApp::openScene() {
-    // TODO: Open file dialog
-    // For now, try to load a default scene
-    std::filesystem::path const scenePath =
-        m_assetManager.getAssetRoot() / "scenes" / "default.json";
+    // Show scene selection popup
+    m_showSceneSelectPopup = true;
+}
 
+void EditorApp::loadSceneFromPath(const std::filesystem::path& scenePath) {
     if (std::filesystem::exists(scenePath)) {
         SceneSerializer serializer(getWorld());
         if (serializer.loadFromFile(scenePath)) {
@@ -439,7 +485,17 @@ void EditorApp::onPlay() {
         // Deselect entity (selection may become invalid during play)
         deselectAll();
 
-        // TODO: Initialize physics bodies from entities with RigidBody2DComponent
+        // Attach physics system to create bodies from components
+        m_physicsSystem->onAttach(getWorld());
+
+        // Attach script system
+        m_scriptSystem->onAttach(getWorld());
+
+        // Wire collision events to script callbacks
+        m_physicsSystem->setCollisionCallback(
+            [this](const CollisionEvent2D& event, CollisionEventType type) {
+                m_scriptSystem->dispatchCollisionEvent(getWorld(), event, type);
+            });
 
         m_editorState = EditorState::Play;
         spdlog::info("Play mode started");
@@ -458,6 +514,12 @@ void EditorApp::onPause() {
 
 void EditorApp::onStop() {
     if (m_editorState != EditorState::Edit) {
+        // Detach script system first (calls onDestroy callbacks)
+        m_scriptSystem->onDetach(getWorld());
+
+        // Detach physics system to destroy bodies
+        m_physicsSystem->onDetach(getWorld());
+
         // Restore scene state from before play
         if (!m_savedSceneState.empty()) {
             SceneSerializer serializer(getWorld());
@@ -493,6 +555,7 @@ void EditorApp::deselectAll() {
 }
 
 void EditorApp::onShutdown() {
+    m_consolePanel.shutdown();
     m_assetPipelinePanel.shutdown();
     m_assetBrowserPanel.shutdown();
     m_viewportPanel.shutdown();

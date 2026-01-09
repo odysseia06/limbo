@@ -11,6 +11,7 @@ namespace limbo {
 
 // Forward declarations
 class World;
+class Physics2D;
 
 /**
  * ScriptEngine - Manages Lua scripting environment
@@ -91,6 +92,11 @@ public:
     void bindWorld(World* world);
 
     /**
+     * Bind the Physics2D system for physics queries
+     */
+    void bindPhysics(Physics2D* physics);
+
+    /**
      * Get last error message
      */
     [[nodiscard]] const String& getLastError() const { return m_lastError; }
@@ -101,11 +107,13 @@ private:
     void bindEntityTypes();
     void bindComponentTypes();
     void bindUtilityFunctions();
+    void bindPhysicsTypes();
 
     sol::state m_lua;
     bool m_initialized = false;
     String m_lastError;
     World* m_boundWorld = nullptr;
+    Physics2D* m_boundPhysics = nullptr;
 };
 
 }  // namespace limbo

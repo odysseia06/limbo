@@ -1,12 +1,17 @@
 #pragma once
 
 #include <limbo/Limbo.hpp>
+#include <limbo/physics/2d/PhysicsSystem2D.hpp>
+#include <limbo/physics/2d/PhysicsDebug2D.hpp>
+#include <limbo/scripting/ScriptEngine.hpp>
+#include <limbo/scripting/ScriptSystem.hpp>
 #include "commands/CommandHistory.hpp"
 #include "panels/SceneHierarchyPanel.hpp"
 #include "panels/InspectorPanel.hpp"
 #include "panels/ViewportPanel.hpp"
 #include "panels/AssetBrowserPanel.hpp"
 #include "panels/AssetPipelinePanel.hpp"
+#include "panels/ConsolePanel.hpp"
 
 #include <filesystem>
 
@@ -52,6 +57,7 @@ private:
     // File operations
     void newScene();
     void openScene();
+    void loadSceneFromPath(const std::filesystem::path& scenePath);
     void saveScene();
     void saveSceneAs();
 
@@ -68,6 +74,13 @@ public:
 
     // Scene modification tracking
     void markSceneModified() { m_sceneModified = true; }
+
+    // Physics debug visualization
+    [[nodiscard]] PhysicsDebug2D& getPhysicsDebug() { return m_physicsDebug; }
+    [[nodiscard]] bool isPhysicsDebugEnabled() const { return m_showPhysicsDebug; }
+    void setPhysicsDebugEnabled(bool enabled) { m_showPhysicsDebug = enabled; }
+    [[nodiscard]] Physics2D& getPhysics() { return m_physics; }
+    [[nodiscard]] EditorState getEditorState() const { return m_editorState; }
 
     // Command system access
     CommandHistory& getCommandHistory() { return m_commandHistory; }
@@ -104,12 +117,20 @@ private:
     ViewportPanel m_viewportPanel;
     AssetBrowserPanel m_assetBrowserPanel;
     AssetPipelinePanel m_assetPipelinePanel;
+    ConsolePanel m_consolePanel;
 
     // Assets
     AssetManager m_assetManager;
 
     // Physics (for play mode)
     Physics2D m_physics;
+    Unique<PhysicsSystem2D> m_physicsSystem;
+    PhysicsDebug2D m_physicsDebug;
+    bool m_showPhysicsDebug = true;
+
+    // Scripting (for play mode)
+    ScriptEngine m_scriptEngine;
+    Unique<ScriptSystem> m_scriptSystem;
 
     // Editor state
     EditorState m_editorState = EditorState::Edit;
@@ -131,6 +152,7 @@ private:
 
     // UI state
     bool m_showDemoWindow = false;
+    bool m_showSceneSelectPopup = false;
 
     // Layout persistence
     std::string m_layoutIniPath;

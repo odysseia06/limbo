@@ -24,6 +24,8 @@ add_executable(limbo_editor
     panels/AssetBrowserPanel.hpp
     panels/AssetPipelinePanel.cpp
     panels/AssetPipelinePanel.hpp
+    panels/ConsolePanel.cpp
+    panels/ConsolePanel.hpp
 )
 
 target_link_libraries(limbo_editor

@@ -4,6 +4,7 @@
 #include "limbo/ecs/Components.hpp"
 #include "limbo/ecs/Entity.hpp"
 #include "limbo/ecs/Hierarchy.hpp"
+#include "limbo/physics/2d/PhysicsComponents2D.hpp"
 
 #include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
@@ -37,12 +38,18 @@ glm::vec2 deserializeVec2(const json& j) {
     if (j.is_array() && j.size() >= 2) {
         return glm::vec2(j[0].get<float>(), j[1].get<float>());
     }
+    if (j.is_object() && j.contains("x") && j.contains("y")) {
+        return glm::vec2(j["x"].get<float>(), j["y"].get<float>());
+    }
     return glm::vec2(0.0f);
 }
 
 glm::vec3 deserializeVec3(const json& j) {
     if (j.is_array() && j.size() >= 3) {
         return glm::vec3(j[0].get<float>(), j[1].get<float>(), j[2].get<float>());
+    }
+    if (j.is_object() && j.contains("x") && j.contains("y") && j.contains("z")) {
+        return glm::vec3(j["x"].get<float>(), j["y"].get<float>(), j["z"].get<float>());
     }
     return glm::vec3(0.0f);
 }
@@ -51,6 +58,11 @@ glm::vec4 deserializeVec4(const json& j) {
     if (j.is_array() && j.size() >= 4) {
         return glm::vec4(j[0].get<float>(), j[1].get<float>(), j[2].get<float>(),
                          j[3].get<float>());
+    }
+    if (j.is_object() && j.contains("r") && j.contains("g") && j.contains("b") &&
+        j.contains("a")) {
+        return glm::vec4(j["r"].get<float>(), j["g"].get<float>(), j["b"].get<float>(),
+                         j["a"].get<float>());
     }
     return glm::vec4(1.0f);
 }
@@ -213,6 +225,7 @@ String SceneSerializer::serialize() {
             const auto& sprite = m_world.getComponent<SpriteRendererComponent>(entityId);
             json spriteJson;
             spriteJson["color"] = serializeVec4(sprite.color);
+            spriteJson["sortingLayer"] = sprite.sortingLayer;
             spriteJson["sortingOrder"] = sprite.sortingOrder;
             if (sprite.textureId.isValid()) {
                 spriteJson["textureId"] = sprite.textureId.uuid().toString();
@@ -268,6 +281,48 @@ String SceneSerializer::serialize() {
             }
 
             componentsJson["PrefabInstance"] = prefabJson;
+        }
+
+        // Rigidbody2D component
+        if (m_world.hasComponent<Rigidbody2DComponent>(entityId)) {
+            const auto& rb = m_world.getComponent<Rigidbody2DComponent>(entityId);
+            json rbJson;
+            rbJson["type"] = static_cast<int>(rb.type);
+            rbJson["gravityScale"] = rb.gravityScale;
+            rbJson["fixedRotation"] = rb.fixedRotation;
+            rbJson["linearVelocity"] = serializeVec2(rb.linearVelocity);
+            rbJson["angularVelocity"] = rb.angularVelocity;
+            rbJson["linearDamping"] = rb.linearDamping;
+            rbJson["angularDamping"] = rb.angularDamping;
+            componentsJson["Rigidbody2D"] = rbJson;
+        }
+
+        // BoxCollider2D component
+        if (m_world.hasComponent<BoxCollider2DComponent>(entityId)) {
+            const auto& box = m_world.getComponent<BoxCollider2DComponent>(entityId);
+            json boxJson;
+            boxJson["size"] = serializeVec2(box.size);
+            boxJson["offset"] = serializeVec2(box.offset);
+            boxJson["density"] = box.density;
+            boxJson["friction"] = box.friction;
+            boxJson["restitution"] = box.restitution;
+            boxJson["restitutionThreshold"] = box.restitutionThreshold;
+            boxJson["isTrigger"] = box.isTrigger;
+            componentsJson["BoxCollider2D"] = boxJson;
+        }
+
+        // CircleCollider2D component
+        if (m_world.hasComponent<CircleCollider2DComponent>(entityId)) {
+            const auto& circle = m_world.getComponent<CircleCollider2DComponent>(entityId);
+            json circleJson;
+            circleJson["radius"] = circle.radius;
+            circleJson["offset"] = serializeVec2(circle.offset);
+            circleJson["density"] = circle.density;
+            circleJson["friction"] = circle.friction;
+            circleJson["restitution"] = circle.restitution;
+            circleJson["restitutionThreshold"] = circle.restitutionThreshold;
+            circleJson["isTrigger"] = circle.isTrigger;
+            componentsJson["CircleCollider2D"] = circleJson;
         }
 
         entityJson["components"] = componentsJson;
@@ -376,6 +431,9 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                 if (spriteJson.contains("color")) {
                     sprite.color = deserializeVec4(spriteJson["color"]);
                 }
+                if (spriteJson.contains("sortingLayer")) {
+                    sprite.sortingLayer = spriteJson["sortingLayer"].get<i32>();
+                }
                 if (spriteJson.contains("sortingOrder")) {
                     sprite.sortingOrder = spriteJson["sortingOrder"].get<i32>();
                 }
@@ -448,6 +506,84 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                             prefabInstance.overrides[key] = true;
                         }
                     }
+                }
+            }
+
+            // Rigidbody2D component
+            if (components.contains("Rigidbody2D")) {
+                const auto& rbJson = components["Rigidbody2D"];
+                auto& rb = m_world.addComponent<Rigidbody2DComponent>(entityId);
+
+                if (rbJson.contains("type")) {
+                    rb.type = static_cast<BodyType>(rbJson["type"].get<int>());
+                }
+                if (rbJson.contains("fixedRotation")) {
+                    rb.fixedRotation = rbJson["fixedRotation"].get<bool>();
+                }
+                if (rbJson.contains("gravityScale")) {
+                    rb.gravityScale = rbJson["gravityScale"].get<float>();
+                }
+                if (rbJson.contains("linearDamping")) {
+                    rb.linearDamping = rbJson["linearDamping"].get<float>();
+                }
+                if (rbJson.contains("angularDamping")) {
+                    rb.angularDamping = rbJson["angularDamping"].get<float>();
+                }
+            }
+
+            // BoxCollider2D component
+            if (components.contains("BoxCollider2D")) {
+                const auto& boxJson = components["BoxCollider2D"];
+                auto& box = m_world.addComponent<BoxCollider2DComponent>(entityId);
+
+                if (boxJson.contains("size")) {
+                    const auto& sizeJson = boxJson["size"];
+                    box.size.x = sizeJson["x"].get<float>();
+                    box.size.y = sizeJson["y"].get<float>();
+                }
+                if (boxJson.contains("offset")) {
+                    const auto& offsetJson = boxJson["offset"];
+                    box.offset.x = offsetJson["x"].get<float>();
+                    box.offset.y = offsetJson["y"].get<float>();
+                }
+                if (boxJson.contains("density")) {
+                    box.density = boxJson["density"].get<float>();
+                }
+                if (boxJson.contains("friction")) {
+                    box.friction = boxJson["friction"].get<float>();
+                }
+                if (boxJson.contains("restitution")) {
+                    box.restitution = boxJson["restitution"].get<float>();
+                }
+                if (boxJson.contains("isTrigger")) {
+                    box.isTrigger = boxJson["isTrigger"].get<bool>();
+                }
+            }
+
+            // CircleCollider2D component
+            if (components.contains("CircleCollider2D")) {
+                const auto& circleJson = components["CircleCollider2D"];
+                auto& circle = m_world.addComponent<CircleCollider2DComponent>(entityId);
+
+                if (circleJson.contains("radius")) {
+                    circle.radius = circleJson["radius"].get<float>();
+                }
+                if (circleJson.contains("offset")) {
+                    const auto& offsetJson = circleJson["offset"];
+                    circle.offset.x = offsetJson["x"].get<float>();
+                    circle.offset.y = offsetJson["y"].get<float>();
+                }
+                if (circleJson.contains("density")) {
+                    circle.density = circleJson["density"].get<float>();
+                }
+                if (circleJson.contains("friction")) {
+                    circle.friction = circleJson["friction"].get<float>();
+                }
+                if (circleJson.contains("restitution")) {
+                    circle.restitution = circleJson["restitution"].get<float>();
+                }
+                if (circleJson.contains("isTrigger")) {
+                    circle.isTrigger = circleJson["isTrigger"].get<bool>();
                 }
             }
         }
