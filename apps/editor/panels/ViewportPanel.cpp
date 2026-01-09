@@ -128,7 +128,7 @@ void ViewportPanel::render() {
 
         // Display the framebuffer texture in ImGui
         u64 textureId = m_framebuffer->getColorAttachmentId();
-        ImGui::Image(reinterpret_cast<ImTextureID>(textureId),
+        ImGui::Image(static_cast<ImTextureID>(static_cast<uintptr_t>(textureId)),
                      ImVec2(m_viewportSize.x, m_viewportSize.y), ImVec2(0, 1),
                      ImVec2(1, 0));  // Flip Y for OpenGL
     }
