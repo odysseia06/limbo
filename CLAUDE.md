@@ -240,7 +240,8 @@ LIMBO_LOG_PHYSICS_ERROR("Error occurred");
 - **Stats Panel**: FPS, frame time, renderer stats
 - **Entity Inspector**: View/edit entity components
 - **Log Console**: Filter logs by level and category
-- Use `DebugPanels::showLogConsole()` in ImGui frame
+- **Profiler Panel**: CPU timing, frame allocator stats, thread pool status
+- Use `DebugPanels::showProfilerPanel()` for performance analysis
 
 ## Common Tasks
 
@@ -266,9 +267,114 @@ LIMBO_LOG_PHYSICS_ERROR("Error occurred");
 4. Update `assetcooker` tool if needed
 5. Write unit tests
 
+## Performance Infrastructure (Milestone 9)
+
+The engine includes performance tools for profiling and optimization:
+
+### CPU Profiler
+```cpp
+#include "limbo/debug/Profiler.hpp"
+
+void MySystem::update(World& world, f32 dt) {
+    LIMBO_PROFILE_SCOPE("MySystem::update");
+    // ... work ...
+}
+
+// Export data
+profiler::Profiler::exportToCSV("profiler_data.csv");
+```
+
+### Frame Allocator
+```cpp
+#include "limbo/core/FrameAllocator.hpp"
+
+// Use FrameVector instead of std::vector for per-frame temporary data
+FrameVector<Entity> entities;
+entities.reserve(100);
+// Memory automatically freed at frame end
+```
+
+### Thread Pool
+```cpp
+#include "limbo/core/ThreadPool.hpp"
+#include "limbo/core/MainThreadQueue.hpp"
+
+// Submit background work
+ThreadPool::submit([]() {
+    // File I/O, decoding - NO OpenGL/ImGui calls!
+});
+
+// Queue GPU work for main thread
+MainThreadQueue::enqueue([texture, data]() {
+    texture->upload(data);  // Safe on main thread
+});
+```
+
+### Async Asset Loading
+```cpp
+#include "limbo/assets/AssetLoader.hpp"
+
+AssetLoader::loadAsync<TextureAsset>(manager, "textures/player.png",
+    [](AssetId id, bool success) {
+        // Called on main thread when ready
+    });
+```
+
+See `docs/PERFORMANCE.md` for complete API documentation.
+
 ## Notes
 
 - All dependencies are fetched via CMake FetchContent
 - Use `compile_commands.json` for IDE integration
 - Editor saves scenes as JSON in assets directory
 - See `docs/QUALITY_BAR.md` for complete quality standards
+
+---
+
+## Session History
+
+### 2026-01-09: Milestone 9 Complete
+
+**Implemented Performance & Architecture Scale-Up:**
+
+1. **CPU Profiler** (`engine/include/limbo/debug/Profiler.hpp`)
+   - Hierarchical scoped timing with `LIMBO_PROFILE_SCOPE`
+   - Frame history ring buffer (120 frames)
+   - CSV export for external analysis
+
+2. **Frame Allocator** (`engine/include/limbo/core/FrameAllocator.hpp`)
+   - Bump-pointer allocator reset each frame
+   - `FrameVector<T>` replaces std::vector for temporary data
+   - Eliminates per-frame heap allocations
+
+3. **Thread Pool** (`engine/include/limbo/core/ThreadPool.hpp`)
+   - Worker threads for background jobs
+   - `MainThreadQueue` for GPU work deferral
+   - Thread safety rules documented
+
+4. **Async Asset Loading** (`engine/include/limbo/assets/AssetLoader.hpp`)
+   - Background IO with main-thread GPU upload
+   - New states: Queued, LoadingIO, LoadingGPU
+
+5. **Profiler Panel** (`DebugPanels::showProfilerPanel()`)
+   - CPU timeline visualization
+   - Smoothed values (updates every 100ms)
+   - Pause/Resume for inspection
+   - Color-coded percentages
+
+6. **SpriteRenderSystem Optimization**
+   - Dirty flag pattern with EnTT signals
+   - Only re-sorts when entities added/removed
+
+**Files Created:**
+- `engine/include/limbo/debug/Profiler.hpp`
+- `engine/include/limbo/core/FrameAllocator.hpp`
+- `engine/include/limbo/core/ThreadPool.hpp`
+- `engine/include/limbo/core/MainThreadQueue.hpp`
+- `engine/include/limbo/assets/AssetLoader.hpp`
+- `docs/PERFORMANCE.md`
+
+**Next Steps (Remaining Milestones):**
+- Milestone 6: Rendering v2 (materials, text, debug rendering)
+- Milestone 7: Physics & Gameplay Integration (queries, events)
+- Milestone 8: Scripting v2 (stable API, hot reload)
