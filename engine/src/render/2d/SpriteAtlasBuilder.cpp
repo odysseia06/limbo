@@ -23,7 +23,8 @@ void SpriteAtlasBuilder::addSprite(const String& name, const std::filesystem::pa
 void SpriteAtlasBuilder::addDirectory(const std::filesystem::path& directory, bool recursive,
                                       const std::vector<String>& extensions) {
     if (!std::filesystem::exists(directory)) {
-        LIMBO_LOG_RENDER_WARN("SpriteAtlasBuilder: Directory does not exist: {}", directory.string());
+        LIMBO_LOG_RENDER_WARN("SpriteAtlasBuilder: Directory does not exist: {}",
+                              directory.string());
         return;
     }
 
@@ -430,9 +431,9 @@ AtlasBuildResult SpriteAtlasBuilder::build(const AtlasBuildConfig& config) {
     }
 
     result.success = true;
-    LIMBO_LOG_RENDER_INFO("SpriteAtlasBuilder: Built {}x{} atlas with {} sprites ({:.1f}% efficiency)",
-                          atlasWidth, atlasHeight, result.packedSprites,
-                          result.packingEfficiency * 100.0f);
+    LIMBO_LOG_RENDER_INFO(
+        "SpriteAtlasBuilder: Built {}x{} atlas with {} sprites ({:.1f}% efficiency)", atlasWidth,
+        atlasHeight, result.packedSprites, result.packingEfficiency * 100.0f);
 
     return result;
 }
@@ -471,7 +472,8 @@ bool SpriteAtlasBuilder::saveAtlas(const SpriteAtlas& atlas, const std::filesyst
                                 static_cast<i32>(height), 4, flippedPixels.data(),
                                 static_cast<i32>(width * 4));
     if (result == 0) {
-        LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Failed to write texture: {}", texturePath.string());
+        LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Failed to write texture: {}",
+                               texturePath.string());
         return false;
     }
 

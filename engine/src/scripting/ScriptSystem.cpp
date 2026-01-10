@@ -58,7 +58,8 @@ void setScriptError(ScriptComponent& script, const String& errorStr) {
 
     // Log with file:line info if available
     if (parsed.line > 0) {
-        LIMBO_LOG_SCRIPT_ERROR("Script error at {}:{}: {}", parsed.file, parsed.line, parsed.message);
+        LIMBO_LOG_SCRIPT_ERROR("Script error at {}:{}: {}", parsed.file, parsed.line,
+                               parsed.message);
     } else {
         LIMBO_LOG_SCRIPT_ERROR("Script error: {}", errorStr);
     }
