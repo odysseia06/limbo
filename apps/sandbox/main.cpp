@@ -1,4 +1,5 @@
 #include <limbo/Limbo.hpp>
+#include <limbo/debug/Log.hpp>
 
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
