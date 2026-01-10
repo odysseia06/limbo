@@ -1,14 +1,15 @@
 #include "limbo/audio/AudioSystem.hpp"
+
 #include "limbo/audio/AudioComponents.hpp"
+#include "limbo/debug/Log.hpp"
 #include "limbo/ecs/World.hpp"
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
 AudioSystem::AudioSystem(AudioEngine& engine) : m_engine(engine) {}
 
 void AudioSystem::onAttach(World& /*world*/) {
-    spdlog::debug("AudioSystem initialized");
+    LIMBO_LOG_AUDIO_DEBUG("AudioSystem initialized");
 }
 
 void AudioSystem::update(World& world, f32 /*deltaTime*/) {
@@ -42,7 +43,7 @@ void AudioSystem::onDetach(World& world) {
         });
 
     m_sources.clear();
-    spdlog::debug("AudioSystem shutdown");
+    LIMBO_LOG_AUDIO_DEBUG("AudioSystem shutdown");
 }
 
 void AudioSystem::play(World& world, World::EntityId entity) {

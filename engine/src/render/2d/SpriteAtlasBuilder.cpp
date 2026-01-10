@@ -1,7 +1,7 @@
 #include "limbo/render/2d/SpriteAtlasBuilder.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glad/gl.h>
-#include <spdlog/spdlog.h>
 #include <stb_image.h>
 #include <stb_image_write.h>
 
@@ -23,7 +23,7 @@ void SpriteAtlasBuilder::addSprite(const String& name, const std::filesystem::pa
 void SpriteAtlasBuilder::addDirectory(const std::filesystem::path& directory, bool recursive,
                                       const std::vector<String>& extensions) {
     if (!std::filesystem::exists(directory)) {
-        spdlog::warn("SpriteAtlasBuilder: Directory does not exist: {}", directory.string());
+        LIMBO_LOG_RENDER_WARN("SpriteAtlasBuilder: Directory does not exist: {}", directory.string());
         return;
     }
 
@@ -68,7 +68,7 @@ void SpriteAtlasBuilder::clear() {
 bool SpriteAtlasBuilder::loadImages() {
     for (auto& sprite : m_sprites) {
         if (!std::filesystem::exists(sprite.path)) {
-            spdlog::error("SpriteAtlasBuilder: Image not found: {}", sprite.path.string());
+            LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Image not found: {}", sprite.path.string());
             return false;
         }
 
@@ -81,8 +81,8 @@ bool SpriteAtlasBuilder::loadImages() {
         u8* data = stbi_load(sprite.path.string().c_str(), &width, &height, &channels, 4);
 
         if (data == nullptr) {
-            spdlog::error("SpriteAtlasBuilder: Failed to load image: {} - {}", sprite.path.string(),
-                          stbi_failure_reason());
+            LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Failed to load image: {} - {}",
+                                   sprite.path.string(), stbi_failure_reason());
             return false;
         }
 
@@ -343,7 +343,7 @@ Unique<Texture2D> SpriteAtlasBuilder::createTexture(const std::vector<PackRect>&
     auto texture = std::make_unique<Texture2D>();
     auto result = texture->create(spec, flippedPixels.data());
     if (!result) {
-        spdlog::error("SpriteAtlasBuilder: Failed to create texture: {}", result.error());
+        LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Failed to create texture: {}", result.error());
         return nullptr;
     }
 
@@ -387,8 +387,8 @@ AtlasBuildResult SpriteAtlasBuilder::build(const AtlasBuildConfig& config) {
     }
 
     if (!result.overflow.empty()) {
-        spdlog::warn("SpriteAtlasBuilder: {} sprites couldn't fit in atlas",
-                     result.overflow.size());
+        LIMBO_LOG_RENDER_WARN("SpriteAtlasBuilder: {} sprites couldn't fit in atlas",
+                              result.overflow.size());
     }
 
     // Calculate packing efficiency
@@ -430,8 +430,9 @@ AtlasBuildResult SpriteAtlasBuilder::build(const AtlasBuildConfig& config) {
     }
 
     result.success = true;
-    spdlog::info("SpriteAtlasBuilder: Built {}x{} atlas with {} sprites ({:.1f}% efficiency)",
-                 atlasWidth, atlasHeight, result.packedSprites, result.packingEfficiency * 100.0f);
+    LIMBO_LOG_RENDER_INFO("SpriteAtlasBuilder: Built {}x{} atlas with {} sprites ({:.1f}% efficiency)",
+                          atlasWidth, atlasHeight, result.packedSprites,
+                          result.packingEfficiency * 100.0f);
 
     return result;
 }
@@ -441,7 +442,7 @@ bool SpriteAtlasBuilder::saveAtlas(const SpriteAtlas& atlas, const std::filesyst
     // Save texture as PNG
     const Texture2D* texture = atlas.getTexture();
     if (texture == nullptr) {
-        spdlog::error("SpriteAtlasBuilder: Atlas has no texture");
+        LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Atlas has no texture");
         return false;
     }
 
@@ -470,7 +471,7 @@ bool SpriteAtlasBuilder::saveAtlas(const SpriteAtlas& atlas, const std::filesyst
                                 static_cast<i32>(height), 4, flippedPixels.data(),
                                 static_cast<i32>(width * 4));
     if (result == 0) {
-        spdlog::error("SpriteAtlasBuilder: Failed to write texture: {}", texturePath.string());
+        LIMBO_LOG_RENDER_ERROR("SpriteAtlasBuilder: Failed to write texture: {}", texturePath.string());
         return false;
     }
 
@@ -480,8 +481,8 @@ bool SpriteAtlasBuilder::saveAtlas(const SpriteAtlas& atlas, const std::filesyst
         return false;
     }
 
-    spdlog::info("SpriteAtlasBuilder: Saved atlas to {} and {}", atlasPath.string(),
-                 texturePath.string());
+    LIMBO_LOG_RENDER_INFO("SpriteAtlasBuilder: Saved atlas to {} and {}", atlasPath.string(),
+                          texturePath.string());
     return true;
 }
 

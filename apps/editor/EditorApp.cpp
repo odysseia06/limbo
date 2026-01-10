@@ -1,9 +1,10 @@
 #include "EditorApp.hpp"
+
 #include "commands/EntityCommands.hpp"
 #include "commands/PropertyCommands.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <imgui.h>
-#include <spdlog/spdlog.h>
 
 namespace limbo::editor {
 
@@ -12,12 +13,12 @@ EditorApp::EditorApp()
       m_assetBrowserPanel(*this), m_assetPipelinePanel(*this), m_consolePanel(*this) {}
 
 void EditorApp::onInit() {
-    spdlog::info("Limbo Editor initialized");
+    LIMBO_LOG_EDITOR_INFO("Limbo Editor initialized");
 
     // Create render context
     m_renderContext = RenderContext::create();
     if (!m_renderContext->init(getWindow())) {
-        spdlog::critical("Failed to initialize render context");
+        LIMBO_LOG_EDITOR_CRITICAL("Failed to initialize render context");
         requestExit();
         return;
     }
@@ -31,7 +32,7 @@ void EditorApp::onInit() {
 
     // Initialize ImGui with layout persistence
     if (!m_imguiLayer.init(getWindow().getNativeHandle(), m_layoutIniPath.c_str())) {
-        spdlog::error("Failed to initialize ImGui");
+        LIMBO_LOG_EDITOR_ERROR("Failed to initialize ImGui");
     }
 
     // Initialize camera
@@ -65,7 +66,7 @@ void EditorApp::onInit() {
     // Start with a new scene
     newScene();
 
-    spdlog::info("Editor ready");
+    LIMBO_LOG_EDITOR_INFO("Editor ready");
 }
 
 void EditorApp::onUpdate(f32 deltaTime) {
@@ -394,7 +395,7 @@ void EditorApp::newScene() {
     m_sceneModified = false;
     m_commandHistory.clear();
     deselectAll();
-    spdlog::info("New scene created");
+    LIMBO_LOG_EDITOR_INFO("New scene created");
 }
 
 bool EditorApp::executeCommand(Unique<Command> command) {
@@ -408,14 +409,14 @@ bool EditorApp::executeCommand(Unique<Command> command) {
 void EditorApp::undo() {
     if (m_commandHistory.undo()) {
         markSceneModified();
-        spdlog::debug("Undo: {}", m_commandHistory.getRedoDescription());
+        LIMBO_LOG_EDITOR_DEBUG("Undo: {}", m_commandHistory.getRedoDescription());
     }
 }
 
 void EditorApp::redo() {
     if (m_commandHistory.redo()) {
         markSceneModified();
-        spdlog::debug("Redo: {}", m_commandHistory.getUndoDescription());
+        LIMBO_LOG_EDITOR_DEBUG("Redo: {}", m_commandHistory.getUndoDescription());
     }
 }
 
@@ -431,12 +432,12 @@ void EditorApp::loadSceneFromPath(const std::filesystem::path& scenePath) {
             m_currentScenePath = scenePath;
             m_sceneModified = false;
             deselectAll();
-            spdlog::info("Scene loaded: {}", scenePath.string());
+            LIMBO_LOG_EDITOR_INFO("Scene loaded: {}", scenePath.string());
         } else {
-            spdlog::error("Failed to load scene: {}", serializer.getError());
+            LIMBO_LOG_EDITOR_ERROR("Failed to load scene: {}", serializer.getError());
         }
     } else {
-        spdlog::warn("No scene file found at: {}", scenePath.string());
+        LIMBO_LOG_EDITOR_WARN("No scene file found at: {}", scenePath.string());
     }
 }
 
@@ -449,9 +450,9 @@ void EditorApp::saveScene() {
     SceneSerializer serializer(getWorld());
     if (serializer.saveToFile(m_currentScenePath)) {
         m_sceneModified = false;
-        spdlog::info("Scene saved: {}", m_currentScenePath.string());
+        LIMBO_LOG_EDITOR_INFO("Scene saved: {}", m_currentScenePath.string());
     } else {
-        spdlog::error("Failed to save scene: {}", serializer.getError());
+        LIMBO_LOG_EDITOR_ERROR("Failed to save scene: {}", serializer.getError());
     }
 }
 
@@ -466,9 +467,9 @@ void EditorApp::saveSceneAs() {
     if (serializer.saveToFile(scenePath)) {
         m_currentScenePath = scenePath;
         m_sceneModified = false;
-        spdlog::info("Scene saved: {}", scenePath.string());
+        LIMBO_LOG_EDITOR_INFO("Scene saved: {}", scenePath.string());
     } else {
-        spdlog::error("Failed to save scene: {}", serializer.getError());
+        LIMBO_LOG_EDITOR_ERROR("Failed to save scene: {}", serializer.getError());
     }
 }
 
@@ -498,17 +499,17 @@ void EditorApp::onPlay() {
             });
 
         m_editorState = EditorState::Play;
-        spdlog::info("Play mode started");
+        LIMBO_LOG_EDITOR_INFO("Play mode started");
     }
 }
 
 void EditorApp::onPause() {
     if (m_editorState == EditorState::Play) {
         m_editorState = EditorState::Pause;
-        spdlog::info("Play mode paused");
+        LIMBO_LOG_EDITOR_INFO("Play mode paused");
     } else if (m_editorState == EditorState::Pause) {
         m_editorState = EditorState::Play;
-        spdlog::info("Play mode resumed");
+        LIMBO_LOG_EDITOR_INFO("Play mode resumed");
     }
 }
 
@@ -524,9 +525,9 @@ void EditorApp::onStop() {
         if (!m_savedSceneState.empty()) {
             SceneSerializer serializer(getWorld());
             if (serializer.deserialize(m_savedSceneState)) {
-                spdlog::info("Scene state restored");
+                LIMBO_LOG_EDITOR_INFO("Scene state restored");
             } else {
-                spdlog::error("Failed to restore scene state: {}", serializer.getError());
+                LIMBO_LOG_EDITOR_ERROR("Failed to restore scene state: {}", serializer.getError());
             }
             m_savedSceneState.clear();
         }
@@ -538,7 +539,7 @@ void EditorApp::onStop() {
         deselectAll();
 
         m_editorState = EditorState::Edit;
-        spdlog::info("Play mode stopped");
+        LIMBO_LOG_EDITOR_INFO("Play mode stopped");
     }
 }
 
@@ -571,7 +572,7 @@ void EditorApp::onShutdown() {
         m_renderContext.reset();
     }
 
-    spdlog::info("Limbo Editor shutdown");
+    LIMBO_LOG_EDITOR_INFO("Limbo Editor shutdown");
 }
 
 }  // namespace limbo::editor

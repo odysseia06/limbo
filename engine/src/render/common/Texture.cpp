@@ -1,8 +1,8 @@
 #include "limbo/render/common/Texture.hpp"
 #include "limbo/core/Assert.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glad/gl.h>
-#include <spdlog/spdlog.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -200,8 +200,8 @@ Result<void, String> Texture2D::loadFromFile(const std::filesystem::path& path) 
     stbi_image_free(data);
 
     if (result) {
-        spdlog::debug("Texture loaded: {} ({}x{}, {} channels)", path.string(), width, height,
-                      channels);
+        LIMBO_LOG_RENDER_DEBUG("Texture loaded: {} ({}x{}, {} channels)", path.string(), width,
+                               height, channels);
     }
 
     return result;
@@ -246,7 +246,7 @@ Result<void, String> Texture2D::create(const TextureSpec& spec, const void* data
         }
     }
 
-    spdlog::debug("Texture2D created (ID: {}, {}x{})", m_textureId, m_width, m_height);
+    LIMBO_LOG_RENDER_DEBUG("Texture2D created (ID: {}, {}x{})", m_textureId, m_width, m_height);
     return {};
 }
 
@@ -273,7 +273,7 @@ void Texture2D::unbind(u32 slot) {
 void Texture2D::destroy() {
     if (m_textureId != 0) {
         glDeleteTextures(1, &m_textureId);
-        spdlog::debug("Texture2D destroyed (ID: {})", m_textureId);
+        LIMBO_LOG_RENDER_DEBUG("Texture2D destroyed (ID: {})", m_textureId);
         m_textureId = 0;
     }
     m_width = 0;

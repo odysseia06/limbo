@@ -2,9 +2,9 @@
 
 #include "limbo/ecs/Components.hpp"
 #include "limbo/ecs/Hierarchy.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 
 #include <fstream>
 
@@ -55,7 +55,7 @@ Prefab Prefab::createFromEntity(World& world, World::EntityId rootEntity) {
     Prefab prefab;
 
     if (!world.isValid(rootEntity)) {
-        spdlog::error("Prefab::createFromEntity: Invalid root entity");
+        LIMBO_LOG_CORE_ERROR("Prefab::createFromEntity: Invalid root entity");
         return prefab;
     }
 
@@ -149,7 +149,7 @@ PrefabEntity Prefab::serializeEntity(World& world, World::EntityId entityId, i32
 
 Entity Prefab::instantiate(World& world, const glm::vec3& position) const {
     if (m_entities.empty()) {
-        spdlog::error("Prefab::instantiate: Prefab has no entities");
+        LIMBO_LOG_CORE_ERROR("Prefab::instantiate: Prefab has no entities");
         return Entity();
     }
 
@@ -361,17 +361,17 @@ bool Prefab::saveToFile(const std::filesystem::path& path) {
 
         std::ofstream file(path);
         if (!file.is_open()) {
-            spdlog::error("Prefab::saveToFile: Failed to open file: {}", path.string());
+            LIMBO_LOG_CORE_ERROR("Prefab::saveToFile: Failed to open file: {}", path.string());
             return false;
         }
 
         file << jsonStr;
         file.close();
 
-        spdlog::info("Prefab saved to: {}", path.string());
+        LIMBO_LOG_CORE_INFO("Prefab saved to: {}", path.string());
         return true;
     } catch (const std::exception& e) {
-        spdlog::error("Prefab::saveToFile: {}", e.what());
+        LIMBO_LOG_CORE_ERROR("Prefab::saveToFile: {}", e.what());
         return false;
     }
 }
@@ -380,7 +380,7 @@ bool Prefab::loadFromFile(const std::filesystem::path& path) {
     try {
         std::ifstream file(path);
         if (!file.is_open()) {
-            spdlog::error("Prefab::loadFromFile: Failed to open file: {}", path.string());
+            LIMBO_LOG_CORE_ERROR("Prefab::loadFromFile: Failed to open file: {}", path.string());
             return false;
         }
 
@@ -389,12 +389,12 @@ bool Prefab::loadFromFile(const std::filesystem::path& path) {
         file.close();
 
         if (deserialize(buffer.str())) {
-            spdlog::info("Prefab loaded from: {}", path.string());
+            LIMBO_LOG_CORE_INFO("Prefab loaded from: {}", path.string());
             return true;
         }
         return false;
     } catch (const std::exception& e) {
-        spdlog::error("Prefab::loadFromFile: {}", e.what());
+        LIMBO_LOG_CORE_ERROR("Prefab::loadFromFile: {}", e.what());
         return false;
     }
 }
@@ -441,7 +441,7 @@ bool Prefab::deserialize(const String& jsonStr) {
         json root = json::parse(jsonStr);
 
         if (!root.contains("type") || root["type"] != "Prefab") {
-            spdlog::error("Prefab::deserialize: Invalid prefab file");
+            LIMBO_LOG_CORE_ERROR("Prefab::deserialize: Invalid prefab file");
             return false;
         }
 
@@ -486,10 +486,10 @@ bool Prefab::deserialize(const String& jsonStr) {
 
         return true;
     } catch (const json::exception& e) {
-        spdlog::error("Prefab::deserialize: JSON error: {}", e.what());
+        LIMBO_LOG_CORE_ERROR("Prefab::deserialize: JSON error: {}", e.what());
         return false;
     } catch (const std::exception& e) {
-        spdlog::error("Prefab::deserialize: {}", e.what());
+        LIMBO_LOG_CORE_ERROR("Prefab::deserialize: {}", e.what());
         return false;
     }
 }

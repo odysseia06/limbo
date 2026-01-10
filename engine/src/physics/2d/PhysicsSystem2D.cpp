@@ -2,8 +2,7 @@
 #include "limbo/physics/2d/PhysicsComponents2D.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
-
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -21,7 +20,7 @@ void PhysicsSystem2D::onAttach(World& world) {
         createBody(world, entity);
     }
 
-    spdlog::debug("PhysicsSystem initialized");
+    LIMBO_LOG_PHYSICS_DEBUG("PhysicsSystem initialized");
 }
 
 void PhysicsSystem2D::update(World& world, f32 deltaTime) {
@@ -55,8 +54,9 @@ void PhysicsSystem2D::update(World& world, f32 deltaTime) {
     // Spiral-of-death protection: clamp to max updates
     i32 updateCount = 0;
     if (m_accumulator > m_fixedTimestep * static_cast<f32>(m_maxFixedUpdatesPerFrame)) {
-        spdlog::warn("Physics: clamping {} accumulated updates to max {}",
-                     static_cast<i32>(m_accumulator / m_fixedTimestep), m_maxFixedUpdatesPerFrame);
+        LIMBO_LOG_PHYSICS_WARN("Physics: clamping {} accumulated updates to max {}",
+                               static_cast<i32>(m_accumulator / m_fixedTimestep),
+                               m_maxFixedUpdatesPerFrame);
         m_accumulator = m_fixedTimestep * static_cast<f32>(m_maxFixedUpdatesPerFrame);
     }
 
@@ -95,7 +95,7 @@ void PhysicsSystem2D::onDetach(World& world) {
     // Clear physics state cache
     m_physicsStates.clear();
 
-    spdlog::debug("PhysicsSystem shutdown");
+    LIMBO_LOG_PHYSICS_DEBUG("PhysicsSystem shutdown");
 }
 
 void PhysicsSystem2D::fixedUpdate(World& world) {

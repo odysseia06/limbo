@@ -1,12 +1,11 @@
 #include "limbo/tilemap/Tileset.hpp"
-
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
 void Tileset::create(Texture2D* texture, u32 tileWidth, u32 tileHeight, u32 margin, u32 spacing) {
     if (!texture) {
-        spdlog::error("Tileset::create: null texture");
+        LIMBO_LOG_RENDER_ERROR("Tileset::create: null texture");
         return;
     }
 
@@ -50,8 +49,8 @@ void Tileset::create(Texture2D* texture, u32 tileWidth, u32 tileHeight, u32 marg
         m_tiles[i].flags = TileFlags::None;
     }
 
-    spdlog::debug("Tileset created: {}x{} tiles ({}x{} px each), {} total", m_columns, m_rows,
-                  tileWidth, tileHeight, tileCount);
+    LIMBO_LOG_RENDER_DEBUG("Tileset created: {}x{} tiles ({}x{} px each), {} total", m_columns,
+                           m_rows, tileWidth, tileHeight, tileCount);
 }
 
 const TileDefinition* Tileset::getTile(u32 id) const {

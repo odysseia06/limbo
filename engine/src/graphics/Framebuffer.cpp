@@ -1,7 +1,7 @@
 #include "limbo/graphics/Framebuffer.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glad/gl.h>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -51,7 +51,7 @@ void Framebuffer::clear(float r, float g, float b, float a) {
 
 void Framebuffer::resize(u32 width, u32 height) {
     if (width == 0 || height == 0 || width > 8192 || height > 8192) {
-        spdlog::warn("Invalid framebuffer size: {}x{}", width, height);
+        LIMBO_LOG_RENDER_WARN("Invalid framebuffer size: {}x{}", width, height);
         return;
     }
 
@@ -90,13 +90,13 @@ void Framebuffer::invalidate() {
 
     // Check framebuffer completeness
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        spdlog::error("Framebuffer is not complete!");
+        LIMBO_LOG_RENDER_ERROR("Framebuffer is not complete!");
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    spdlog::debug("Framebuffer created (ID: {}, {}x{})", m_framebufferId, m_spec.width,
-                  m_spec.height);
+    LIMBO_LOG_RENDER_DEBUG("Framebuffer created (ID: {}, {}x{})", m_framebufferId, m_spec.width,
+                           m_spec.height);
 }
 
 void Framebuffer::cleanup() {

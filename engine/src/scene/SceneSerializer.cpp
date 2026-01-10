@@ -5,9 +5,9 @@
 #include "limbo/ecs/Entity.hpp"
 #include "limbo/ecs/Hierarchy.hpp"
 #include "limbo/physics/2d/PhysicsComponents2D.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 
 #include <fstream>
 #include <unordered_map>
@@ -131,18 +131,18 @@ bool SceneSerializer::saveToFile(const std::filesystem::path& path) {
         std::ofstream file(path);
         if (!file.is_open()) {
             m_error = "Failed to open file for writing: " + path.string();
-            spdlog::error("{}", m_error);
+            LIMBO_LOG_CORE_ERROR("{}", m_error);
             return false;
         }
 
         file << jsonStr;
         file.close();
 
-        spdlog::info("Scene saved to: {}", path.string());
+        LIMBO_LOG_CORE_INFO("Scene saved to: {}", path.string());
         return true;
     } catch (const std::exception& e) {
         m_error = "Failed to save scene: " + String(e.what());
-        spdlog::error("{}", m_error);
+        LIMBO_LOG_CORE_ERROR("{}", m_error);
         return false;
     }
 }
@@ -152,7 +152,7 @@ bool SceneSerializer::loadFromFile(const std::filesystem::path& path) {
         std::ifstream file(path);
         if (!file.is_open()) {
             m_error = "Failed to open file for reading: " + path.string();
-            spdlog::error("{}", m_error);
+            LIMBO_LOG_CORE_ERROR("{}", m_error);
             return false;
         }
 
@@ -161,13 +161,13 @@ bool SceneSerializer::loadFromFile(const std::filesystem::path& path) {
         file.close();
 
         if (deserialize(buffer.str())) {
-            spdlog::info("Scene loaded from: {}", path.string());
+            LIMBO_LOG_CORE_INFO("Scene loaded from: {}", path.string());
             return true;
         }
         return false;
     } catch (const std::exception& e) {
         m_error = "Failed to load scene: " + String(e.what());
-        spdlog::error("{}", m_error);
+        LIMBO_LOG_CORE_ERROR("{}", m_error);
         return false;
     }
 }
@@ -350,12 +350,12 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
 
         // Migrate if needed
         if (version < kSceneFormatVersion) {
-            spdlog::info("Scene version {} is older than current {}, migrating...", version,
-                         kSceneFormatVersion);
+            LIMBO_LOG_CORE_INFO("Scene version {} is older than current {}, migrating...", version,
+                                kSceneFormatVersion);
             SchemaMigration migration = SchemaMigration::createSceneMigrationRegistry();
             if (!migration.migrate(root, version, kSceneFormatVersion)) {
                 m_error = "Failed to migrate scene: " + migration.getError();
-                spdlog::error("{}", m_error);
+                LIMBO_LOG_CORE_ERROR("{}", m_error);
                 return false;
             }
             version = kSceneFormatVersion;
@@ -367,7 +367,7 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
         // Load entities
         if (!root.contains("entities") || !root["entities"].is_array()) {
             m_error = "Invalid scene file: missing entities array";
-            spdlog::error("{}", m_error);
+            LIMBO_LOG_CORE_ERROR("{}", m_error);
             return false;
         }
 
@@ -587,15 +587,15 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
             }
         }
 
-        spdlog::info("Loaded {} entities", m_world.entityCount());
+        LIMBO_LOG_CORE_INFO("Loaded {} entities", m_world.entityCount());
         return true;
     } catch (const json::exception& e) {
         m_error = "JSON parse error: " + String(e.what());
-        spdlog::error("{}", m_error);
+        LIMBO_LOG_CORE_ERROR("{}", m_error);
         return false;
     } catch (const std::exception& e) {
         m_error = "Deserialization error: " + String(e.what());
-        spdlog::error("{}", m_error);
+        LIMBO_LOG_CORE_ERROR("{}", m_error);
         return false;
     }
 }

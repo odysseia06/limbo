@@ -1,8 +1,9 @@
 #include "AssetPipelinePanel.hpp"
+
 #include "../EditorApp.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <imgui.h>
-#include <spdlog/spdlog.h>
 
 #include <fstream>
 
@@ -22,7 +23,7 @@ void AssetPipelinePanel::init() {
 
     // Setup hot reload manager
     m_hotReloadManager.setReloadHandler([this](AssetId id) {
-        spdlog::info("Hot reload triggered for asset: {}", id.toString());
+        LIMBO_LOG_ASSET_INFO("Hot reload triggered for asset: {}", id.toString());
         // In a real scenario, this would reload the actual asset
         return true;
     });
@@ -35,7 +36,7 @@ void AssetPipelinePanel::init() {
     });
 
     m_initialized = true;
-    spdlog::info("AssetPipelinePanel initialized");
+    LIMBO_LOG_EDITOR_INFO("AssetPipelinePanel initialized");
 }
 
 void AssetPipelinePanel::shutdown() {
@@ -105,13 +106,13 @@ void AssetPipelinePanel::renderRegistryTab() {
     ImGui::SameLine();
     if (ImGui::Button("Save Registry")) {
         if (m_registry.save()) {
-            spdlog::info("Registry saved");
+            LIMBO_LOG_ASSET_INFO("Registry saved");
         }
     }
     ImGui::SameLine();
     if (ImGui::Button("Reload Registry")) {
         if (m_registry.load()) {
-            spdlog::info("Registry reloaded");
+            LIMBO_LOG_ASSET_INFO("Registry reloaded");
         }
     }
 
@@ -250,11 +251,11 @@ void AssetPipelinePanel::renderHotReloadTab() {
                     m_hotReloadManager.watchAsset(id, path);
                 }
             }
-            spdlog::info("Hot reload enabled - watching {} assets",
-                         m_registry.getAllAssetIds().size());
+            LIMBO_LOG_ASSET_INFO("Hot reload enabled - watching {} assets",
+                                 m_registry.getAllAssetIds().size());
         } else {
             m_hotReloadManager.unwatchAll();
-            spdlog::info("Hot reload disabled");
+            LIMBO_LOG_ASSET_INFO("Hot reload disabled");
         }
     }
 
@@ -287,7 +288,7 @@ void AssetPipelinePanel::renderHotReloadTab() {
             if (std::filesystem::exists(m_testAssetPath)) {
                 std::filesystem::remove(m_testAssetPath);
                 m_testAssetCreated = false;
-                spdlog::info("Test asset deleted");
+                LIMBO_LOG_ASSET_INFO("Test asset deleted");
             }
         }
     }
@@ -411,8 +412,8 @@ void AssetPipelinePanel::scanAssets() {
     m_registry.save();
     m_hasScanned = true;
 
-    spdlog::info("Scan complete: {} new, {} modified, {} deleted", m_newAssets.size(),
-                 m_modifiedAssets.size(), m_deletedAssets.size());
+    LIMBO_LOG_ASSET_INFO("Scan complete: {} new, {} modified, {} deleted", m_newAssets.size(),
+                         m_modifiedAssets.size(), m_deletedAssets.size());
 }
 
 void AssetPipelinePanel::importAllAssets() {
@@ -432,7 +433,7 @@ void AssetPipelinePanel::importAllAssets() {
     m_importing = false;
     m_importCurrentAsset.clear();
 
-    spdlog::info("Import complete: {} assets imported", imported);
+    LIMBO_LOG_ASSET_INFO("Import complete: {} assets imported", imported);
 }
 
 void AssetPipelinePanel::rebuildAllAssets() {
@@ -463,15 +464,15 @@ void AssetPipelinePanel::createTestAsset() {
         }
 
         m_testAssetCreated = true;
-        spdlog::info("Test asset created: {}", m_testAssetPath.string());
+        LIMBO_LOG_ASSET_INFO("Test asset created: {}", m_testAssetPath.string());
     } else {
-        spdlog::error("Failed to create test asset");
+        LIMBO_LOG_ASSET_ERROR("Failed to create test asset");
     }
 }
 
 void AssetPipelinePanel::modifyTestAsset() {
     if (!std::filesystem::exists(m_testAssetPath)) {
-        spdlog::warn("Test asset does not exist");
+        LIMBO_LOG_ASSET_WARN("Test asset does not exist");
         return;
     }
 
@@ -484,7 +485,7 @@ void AssetPipelinePanel::modifyTestAsset() {
         file.close();
         modifyCount++;
 
-        spdlog::info("Test asset modified (version {})", modifyCount - 1);
+        LIMBO_LOG_ASSET_INFO("Test asset modified (version {})", modifyCount - 1);
     }
 }
 

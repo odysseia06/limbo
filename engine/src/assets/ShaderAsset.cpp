@@ -1,6 +1,7 @@
 #include "limbo/assets/ShaderAsset.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
+
 #include <filesystem>
 
 namespace limbo {
@@ -38,13 +39,13 @@ bool ShaderAsset::load() {
                 m_shaderFiles.push_back(vertPath);
                 m_shaderFiles.push_back(fragPath);
 
-                spdlog::debug("Loaded shader: {} ({}, {})", basePath.string(), ext.vertex,
-                              ext.fragment);
+                LIMBO_LOG_ASSET_DEBUG("Loaded shader: {} ({}, {})", basePath.string(), ext.vertex,
+                                      ext.fragment);
                 return true;
             } else {
                 setError(result.error());
-                spdlog::error("Failed to compile shader '{}': {}", basePath.string(),
-                              result.error());
+                LIMBO_LOG_ASSET_ERROR("Failed to compile shader '{}': {}", basePath.string(),
+                                      result.error());
                 m_shader.reset();
                 return false;
             }
@@ -54,7 +55,7 @@ bool ShaderAsset::load() {
     // No shader files found
     String error = "Could not find shader files for: " + basePath.string();
     setError(error);
-    spdlog::error("{}", error);
+    LIMBO_LOG_ASSET_ERROR("{}", error);
     m_shader.reset();
     return false;
 }

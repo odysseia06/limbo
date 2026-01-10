@@ -1,6 +1,6 @@
 #include "limbo/scene/SchemaMigration.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -24,7 +24,7 @@ bool SchemaMigration::migrate(json& data, i32 fromVersion, i32 toVersion) {
 
     if (fromVersion > toVersion) {
         m_error = "Cannot downgrade schema version";
-        spdlog::error("SchemaMigration: {}", m_error);
+        LIMBO_LOG_CORE_ERROR("SchemaMigration: {}", m_error);
         return false;
     }
 
@@ -33,16 +33,16 @@ bool SchemaMigration::migrate(json& data, i32 fromVersion, i32 toVersion) {
         auto it = m_migrations.find(version);
         if (it == m_migrations.end()) {
             m_error = "No migration found for version " + std::to_string(version);
-            spdlog::error("SchemaMigration: {}", m_error);
+            LIMBO_LOG_CORE_ERROR("SchemaMigration: {}", m_error);
             return false;
         }
 
-        spdlog::info("SchemaMigration: Migrating from v{} to v{}", version, version + 1);
+        LIMBO_LOG_CORE_INFO("SchemaMigration: Migrating from v{} to v{}", version, version + 1);
 
         if (!it->second(data)) {
             m_error = "Migration from v" + std::to_string(version) + " to v" +
                       std::to_string(version + 1) + " failed";
-            spdlog::error("SchemaMigration: {}", m_error);
+            LIMBO_LOG_CORE_ERROR("SchemaMigration: {}", m_error);
             return false;
         }
 
@@ -50,7 +50,7 @@ bool SchemaMigration::migrate(json& data, i32 fromVersion, i32 toVersion) {
         data["version"] = version + 1;
     }
 
-    spdlog::info("SchemaMigration: Successfully migrated from v{} to v{}", fromVersion, toVersion);
+    LIMBO_LOG_CORE_INFO("SchemaMigration: Successfully migrated from v{} to v{}", fromVersion, toVersion);
     return true;
 }
 

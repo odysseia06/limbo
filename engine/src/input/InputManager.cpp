@@ -1,7 +1,8 @@
 #include "limbo/input/InputManager.hpp"
 
+#include "limbo/debug/Log.hpp"
+
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <fstream>
@@ -364,7 +365,7 @@ void InputManager::init() {
     state.rebindingAction.clear();
     state.initialized = true;
 
-    spdlog::debug("InputManager initialized");
+    LIMBO_LOG_INPUT_DEBUG("InputManager initialized");
 }
 
 void InputManager::shutdown() {
@@ -377,7 +378,7 @@ void InputManager::shutdown() {
     state.axisCallbacks.clear();
     state.initialized = false;
 
-    spdlog::debug("InputManager shutdown");
+    LIMBO_LOG_INPUT_DEBUG("InputManager shutdown");
 }
 
 void InputManager::update() {
@@ -579,7 +580,7 @@ bool InputManager::loadConfig(const std::filesystem::path& path) {
     try {
         std::ifstream file(path);
         if (!file.is_open()) {
-            spdlog::error("Failed to open input config: {}", path.string());
+            LIMBO_LOG_INPUT_ERROR("Failed to open input config: {}", path.string());
             return false;
         }
 
@@ -696,12 +697,12 @@ bool InputManager::loadConfig(const std::filesystem::path& path) {
             }
         }
 
-        spdlog::info("Loaded input config: {} actions, {} axes", state.actions.size(),
-                     state.axes.size());
+        LIMBO_LOG_INPUT_INFO("Loaded input config: {} actions, {} axes", state.actions.size(),
+                             state.axes.size());
         return true;
 
     } catch (const std::exception& e) {
-        spdlog::error("Failed to parse input config: {}", e.what());
+        LIMBO_LOG_INPUT_ERROR("Failed to parse input config: {}", e.what());
         return false;
     }
 }
@@ -808,16 +809,16 @@ bool InputManager::saveConfig(const std::filesystem::path& path) {
 
         std::ofstream file(path);
         if (!file.is_open()) {
-            spdlog::error("Failed to create input config: {}", path.string());
+            LIMBO_LOG_INPUT_ERROR("Failed to create input config: {}", path.string());
             return false;
         }
 
         file << config.dump(2);
-        spdlog::info("Saved input config to: {}", path.string());
+        LIMBO_LOG_INPUT_INFO("Saved input config to: {}", path.string());
         return true;
 
     } catch (const std::exception& e) {
-        spdlog::error("Failed to save input config: {}", e.what());
+        LIMBO_LOG_INPUT_ERROR("Failed to save input config: {}", e.what());
         return false;
     }
 }
@@ -879,7 +880,7 @@ void InputManager::removeAxisCallback(u32 handle) {
 void InputManager::startRebinding(const String& action, u32 bindingIndex) {
     auto& state = getState();
     if (state.actions.find(action) == state.actions.end()) {
-        spdlog::warn("Cannot rebind unknown action: {}", action);
+        LIMBO_LOG_INPUT_WARN("Cannot rebind unknown action: {}", action);
         return;
     }
     state.rebinding = true;

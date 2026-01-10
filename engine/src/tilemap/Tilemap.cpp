@@ -1,7 +1,7 @@
 #include "limbo/tilemap/Tilemap.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <algorithm>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -12,8 +12,8 @@ void Tilemap::create(u32 width, u32 height, f32 tileWidth, f32 tileHeight) {
     m_tileHeight = tileHeight;
     m_layers.clear();
 
-    spdlog::debug("Tilemap created: {}x{} tiles, {}x{} units per tile", width, height, tileWidth,
-                  tileHeight);
+    LIMBO_LOG_RENDER_DEBUG("Tilemap created: {}x{} tiles, {}x{} units per tile", width, height,
+                           tileWidth, tileHeight);
 }
 
 void Tilemap::clear() {
@@ -38,7 +38,7 @@ u32 Tilemap::addLayer(const String& name, i32 zOrder) {
     // Find the index of the layer we just added
     for (u32 i = 0; i < m_layers.size(); ++i) {
         if (m_layers[i].name == name) {
-            spdlog::debug("Added tilemap layer '{}' at index {} (zOrder: {})", name, i, zOrder);
+            LIMBO_LOG_RENDER_DEBUG("Added tilemap layer '{}' at index {} (zOrder: {})", name, i, zOrder);
             return i;
         }
     }

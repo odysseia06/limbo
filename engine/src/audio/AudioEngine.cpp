@@ -6,7 +6,8 @@
 #include <miniaudio.h>
 
 #include "limbo/audio/AudioEngine.hpp"
-#include <spdlog/spdlog.h>
+
+#include "limbo/debug/Log.hpp"
 #include <algorithm>
 
 namespace limbo {
@@ -26,7 +27,7 @@ AudioEngine::~AudioEngine() {
 
 bool AudioEngine::init() {
     if (m_initialized) {
-        spdlog::warn("AudioEngine already initialized");
+        LIMBO_LOG_AUDIO_WARN("AudioEngine already initialized");
         return true;
     }
 
@@ -41,7 +42,7 @@ bool AudioEngine::init() {
 
     ma_result result = ma_device_init(nullptr, &config, m_device);
     if (result != MA_SUCCESS) {
-        spdlog::error("Failed to initialize audio device: {}", static_cast<int>(result));
+        LIMBO_LOG_AUDIO_ERROR("Failed to initialize audio device: {}", static_cast<int>(result));
         delete m_device;
         m_device = nullptr;
         return false;
@@ -53,7 +54,7 @@ bool AudioEngine::init() {
 
     result = ma_device_start(m_device);
     if (result != MA_SUCCESS) {
-        spdlog::error("Failed to start audio device: {}", static_cast<int>(result));
+        LIMBO_LOG_AUDIO_ERROR("Failed to start audio device: {}", static_cast<int>(result));
         ma_device_uninit(m_device);
         delete m_device;
         m_device = nullptr;
@@ -61,7 +62,7 @@ bool AudioEngine::init() {
     }
 
     m_initialized = true;
-    spdlog::info("AudioEngine initialized ({}Hz, {} channels)", m_sampleRate, m_channels);
+    LIMBO_LOG_AUDIO_INFO("AudioEngine initialized ({}Hz, {} channels)", m_sampleRate, m_channels);
     return true;
 }
 
@@ -83,7 +84,7 @@ void AudioEngine::shutdown() {
     }
 
     m_initialized = false;
-    spdlog::info("AudioEngine shutdown");
+    LIMBO_LOG_AUDIO_INFO("AudioEngine shutdown");
 }
 
 void AudioEngine::registerSource(AudioSource* source) {
@@ -187,7 +188,7 @@ bool AudioClip::loadFromFile(const String& filepath) {
 
     ma_result result = ma_decoder_init_file(filepath.c_str(), &config, &decoder);
     if (result != MA_SUCCESS) {
-        spdlog::error("Failed to open audio file: {}", filepath);
+        LIMBO_LOG_AUDIO_ERROR("Failed to open audio file: {}", filepath);
         return false;
     }
 
@@ -217,8 +218,8 @@ bool AudioClip::loadFromFile(const String& filepath) {
     ma_decoder_uninit(&decoder);
 
     m_filepath = filepath;
-    spdlog::debug("Loaded audio: {} ({} samples, {}Hz, {} channels)", filepath, m_samples.size(),
-                  m_format.sampleRate, m_format.channels);
+    LIMBO_LOG_AUDIO_DEBUG("Loaded audio: {} ({} samples, {}Hz, {} channels)", filepath,
+                          m_samples.size(), m_format.sampleRate, m_format.channels);
 
     return true;
 }
@@ -229,7 +230,7 @@ bool AudioClip::loadFromMemory(const void* data, usize size) {
 
     ma_result result = ma_decoder_init_memory(data, size, &config, &decoder);
     if (result != MA_SUCCESS) {
-        spdlog::error("Failed to decode audio from memory");
+        LIMBO_LOG_AUDIO_ERROR("Failed to decode audio from memory");
         return false;
     }
 
@@ -289,7 +290,7 @@ void AudioClip::generateTestTone(f32 frequency, f32 duration, f32 amplitude) {
     }
 
     m_filepath = "<generated>";
-    spdlog::debug("Generated test tone: {}Hz, {}s", frequency, duration);
+    LIMBO_LOG_AUDIO_DEBUG("Generated test tone: {}Hz, {}s", frequency, duration);
 }
 
 f32 AudioClip::getDuration() const {

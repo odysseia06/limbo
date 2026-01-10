@@ -1,6 +1,6 @@
 #include "limbo/assets/SpriteAtlasAsset.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -42,8 +42,8 @@ bool SpriteAtlasAsset::load() {
 
     m_atlas->setTexture(std::move(texture));
 
-    spdlog::debug("SpriteAtlasAsset: Loaded atlas with {} regions from {}",
-                  m_atlas->getRegionCount(), atlasPath.string());
+    LIMBO_LOG_ASSET_DEBUG("SpriteAtlasAsset: Loaded atlas with {} regions from {}",
+                          m_atlas->getRegionCount(), atlasPath.string());
 
     return true;
 }

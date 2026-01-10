@@ -1,6 +1,6 @@
 #include "CommandHistory.hpp"
 
-#include <spdlog/spdlog.h>
+#include <limbo/debug/Log.hpp>
 
 namespace limbo::editor {
 
@@ -36,7 +36,7 @@ bool CommandHistory::execute(CommandPtr command) {
 
     // Execute the command
     if (!command->execute()) {
-        spdlog::warn("Command failed to execute: {}", command->getDescription());
+        LIMBO_LOG_EDITOR_WARN("Command failed to execute: {}", command->getDescription());
         return false;
     }
 
@@ -67,7 +67,7 @@ bool CommandHistory::undo() {
 
     auto& command = m_commands[static_cast<usize>(m_currentIndex)];
     if (!command->undo()) {
-        spdlog::warn("Command failed to undo: {}", command->getDescription());
+        LIMBO_LOG_EDITOR_WARN("Command failed to undo: {}", command->getDescription());
         return false;
     }
 
@@ -84,7 +84,7 @@ bool CommandHistory::redo() {
     m_currentIndex++;
     auto& command = m_commands[static_cast<usize>(m_currentIndex)];
     if (!command->execute()) {
-        spdlog::warn("Command failed to redo: {}", command->getDescription());
+        LIMBO_LOG_EDITOR_WARN("Command failed to redo: {}", command->getDescription());
         m_currentIndex--;
         return false;
     }
@@ -126,7 +126,7 @@ void CommandHistory::beginGroup(const String& description) {
 
 void CommandHistory::endGroup() {
     if (m_groupDepth <= 0) {
-        spdlog::warn("CommandHistory::endGroup called without matching beginGroup");
+        LIMBO_LOG_EDITOR_WARN("CommandHistory::endGroup called without matching beginGroup");
         return;
     }
 

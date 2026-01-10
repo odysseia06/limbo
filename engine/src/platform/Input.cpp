@@ -1,9 +1,9 @@
 #include "limbo/platform/Input.hpp"
 #include "limbo/platform/Platform.hpp"
 #include "limbo/core/Assert.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <GLFW/glfw3.h>
-#include <spdlog/spdlog.h>
 
 #include <array>
 #include <cstring>
@@ -90,7 +90,7 @@ void Input::init(Window& window) {
     s_state.mousePosition = glm::vec2(static_cast<f32>(x), static_cast<f32>(y));
     s_state.mousePreviousPosition = s_state.mousePosition;
 
-    spdlog::debug("Input system initialized");
+    LIMBO_LOG_INPUT_DEBUG("Input system initialized");
 }
 
 void Input::update() {

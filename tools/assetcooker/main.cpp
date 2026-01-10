@@ -1,7 +1,6 @@
 #include <limbo/assets/AssetRegistry.hpp>
 #include <limbo/assets/AssetImporter.hpp>
-
-#include <spdlog/spdlog.h>
+#include <limbo/debug/Log.hpp>
 
 #include <cstdlib>
 #include <filesystem>
@@ -10,22 +9,22 @@
 using namespace limbo;
 
 void printUsage(const char* programName) {
-    spdlog::info("Limbo Asset Cooker v0.1.0");
-    spdlog::info("");
-    spdlog::info("Usage: {} <command> [options]", programName);
-    spdlog::info("");
-    spdlog::info("Commands:");
-    spdlog::info("  scan      Scan source directory for new/changed/deleted assets");
-    spdlog::info("  import    Import all assets that need importing");
-    spdlog::info("  rebuild   Force reimport of all assets");
-    spdlog::info("  status    Show registry status");
-    spdlog::info("  clean     Remove all imported assets");
-    spdlog::info("");
-    spdlog::info("Options:");
-    spdlog::info("  --project <path>   Project root directory (default: current directory)");
-    spdlog::info("  --source <dir>     Source assets directory (default: assets)");
-    spdlog::info("  --output <dir>     Imported assets directory (default: build/imported)");
-    spdlog::info("  --verbose          Enable verbose logging");
+    LIMBO_LOG_ASSET_INFO("Limbo Asset Cooker v0.1.0");
+    LIMBO_LOG_ASSET_INFO("");
+    LIMBO_LOG_ASSET_INFO("Usage: {} <command> [options]", programName);
+    LIMBO_LOG_ASSET_INFO("");
+    LIMBO_LOG_ASSET_INFO("Commands:");
+    LIMBO_LOG_ASSET_INFO("  scan      Scan source directory for new/changed/deleted assets");
+    LIMBO_LOG_ASSET_INFO("  import    Import all assets that need importing");
+    LIMBO_LOG_ASSET_INFO("  rebuild   Force reimport of all assets");
+    LIMBO_LOG_ASSET_INFO("  status    Show registry status");
+    LIMBO_LOG_ASSET_INFO("  clean     Remove all imported assets");
+    LIMBO_LOG_ASSET_INFO("");
+    LIMBO_LOG_ASSET_INFO("Options:");
+    LIMBO_LOG_ASSET_INFO("  --project <path>   Project root directory (default: current directory)");
+    LIMBO_LOG_ASSET_INFO("  --source <dir>     Source assets directory (default: assets)");
+    LIMBO_LOG_ASSET_INFO("  --output <dir>     Imported assets directory (default: build/imported)");
+    LIMBO_LOG_ASSET_INFO("  --verbose          Enable verbose logging");
 }
 
 struct CookerOptions {
@@ -60,7 +59,7 @@ CookerOptions parseArgs(int argc, char* argv[]) {
 }
 
 int cmdScan(AssetRegistry& registry) {
-    spdlog::info("Scanning source directory...");
+    LIMBO_LOG_ASSET_INFO("Scanning source directory...");
 
     usize changes = registry.scanSourceDirectory();
 
@@ -69,42 +68,42 @@ int cmdScan(AssetRegistry& registry) {
     const auto& modifiedAssets = registry.getModifiedAssets();
 
     if (changes == 0) {
-        spdlog::info("No changes detected.");
+        LIMBO_LOG_ASSET_INFO("No changes detected.");
         return EXIT_SUCCESS;
     }
 
-    spdlog::info("Found {} changes:", changes);
+    LIMBO_LOG_ASSET_INFO("Found {} changes:", changes);
 
     if (!newAssets.empty()) {
-        spdlog::info("  New assets ({}):", newAssets.size());
+        LIMBO_LOG_ASSET_INFO("  New assets ({}):", newAssets.size());
         for (const auto& path : newAssets) {
-            spdlog::info("    + {}", path);
+            LIMBO_LOG_ASSET_INFO("    + {}", path);
         }
     }
 
     if (!modifiedAssets.empty()) {
-        spdlog::info("  Modified assets ({}):", modifiedAssets.size());
+        LIMBO_LOG_ASSET_INFO("  Modified assets ({}):", modifiedAssets.size());
         for (AssetId id : modifiedAssets) {
             const AssetMetadata* meta = registry.getMetadata(id);
             if (meta) {
-                spdlog::info("    ~ {}", meta->sourcePath);
+                LIMBO_LOG_ASSET_INFO("    ~ {}", meta->sourcePath);
             }
         }
     }
 
     if (!deletedAssets.empty()) {
-        spdlog::info("  Deleted assets ({}):", deletedAssets.size());
+        LIMBO_LOG_ASSET_INFO("  Deleted assets ({}):", deletedAssets.size());
         for (AssetId id : deletedAssets) {
             const AssetMetadata* meta = registry.getMetadata(id);
             if (meta) {
-                spdlog::info("    - {}", meta->sourcePath);
+                LIMBO_LOG_ASSET_INFO("    - {}", meta->sourcePath);
             }
         }
     }
 
     // Auto-register new assets
     if (!newAssets.empty()) {
-        spdlog::info("Registering new assets...");
+        LIMBO_LOG_ASSET_INFO("Registering new assets...");
         for (const auto& path : newAssets) {
             std::filesystem::path fullPath = registry.getSourceDir() / path;
             AssetType type = AssetType::Unknown;
@@ -125,7 +124,7 @@ int cmdScan(AssetRegistry& registry) {
 
             if (type != AssetType::Unknown) {
                 AssetId id = registry.registerAsset(path, type);
-                spdlog::debug("  Registered: {} -> {}", path, id.toString());
+                LIMBO_LOG_ASSET_DEBUG("  Registered: {} -> {}", path, id.toString());
             }
         }
         registry.save();
@@ -133,7 +132,7 @@ int cmdScan(AssetRegistry& registry) {
 
     // Handle deleted assets
     if (!deletedAssets.empty()) {
-        spdlog::info("Unregistering deleted assets...");
+        LIMBO_LOG_ASSET_INFO("Unregistering deleted assets...");
         for (AssetId id : deletedAssets) {
             registry.unregisterAsset(id);
         }
@@ -169,25 +168,25 @@ int cmdImport(AssetRegistry& registry, AssetImporterManager& importer) {
     }
 
     // Import all assets that need it
-    spdlog::info("Importing assets...");
+    LIMBO_LOG_ASSET_INFO("Importing assets...");
 
     importer.setProgressCallback([](usize current, usize total, const String& path) {
-        spdlog::info("[{}/{}] Importing: {}", current, total, path);
+        LIMBO_LOG_ASSET_INFO("[{}/{}] Importing: {}", current, total, path);
     });
 
     usize imported = importer.importAll();
 
     if (imported > 0) {
-        spdlog::info("Successfully imported {} assets.", imported);
+        LIMBO_LOG_ASSET_INFO("Successfully imported {} assets.", imported);
     } else {
-        spdlog::info("No assets needed importing.");
+        LIMBO_LOG_ASSET_INFO("No assets needed importing.");
     }
 
     return EXIT_SUCCESS;
 }
 
 int cmdRebuild(AssetRegistry& registry, AssetImporterManager& importer) {
-    spdlog::info("Rebuilding all assets...");
+    LIMBO_LOG_ASSET_INFO("Rebuilding all assets...");
 
     // Force reimport by clearing all source hashes
     std::vector<AssetId> allAssets = registry.getAllAssetIds();
@@ -197,11 +196,11 @@ int cmdRebuild(AssetRegistry& registry, AssetImporterManager& importer) {
     }
 
     importer.setProgressCallback([](usize current, usize total, const String& path) {
-        spdlog::info("[{}/{}] Importing: {}", current, total, path);
+        LIMBO_LOG_ASSET_INFO("[{}/{}] Importing: {}", current, total, path);
     });
 
     usize imported = importer.importAll();
-    spdlog::info("Rebuilt {} assets.", imported);
+    LIMBO_LOG_ASSET_INFO("Rebuilt {} assets.", imported);
 
     return EXIT_SUCCESS;
 }
@@ -209,13 +208,13 @@ int cmdRebuild(AssetRegistry& registry, AssetImporterManager& importer) {
 int cmdStatus(AssetRegistry& registry) {
     std::vector<AssetId> allAssets = registry.getAllAssetIds();
 
-    spdlog::info("Asset Registry Status");
-    spdlog::info("=====================");
-    spdlog::info("Project Root: {}", registry.getProjectRoot().string());
-    spdlog::info("Source Dir:   {}", registry.getSourceDir().string());
-    spdlog::info("Imported Dir: {}", registry.getImportedDir().string());
-    spdlog::info("");
-    spdlog::info("Total Assets: {}", allAssets.size());
+    LIMBO_LOG_ASSET_INFO("Asset Registry Status");
+    LIMBO_LOG_ASSET_INFO("=====================");
+    LIMBO_LOG_ASSET_INFO("Project Root: {}", registry.getProjectRoot().string());
+    LIMBO_LOG_ASSET_INFO("Source Dir:   {}", registry.getSourceDir().string());
+    LIMBO_LOG_ASSET_INFO("Imported Dir: {}", registry.getImportedDir().string());
+    LIMBO_LOG_ASSET_INFO("");
+    LIMBO_LOG_ASSET_INFO("Total Assets: {}", allAssets.size());
 
     // Count by type
     usize textureCount = 0;
@@ -252,20 +251,20 @@ int cmdStatus(AssetRegistry& registry) {
         }
     }
 
-    spdlog::info("  Textures:    {}", textureCount);
-    spdlog::info("  Shaders:     {}", shaderCount);
-    spdlog::info("  Audio:       {}", audioCount);
+    LIMBO_LOG_ASSET_INFO("  Textures:    {}", textureCount);
+    LIMBO_LOG_ASSET_INFO("  Shaders:     {}", shaderCount);
+    LIMBO_LOG_ASSET_INFO("  Audio:       {}", audioCount);
     if (unknownCount > 0) {
-        spdlog::info("  Unknown:     {}", unknownCount);
+        LIMBO_LOG_ASSET_INFO("  Unknown:     {}", unknownCount);
     }
-    spdlog::info("");
-    spdlog::info("Needs Import:  {}", needsImport);
+    LIMBO_LOG_ASSET_INFO("");
+    LIMBO_LOG_ASSET_INFO("Needs Import:  {}", needsImport);
 
     return EXIT_SUCCESS;
 }
 
 int cmdClean(AssetRegistry& registry) {
-    spdlog::info("Cleaning imported assets...");
+    LIMBO_LOG_ASSET_INFO("Cleaning imported assets...");
 
     std::filesystem::path importedDir = registry.getImportedDir();
 
@@ -277,7 +276,7 @@ int cmdClean(AssetRegistry& registry) {
                 ++count;
             }
         }
-        spdlog::info("Removed {} items from imported directory.", count);
+        LIMBO_LOG_ASSET_INFO("Removed {} items from imported directory.", count);
     }
 
     // Clear imported paths in registry
@@ -288,7 +287,7 @@ int cmdClean(AssetRegistry& registry) {
     }
     registry.save();
 
-    spdlog::info("Clean complete.");
+    LIMBO_LOG_ASSET_INFO("Clean complete.");
     return EXIT_SUCCESS;
 }
 
@@ -311,10 +310,10 @@ int main(int argc, char* argv[]) {
         spdlog::set_level(spdlog::level::info);
     }
 
-    spdlog::info("Limbo Asset Cooker v0.1.0");
-    spdlog::debug("Project: {}", options.projectRoot.string());
-    spdlog::debug("Source:  {}", options.sourceDir);
-    spdlog::debug("Output:  {}", options.outputDir);
+    LIMBO_LOG_ASSET_INFO("Limbo Asset Cooker v0.1.0");
+    LIMBO_LOG_ASSET_DEBUG("Project: {}", options.projectRoot.string());
+    LIMBO_LOG_ASSET_DEBUG("Source:  {}", options.sourceDir);
+    LIMBO_LOG_ASSET_DEBUG("Output:  {}", options.outputDir);
 
     // Initialize registry
     AssetRegistry registry;
@@ -339,7 +338,7 @@ int main(int argc, char* argv[]) {
     } else if (options.command == "clean") {
         result = cmdClean(registry);
     } else {
-        spdlog::error("Unknown command: {}", options.command);
+        LIMBO_LOG_ASSET_ERROR("Unknown command: {}", options.command);
         printUsage(argv[0]);
         result = EXIT_FAILURE;
     }

@@ -1,6 +1,8 @@
 #include "AssetBrowserPanel.hpp"
 #include "EditorApp.hpp"
 
+#include <limbo/debug/Log.hpp>
+
 #include <imgui.h>
 #include <algorithm>
 #include <cctype>
@@ -149,9 +151,9 @@ void AssetBrowserPanel::drawAssetGrid() {
                 String const ext = entry.path.extension().string();
                 if (ext == ".json") {
                     // Could be a scene or prefab
-                    spdlog::info("Opening asset: {}", entry.path.string());
+                    LIMBO_LOG_EDITOR_INFO("Opening asset: {}", entry.path.string());
                 } else {
-                    spdlog::info("Asset selected: {}", entry.path.string());
+                    LIMBO_LOG_EDITOR_INFO("Asset selected: {}", entry.path.string());
                 }
             }
         }

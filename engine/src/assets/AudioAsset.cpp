@@ -1,5 +1,6 @@
 #include "limbo/assets/AudioAsset.hpp"
-#include <spdlog/spdlog.h>
+
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -12,8 +13,8 @@ bool AudioAsset::load() {
         return false;
     }
 
-    spdlog::debug("Loaded audio asset: {} ({}s, {}Hz)", getPath().string(), m_clip->getDuration(),
-                  m_clip->getFormat().sampleRate);
+    LIMBO_LOG_ASSET_DEBUG("Loaded audio asset: {} ({}s, {}Hz)", getPath().string(),
+                          m_clip->getDuration(), m_clip->getFormat().sampleRate);
 
     return true;
 }

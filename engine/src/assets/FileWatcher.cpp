@@ -1,12 +1,12 @@
 #include "limbo/assets/FileWatcher.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
 void FileWatcher::watch(const std::filesystem::path& path, Callback callback) {
     if (!std::filesystem::exists(path)) {
-        spdlog::warn("FileWatcher: Cannot watch non-existent file: {}", path.string());
+        LIMBO_LOG_ASSET_WARN("FileWatcher: Cannot watch non-existent file: {}", path.string());
         return;
     }
 
@@ -19,7 +19,7 @@ void FileWatcher::watch(const std::filesystem::path& path, Callback callback) {
     watched.lastChecked = Clock::now();
 
     m_watchedFiles[key] = std::move(watched);
-    spdlog::debug("FileWatcher: Now watching: {}", path.string());
+    LIMBO_LOG_ASSET_DEBUG("FileWatcher: Now watching: {}", path.string());
 }
 
 void FileWatcher::unwatch(const std::filesystem::path& path) {
@@ -27,13 +27,13 @@ void FileWatcher::unwatch(const std::filesystem::path& path) {
     auto it = m_watchedFiles.find(key);
     if (it != m_watchedFiles.end()) {
         m_watchedFiles.erase(it);
-        spdlog::debug("FileWatcher: Stopped watching: {}", path.string());
+        LIMBO_LOG_ASSET_DEBUG("FileWatcher: Stopped watching: {}", path.string());
     }
 }
 
 void FileWatcher::unwatchAll() {
     m_watchedFiles.clear();
-    spdlog::debug("FileWatcher: Stopped watching all files");
+    LIMBO_LOG_ASSET_DEBUG("FileWatcher: Stopped watching all files");
 }
 
 void FileWatcher::poll() {
@@ -63,7 +63,7 @@ void FileWatcher::poll() {
 
         if (currentModTime != watched.lastModified) {
             watched.lastModified = currentModTime;
-            spdlog::info("FileWatcher: File changed: {}", watched.path.string());
+            LIMBO_LOG_ASSET_INFO("FileWatcher: File changed: {}", watched.path.string());
 
             // Trigger callback
             if (watched.callback) {

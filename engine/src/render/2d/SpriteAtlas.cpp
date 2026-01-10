@@ -1,9 +1,9 @@
 #include "limbo/render/2d/SpriteAtlas.hpp"
 
 #include "limbo/core/Assert.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 
 #include <fstream>
 
@@ -75,7 +75,7 @@ bool SpriteAtlas::saveMetadata(const std::filesystem::path& path, const String& 
 
         std::ofstream file(path);
         if (!file.is_open()) {
-            spdlog::error("SpriteAtlas: Failed to open file for writing: {}", path.string());
+            LIMBO_LOG_RENDER_ERROR("SpriteAtlas: Failed to open file for writing: {}", path.string());
             return false;
         }
 
@@ -83,7 +83,7 @@ bool SpriteAtlas::saveMetadata(const std::filesystem::path& path, const String& 
         return true;
 
     } catch (const std::exception& e) {
-        spdlog::error("SpriteAtlas: Failed to save metadata: {}", e.what());
+        LIMBO_LOG_RENDER_ERROR("SpriteAtlas: Failed to save metadata: {}", e.what());
         return false;
     }
 }
@@ -92,7 +92,7 @@ String SpriteAtlas::loadMetadata(const std::filesystem::path& path) {
     try {
         std::ifstream file(path);
         if (!file.is_open()) {
-            spdlog::error("SpriteAtlas: Failed to open file: {}", path.string());
+            LIMBO_LOG_RENDER_ERROR("SpriteAtlas: Failed to open file: {}", path.string());
             return "";
         }
 
@@ -102,7 +102,7 @@ String SpriteAtlas::loadMetadata(const std::filesystem::path& path) {
         // Check version
         i32 version = json.value("version", 1);
         if (version != 1) {
-            spdlog::warn("SpriteAtlas: Unknown version {}, attempting to load anyway", version);
+            LIMBO_LOG_RENDER_WARN("SpriteAtlas: Unknown version {}, attempting to load anyway", version);
         }
 
         // Read atlas info
@@ -145,7 +145,7 @@ String SpriteAtlas::loadMetadata(const std::filesystem::path& path) {
         return texturePath;
 
     } catch (const std::exception& e) {
-        spdlog::error("SpriteAtlas: Failed to load metadata: {}", e.what());
+        LIMBO_LOG_RENDER_ERROR("SpriteAtlas: Failed to load metadata: {}", e.what());
         return "";
     }
 }

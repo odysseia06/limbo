@@ -1,7 +1,7 @@
 #include "limbo/assets/AssetRegistry.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <chrono>
@@ -69,8 +69,8 @@ void AssetRegistry::init(const std::filesystem::path& projectRoot, const String&
         std::filesystem::create_directories(importedPath);
     }
 
-    spdlog::debug("AssetRegistry initialized: project={}, source={}, imported={}",
-                  m_projectRoot.string(), m_sourceDir, m_importedDir);
+    LIMBO_LOG_ASSET_DEBUG("AssetRegistry initialized: project={}, source={}, imported={}",
+                          m_projectRoot.string(), m_sourceDir, m_importedDir);
 }
 
 std::filesystem::path AssetRegistry::getRegistryPath() const {
@@ -81,14 +81,14 @@ bool AssetRegistry::load() {
     std::filesystem::path registryPath = getRegistryPath();
 
     if (!std::filesystem::exists(registryPath)) {
-        spdlog::info("Asset registry not found, creating new: {}", registryPath.string());
+        LIMBO_LOG_ASSET_INFO("Asset registry not found, creating new: {}", registryPath.string());
         return true;  // Not an error, just empty
     }
 
     try {
         std::ifstream file(registryPath);
         if (!file.is_open()) {
-            spdlog::error("Failed to open asset registry: {}", registryPath.string());
+            LIMBO_LOG_ASSET_ERROR("Failed to open asset registry: {}", registryPath.string());
             return false;
         }
 
@@ -129,11 +129,11 @@ bool AssetRegistry::load() {
             }
         }
 
-        spdlog::info("Asset registry loaded: {} assets", m_assets.size());
+        LIMBO_LOG_ASSET_INFO("Asset registry loaded: {} assets", m_assets.size());
         return true;
 
     } catch (const std::exception& e) {
-        spdlog::error("Failed to parse asset registry: {}", e.what());
+        LIMBO_LOG_ASSET_ERROR("Failed to parse asset registry: {}", e.what());
         return false;
     }
 }
@@ -172,16 +172,16 @@ bool AssetRegistry::save() const {
 
         std::ofstream file(registryPath);
         if (!file.is_open()) {
-            spdlog::error("Failed to create asset registry: {}", registryPath.string());
+            LIMBO_LOG_ASSET_ERROR("Failed to create asset registry: {}", registryPath.string());
             return false;
         }
 
         file << data.dump(2);
-        spdlog::debug("Asset registry saved: {} assets", m_assets.size());
+        LIMBO_LOG_ASSET_DEBUG("Asset registry saved: {} assets", m_assets.size());
         return true;
 
     } catch (const std::exception& e) {
-        spdlog::error("Failed to save asset registry: {}", e.what());
+        LIMBO_LOG_ASSET_ERROR("Failed to save asset registry: {}", e.what());
         return false;
     }
 }
@@ -210,7 +210,7 @@ AssetId AssetRegistry::registerAsset(const String& sourcePath, AssetType type) {
     m_assets[id] = metadata;
     m_pathToId[sourcePath] = id;
 
-    spdlog::debug("Registered asset: {} -> {}", sourcePath, id.toString());
+    LIMBO_LOG_ASSET_DEBUG("Registered asset: {} -> {}", sourcePath, id.toString());
     return id;
 }
 
@@ -242,7 +242,7 @@ void AssetRegistry::unregisterAsset(AssetId id) {
     }
 
     m_assets.erase(it);
-    spdlog::debug("Unregistered asset: {}", id.toString());
+    LIMBO_LOG_ASSET_DEBUG("Unregistered asset: {}", id.toString());
 }
 
 bool AssetRegistry::isRegistered(AssetId id) const {
@@ -445,7 +445,7 @@ usize AssetRegistry::scanSourceDirectory() {
     std::filesystem::path sourceDir = m_projectRoot / m_sourceDir;
 
     if (!std::filesystem::exists(sourceDir)) {
-        spdlog::warn("Source directory does not exist: {}", sourceDir.string());
+        LIMBO_LOG_ASSET_WARN("Source directory does not exist: {}", sourceDir.string());
         return 0;
     }
 
@@ -499,8 +499,8 @@ usize AssetRegistry::scanSourceDirectory() {
     usize totalChanges = m_newAssets.size() + m_deletedAssets.size() + m_modifiedAssets.size();
 
     if (totalChanges > 0) {
-        spdlog::info("Asset scan: {} new, {} deleted, {} modified", m_newAssets.size(),
-                     m_deletedAssets.size(), m_modifiedAssets.size());
+        LIMBO_LOG_ASSET_INFO("Asset scan: {} new, {} deleted, {} modified", m_newAssets.size(),
+                             m_deletedAssets.size(), m_modifiedAssets.size());
     }
 
     return totalChanges;

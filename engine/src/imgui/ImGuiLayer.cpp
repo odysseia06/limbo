@@ -1,11 +1,12 @@
 #include "limbo/imgui/ImGuiLayer.hpp"
 
+#include "limbo/debug/Log.hpp"
+
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include <GLFW/glfw3.h>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -17,7 +18,7 @@ ImGuiLayer::~ImGuiLayer() {
 
 bool ImGuiLayer::init(GLFWwindow* window, const char* iniFilePath) {
     if (m_initialized) {
-        spdlog::warn("ImGuiLayer already initialized");
+        LIMBO_LOG_CORE_WARN("ImGuiLayer already initialized");
         return true;
     }
 
@@ -33,7 +34,7 @@ bool ImGuiLayer::init(GLFWwindow* window, const char* iniFilePath) {
     // Set ini file for layout persistence
     if (iniFilePath != nullptr) {
         io.IniFilename = iniFilePath;
-        spdlog::info("ImGui layout will be saved to: {}", iniFilePath);
+        LIMBO_LOG_CORE_INFO("ImGui layout will be saved to: {}", iniFilePath);
     } else {
         io.IniFilename = nullptr;  // Disable automatic ini saving
     }
@@ -51,20 +52,20 @@ bool ImGuiLayer::init(GLFWwindow* window, const char* iniFilePath) {
 
     // Setup Platform/Renderer backends
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) {
-        spdlog::error("Failed to initialize ImGui GLFW backend");
+        LIMBO_LOG_CORE_ERROR("Failed to initialize ImGui GLFW backend");
         ImGui::DestroyContext();
         return false;
     }
 
     if (!ImGui_ImplOpenGL3_Init("#version 450")) {
-        spdlog::error("Failed to initialize ImGui OpenGL3 backend");
+        LIMBO_LOG_CORE_ERROR("Failed to initialize ImGui OpenGL3 backend");
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
         return false;
     }
 
     m_initialized = true;
-    spdlog::info("ImGui initialized (version {})", IMGUI_VERSION);
+    LIMBO_LOG_CORE_INFO("ImGui initialized (version {})", IMGUI_VERSION);
 
     return true;
 }
@@ -79,7 +80,7 @@ void ImGuiLayer::shutdown() {
     ImGui::DestroyContext();
 
     m_initialized = false;
-    spdlog::info("ImGui shutdown");
+    LIMBO_LOG_CORE_INFO("ImGui shutdown");
 }
 
 void ImGuiLayer::beginFrame() {
