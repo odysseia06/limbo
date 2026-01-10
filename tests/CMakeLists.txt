@@ -3,6 +3,7 @@
 
 # Collect test sources
 set(TEST_SOURCES
+    test_main.cpp
     core/test_types.cpp
     core/test_asset_id.cpp
     util/test_file_io.cpp
@@ -23,7 +24,7 @@ add_executable(limbo_tests
 target_link_libraries(limbo_tests
     PRIVATE
         limbo::engine
-        Catch2::Catch2WithMain
+        Catch2::Catch2
 )
 
 # Apply warnings

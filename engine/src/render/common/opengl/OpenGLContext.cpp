@@ -25,9 +25,12 @@ public:
         }
 
         LIMBO_LOG_RENDER_INFO("OpenGL Context initialized");
-        LIMBO_LOG_RENDER_INFO("  Vendor:   {}", reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
-        LIMBO_LOG_RENDER_INFO("  Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
-        LIMBO_LOG_RENDER_INFO("  Version:  {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+        LIMBO_LOG_RENDER_INFO("  Vendor:   {}",
+                              reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+        LIMBO_LOG_RENDER_INFO("  Renderer: {}",
+                              reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+        LIMBO_LOG_RENDER_INFO("  Version:  {}",
+                              reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
 #ifdef LIMBO_DEBUG
         // Enable debug output if available

@@ -13,7 +13,8 @@ ParticleRenderSystem::ParticleRenderSystem(u32 maxParticles) : m_pool(maxParticl
 
 void ParticleRenderSystem::onAttach(World& world) {
     (void)world;
-    LIMBO_LOG_RENDER_DEBUG("ParticleRenderSystem attached (max particles: {})", m_pool.getMaxParticles());
+    LIMBO_LOG_RENDER_DEBUG("ParticleRenderSystem attached (max particles: {})",
+                           m_pool.getMaxParticles());
 }
 
 void ParticleRenderSystem::update(World& world, f32 deltaTime) {

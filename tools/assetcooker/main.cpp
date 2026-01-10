@@ -21,9 +21,11 @@ void printUsage(const char* programName) {
     LIMBO_LOG_ASSET_INFO("  clean     Remove all imported assets");
     LIMBO_LOG_ASSET_INFO("");
     LIMBO_LOG_ASSET_INFO("Options:");
-    LIMBO_LOG_ASSET_INFO("  --project <path>   Project root directory (default: current directory)");
+    LIMBO_LOG_ASSET_INFO(
+        "  --project <path>   Project root directory (default: current directory)");
     LIMBO_LOG_ASSET_INFO("  --source <dir>     Source assets directory (default: assets)");
-    LIMBO_LOG_ASSET_INFO("  --output <dir>     Imported assets directory (default: build/imported)");
+    LIMBO_LOG_ASSET_INFO(
+        "  --output <dir>     Imported assets directory (default: build/imported)");
     LIMBO_LOG_ASSET_INFO("  --verbose          Enable verbose logging");
 }
 
