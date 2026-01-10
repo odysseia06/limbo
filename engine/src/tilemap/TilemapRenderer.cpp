@@ -3,8 +3,7 @@
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
 #include "limbo/render/2d/Renderer2D.hpp"
-
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -105,7 +104,7 @@ void TilemapRenderer::renderTile(const Tilemap& tilemap, u32 tileId, const glm::
 
 void TilemapRenderSystem::onAttach(World& world) {
     (void)world;
-    spdlog::debug("TilemapRenderSystem attached");
+    LIMBO_LOG_RENDER_DEBUG("TilemapRenderSystem attached");
 }
 
 void TilemapRenderSystem::update(World& world, f32 deltaTime) {
@@ -116,7 +115,7 @@ void TilemapRenderSystem::update(World& world, f32 deltaTime) {
 
 void TilemapRenderSystem::onDetach(World& world) {
     (void)world;
-    spdlog::debug("TilemapRenderSystem detached");
+    LIMBO_LOG_RENDER_DEBUG("TilemapRenderSystem detached");
 }
 
 void TilemapRenderSystem::render(World& world) {

@@ -1,6 +1,6 @@
 #include "limbo/debug/Profiler.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -59,7 +59,7 @@ void Profiler::init(u32 maxSamplesPerFrame, u32 historyFrames) {
     auto& state = getState();
 
     if (state.initialized) {
-        spdlog::warn("Profiler already initialized");
+        LIMBO_LOG_CORE_WARN("Profiler already initialized");
         return;
     }
 
@@ -80,8 +80,8 @@ void Profiler::init(u32 maxSamplesPerFrame, u32 historyFrames) {
     state.mainThreadId = std::this_thread::get_id();
     state.initialized = true;
 
-    spdlog::debug("Profiler initialized (maxSamples={}, history={})", maxSamplesPerFrame,
-                  historyFrames);
+    LIMBO_LOG_CORE_DEBUG("Profiler initialized (maxSamples={}, history={})", maxSamplesPerFrame,
+                         historyFrames);
 }
 
 void Profiler::shutdown() {
@@ -97,7 +97,7 @@ void Profiler::shutdown() {
     state.hasCapturedFrame = false;
     state.initialized = false;
 
-    spdlog::debug("Profiler shutdown");
+    LIMBO_LOG_CORE_DEBUG("Profiler shutdown");
 }
 
 void Profiler::beginFrame() {
@@ -152,7 +152,7 @@ void Profiler::beginSample(const char* name) {
         // Log warning once per frame to avoid spam
         static u64 lastWarningFrame = 0;
         if (lastWarningFrame != state.frameNumber) {
-            spdlog::warn("Profiler sample buffer full (max {})", state.maxSamplesPerFrame);
+            LIMBO_LOG_CORE_WARN("Profiler sample buffer full (max {})", state.maxSamplesPerFrame);
             lastWarningFrame = state.frameNumber;
         }
         return;
@@ -188,7 +188,7 @@ void Profiler::endSample() {
     }
 
     if (t_sampleStack.sampleIndices.empty()) {
-        spdlog::warn("Profiler::endSample() called without matching beginSample()");
+        LIMBO_LOG_CORE_WARN("Profiler::endSample() called without matching beginSample()");
         return;
     }
 
@@ -254,13 +254,13 @@ bool Profiler::exportToCSV(const char* filepath) {
     auto& state = getState();
 
     if (!state.initialized || !state.hasCapturedFrame) {
-        spdlog::error("No captured frame to export");
+        LIMBO_LOG_CORE_ERROR("No captured frame to export");
         return false;
     }
 
     std::ofstream file(filepath);
     if (!file.is_open()) {
-        spdlog::error("Failed to open file for CSV export: {}", filepath);
+        LIMBO_LOG_CORE_ERROR("Failed to open file for CSV export: {}", filepath);
         return false;
     }
 
@@ -281,7 +281,7 @@ bool Profiler::exportToCSV(const char* filepath) {
     }
 
     file.close();
-    spdlog::info("Exported profiler data to: {}", filepath);
+    LIMBO_LOG_CORE_INFO("Exported profiler data to: {}", filepath);
     return true;
 }
 

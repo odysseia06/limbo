@@ -1,8 +1,8 @@
 #include "limbo/render/common/Buffer.hpp"
 #include "limbo/core/Assert.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glad/gl.h>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -35,7 +35,7 @@ void VertexBuffer::create(const void* data, u32 size) {
     glCreateBuffers(1, &m_bufferId);
     glNamedBufferData(m_bufferId, size, data, GL_STATIC_DRAW);
 
-    spdlog::debug("VertexBuffer created (ID: {}, size: {} bytes)", m_bufferId, size);
+    LIMBO_LOG_RENDER_DEBUG("VertexBuffer created (ID: {}, size: {} bytes)", m_bufferId, size);
 }
 
 void VertexBuffer::create(u32 size) {
@@ -44,7 +44,7 @@ void VertexBuffer::create(u32 size) {
     glCreateBuffers(1, &m_bufferId);
     glNamedBufferData(m_bufferId, size, nullptr, GL_DYNAMIC_DRAW);
 
-    spdlog::debug("VertexBuffer created (ID: {}, size: {} bytes, dynamic)", m_bufferId, size);
+    LIMBO_LOG_RENDER_DEBUG("VertexBuffer created (ID: {}, size: {} bytes, dynamic)", m_bufferId, size);
 }
 
 void VertexBuffer::setData(const void* data, u32 size) {
@@ -64,7 +64,7 @@ void VertexBuffer::unbind() {
 void VertexBuffer::destroy() {
     if (m_bufferId != 0) {
         glDeleteBuffers(1, &m_bufferId);
-        spdlog::debug("VertexBuffer destroyed (ID: {})", m_bufferId);
+        LIMBO_LOG_RENDER_DEBUG("VertexBuffer destroyed (ID: {})", m_bufferId);
         m_bufferId = 0;
     }
 }
@@ -101,7 +101,7 @@ void IndexBuffer::create(const u32* indices, u32 count) {
     glCreateBuffers(1, &m_bufferId);
     glNamedBufferData(m_bufferId, count * sizeof(u32), indices, GL_STATIC_DRAW);
 
-    spdlog::debug("IndexBuffer created (ID: {}, count: {})", m_bufferId, count);
+    LIMBO_LOG_RENDER_DEBUG("IndexBuffer created (ID: {}, count: {})", m_bufferId, count);
 }
 
 void IndexBuffer::bind() const {
@@ -116,7 +116,7 @@ void IndexBuffer::unbind() {
 void IndexBuffer::destroy() {
     if (m_bufferId != 0) {
         glDeleteBuffers(1, &m_bufferId);
-        spdlog::debug("IndexBuffer destroyed (ID: {})", m_bufferId);
+        LIMBO_LOG_RENDER_DEBUG("IndexBuffer destroyed (ID: {})", m_bufferId);
         m_bufferId = 0;
     }
     m_count = 0;
@@ -179,7 +179,7 @@ VertexArray& VertexArray::operator=(VertexArray&& other) noexcept {
 void VertexArray::create() {
     destroy();
     glCreateVertexArrays(1, &m_arrayId);
-    spdlog::debug("VertexArray created (ID: {})", m_arrayId);
+    LIMBO_LOG_RENDER_DEBUG("VertexArray created (ID: {})", m_arrayId);
 }
 
 void VertexArray::bind() const {
@@ -265,7 +265,7 @@ void VertexArray::setIndexBuffer(IndexBuffer&& buffer) {
 void VertexArray::destroy() {
     if (m_arrayId != 0) {
         glDeleteVertexArrays(1, &m_arrayId);
-        spdlog::debug("VertexArray destroyed (ID: {})", m_arrayId);
+        LIMBO_LOG_RENDER_DEBUG("VertexArray destroyed (ID: {})", m_arrayId);
         m_arrayId = 0;
     }
     m_vertexBufferIndex = 0;

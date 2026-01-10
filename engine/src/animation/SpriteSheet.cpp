@@ -1,5 +1,6 @@
 #include "limbo/animation/SpriteSheet.hpp"
-#include <spdlog/spdlog.h>
+
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -9,7 +10,7 @@ void SpriteSheet::setTexture(Texture2D* texture) {
 
 void SpriteSheet::createFromGrid(u32 cellWidth, u32 cellHeight, u32 frameCount, u32 startIndex) {
     if (!m_texture) {
-        spdlog::warn("SpriteSheet::createFromGrid: No texture set");
+        LIMBO_LOG_RENDER_WARN("SpriteSheet::createFromGrid: No texture set");
         return;
     }
 
@@ -17,7 +18,7 @@ void SpriteSheet::createFromGrid(u32 cellWidth, u32 cellHeight, u32 frameCount, 
     const u32 texHeight = m_texture->getHeight();
 
     if (cellWidth == 0 || cellHeight == 0) {
-        spdlog::warn("SpriteSheet::createFromGrid: Invalid cell dimensions");
+        LIMBO_LOG_RENDER_WARN("SpriteSheet::createFromGrid: Invalid cell dimensions");
         return;
     }
 
@@ -53,7 +54,8 @@ void SpriteSheet::createFromGrid(u32 cellWidth, u32 cellHeight, u32 frameCount, 
         m_frames.push_back(frame);
     }
 
-    spdlog::debug("SpriteSheet: Created {} frames from {}x{} grid", m_frames.size(), cols, rows);
+    LIMBO_LOG_RENDER_DEBUG("SpriteSheet: Created {} frames from {}x{} grid", m_frames.size(), cols,
+                           rows);
 }
 
 void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const String& name) {
@@ -63,7 +65,7 @@ void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const String& na
 void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const glm::vec2& pivot,
                            const String& name) {
     if (!m_texture) {
-        spdlog::warn("SpriteSheet::addFrame: No texture set");
+        LIMBO_LOG_RENDER_WARN("SpriteSheet::addFrame: No texture set");
         return;
     }
 
@@ -85,7 +87,7 @@ void SpriteSheet::addFrame(u32 x, u32 y, u32 width, u32 height, const glm::vec2&
 const SpriteFrame& SpriteSheet::getFrame(usize index) const {
     static SpriteFrame const s_defaultFrame;
     if (index >= m_frames.size()) {
-        spdlog::warn("SpriteSheet::getFrame: Index {} out of bounds", index);
+        LIMBO_LOG_RENDER_WARN("SpriteSheet::getFrame: Index {} out of bounds", index);
         return s_defaultFrame;
     }
     return m_frames[index];

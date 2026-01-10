@@ -1,7 +1,6 @@
 #include "limbo/scripting/ScriptHotReloadManager.hpp"
 #include "limbo/scripting/ScriptComponent.hpp"
-
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -18,7 +17,7 @@ void ScriptHotReloadManager::watchScript(const std::filesystem::path& path,
         m_fileWatcher.watch(path, [this](const std::filesystem::path& changedPath) {
             onScriptChanged(changedPath);
         });
-        spdlog::debug("ScriptHotReloadManager: Watching {}", pathStr);
+        LIMBO_LOG_SCRIPT_DEBUG("ScriptHotReloadManager: Watching {}", pathStr);
     }
 }
 
@@ -38,7 +37,7 @@ void ScriptHotReloadManager::unwatchScript(const std::filesystem::path& path,
     if (it->second.empty()) {
         m_fileWatcher.unwatch(path);
         m_scriptToEntities.erase(it);
-        spdlog::debug("ScriptHotReloadManager: Unwatched {}", pathStr);
+        LIMBO_LOG_SCRIPT_DEBUG("ScriptHotReloadManager: Unwatched {}", pathStr);
     }
 }
 
@@ -57,7 +56,7 @@ void ScriptHotReloadManager::unwatchEntity(World::EntityId entityId) {
     for (const auto& pathStr : emptyScripts) {
         m_fileWatcher.unwatch(pathStr);
         m_scriptToEntities.erase(pathStr);
-        spdlog::debug("ScriptHotReloadManager: Unwatched {}", pathStr);
+        LIMBO_LOG_SCRIPT_DEBUG("ScriptHotReloadManager: Unwatched {}", pathStr);
     }
 }
 
@@ -65,7 +64,7 @@ void ScriptHotReloadManager::unwatchAll() {
     m_fileWatcher.unwatchAll();
     m_scriptToEntities.clear();
     m_pendingReloads.clear();
-    spdlog::debug("ScriptHotReloadManager: Unwatched all scripts");
+    LIMBO_LOG_SCRIPT_DEBUG("ScriptHotReloadManager: Unwatched all scripts");
 }
 
 bool ScriptHotReloadManager::isWatching(const std::filesystem::path& path) const {
@@ -104,7 +103,7 @@ void ScriptHotReloadManager::onScriptChanged(const std::filesystem::path& path) 
     }
 
     String const pathStr = path.string();
-    spdlog::info("Script changed: {}", pathStr);
+    LIMBO_LOG_SCRIPT_INFO("Script changed: {}", pathStr);
     m_pendingReloads.insert(pathStr);
 }
 
@@ -116,7 +115,7 @@ void ScriptHotReloadManager::reloadScript(World& world, const std::filesystem::p
         return;
     }
 
-    spdlog::info("Reloading script: {}", pathStr);
+    LIMBO_LOG_SCRIPT_INFO("Reloading script: {}", pathStr);
     m_totalReloads++;
 
     bool anyFailed = false;
@@ -137,10 +136,10 @@ void ScriptHotReloadManager::reloadScript(World& world, const std::filesystem::p
                     auto result = onBeforeReload();
                     if (!result.valid()) {
                         sol::error const err = result;
-                        spdlog::warn("Script onBeforeReload error: {}", err.what());
+                        LIMBO_LOG_SCRIPT_WARN("Script onBeforeReload error: {}", err.what());
                     }
                 } catch (const sol::error& e) {
-                    spdlog::warn("Script onBeforeReload exception: {}", e.what());
+                    LIMBO_LOG_SCRIPT_WARN("Script onBeforeReload exception: {}", e.what());
                 }
             }
         }
@@ -162,7 +161,7 @@ void ScriptHotReloadManager::reloadScript(World& world, const std::filesystem::p
         // Note: The script will be re-initialized by ScriptSystem::update()
         // on the next frame, which will call initializeScript() and then onStart()
 
-        spdlog::debug("Reset script state for entity {}", static_cast<u32>(entityId));
+        LIMBO_LOG_SCRIPT_DEBUG("Reset script state for entity {}", static_cast<u32>(entityId));
     }
 
     if (anyFailed) {

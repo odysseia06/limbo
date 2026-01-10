@@ -1,6 +1,6 @@
 #include "limbo/assets/AssetManager.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -10,7 +10,7 @@ AssetManager::~AssetManager() {
 
 void AssetManager::setAssetRoot(const std::filesystem::path& root) {
     m_assetRoot = root;
-    spdlog::info("Asset root set to: {}", m_assetRoot.string());
+    LIMBO_LOG_ASSET_INFO("Asset root set to: {}", m_assetRoot.string());
 }
 
 void AssetManager::setupHotReloadManager() {
@@ -25,7 +25,7 @@ void AssetManager::setupHotReloadManager() {
     });
 
     m_hotReloadManager.setEnabled(true);
-    spdlog::info("Hot reload manager initialized");
+    LIMBO_LOG_ASSET_INFO("Hot reload manager initialized");
 }
 
 void AssetManager::addAssetDependency(AssetId assetId, AssetId dependencyId) {
@@ -74,7 +74,7 @@ bool AssetManager::reload(AssetId id) {
         return false;
     }
 
-    spdlog::info("Reloading asset: {}", it->second->getPath().string());
+    LIMBO_LOG_ASSET_INFO("Reloading asset: {}", it->second->getPath().string());
 
     it->second->setState(AssetState::Loading);
     if (it->second->reload()) {

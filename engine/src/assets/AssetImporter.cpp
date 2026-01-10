@@ -1,9 +1,9 @@
 #include "limbo/assets/AssetImporter.hpp"
 
 #include "limbo/render/2d/SpriteAtlasBuilder.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
-#include <spdlog/spdlog.h>
 
 #include <algorithm>
 #include <fstream>
@@ -43,7 +43,7 @@ ImportResult TextureImporter::import(const ImportContext& context) {
 
     // Return relative path from imported dir
     String relativePath = "textures/" + filename;
-    spdlog::debug("Imported texture: {} -> {}", context.sourcePath.string(), relativePath);
+    LIMBO_LOG_ASSET_DEBUG("Imported texture: {} -> {}", context.sourcePath.string(), relativePath);
 
     return ImportResult::ok(relativePath);
 }
@@ -85,7 +85,7 @@ ImportResult ShaderImporter::import(const ImportContext& context) {
     }
 
     String relativePath = "shaders/" + filename;
-    spdlog::debug("Imported shader: {} -> {}", context.sourcePath.string(), relativePath);
+    LIMBO_LOG_ASSET_DEBUG("Imported shader: {} -> {}", context.sourcePath.string(), relativePath);
 
     return ImportResult::ok(relativePath);
 }
@@ -123,7 +123,7 @@ ImportResult AudioImporter::import(const ImportContext& context) {
     }
 
     String relativePath = "audio/" + filename;
-    spdlog::debug("Imported audio: {} -> {}", context.sourcePath.string(), relativePath);
+    LIMBO_LOG_ASSET_DEBUG("Imported audio: {} -> {}", context.sourcePath.string(), relativePath);
 
     return ImportResult::ok(relativePath);
 }
@@ -180,7 +180,7 @@ ImportResult SpriteAtlasImporter::import(const ImportContext& context) {
             String path = spriteDefn.value("path", "");
 
             if (path.empty()) {
-                spdlog::warn("SpriteAtlasImporter: Sprite missing path, skipping");
+                LIMBO_LOG_ASSET_WARN("SpriteAtlasImporter: Sprite missing path, skipping");
                 continue;
             }
 
@@ -243,9 +243,9 @@ ImportResult SpriteAtlasImporter::import(const ImportContext& context) {
     }
 
     String relativePath = "atlases/" + baseName + ".atlas";
-    spdlog::info("Imported sprite atlas: {} -> {} ({} sprites, {:.1f}% efficiency)",
-                 context.sourcePath.string(), relativePath, buildResult.packedSprites,
-                 buildResult.packingEfficiency * 100.0f);
+    LIMBO_LOG_ASSET_INFO("Imported sprite atlas: {} -> {} ({} sprites, {:.1f}% efficiency)",
+                         context.sourcePath.string(), relativePath, buildResult.packedSprites,
+                         buildResult.packingEfficiency * 100.0f);
 
     return ImportResult::ok(relativePath);
 }
@@ -352,7 +352,7 @@ ImportResult AssetImporterManager::importAsset(AssetId id) {
         m_registry->updateSourceHash(id, sourceHash);
         m_registry->markAsImported(id, result.importedPath);
     } else {
-        spdlog::error("Failed to import asset {}: {}", metadata->sourcePath, result.error);
+        LIMBO_LOG_ASSET_ERROR("Failed to import asset {}: {}", metadata->sourcePath, result.error);
     }
 
     return result;
@@ -385,7 +385,7 @@ usize AssetImporterManager::importAll() {
         m_registry->save();
     }
 
-    spdlog::info("Imported {} of {} assets", imported, total);
+    LIMBO_LOG_ASSET_INFO("Imported {} of {} assets", imported, total);
     return imported;
 }
 

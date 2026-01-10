@@ -1,12 +1,13 @@
 #include "limbo/animation/AnimationSystem.hpp"
+
 #include "limbo/animation/AnimatorComponent.hpp"
+#include "limbo/debug/Log.hpp"
 #include "limbo/ecs/Components.hpp"
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
 void AnimationSystem::onAttach(World& /*world*/) {
-    spdlog::debug("AnimationSystem initialized");
+    LIMBO_LOG_CORE_DEBUG("AnimationSystem initialized");
 }
 
 void AnimationSystem::update(World& world, f32 deltaTime) {
@@ -37,7 +38,7 @@ void AnimationSystem::update(World& world, f32 deltaTime) {
 }
 
 void AnimationSystem::onDetach(World& /*world*/) {
-    spdlog::debug("AnimationSystem shutdown");
+    LIMBO_LOG_CORE_DEBUG("AnimationSystem shutdown");
 }
 
 }  // namespace limbo

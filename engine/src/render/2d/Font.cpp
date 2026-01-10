@@ -1,7 +1,7 @@
 #include "limbo/render/2d/Font.hpp"
 #include "limbo/util/FileIO.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
@@ -118,8 +118,8 @@ Result<Unique<Font>, String> Font::loadFromFile(const std::filesystem::path& pat
         return unexpected<String>("Failed to create font atlas texture: " + createResult.error());
     }
 
-    spdlog::debug("Loaded font '{}' with {} glyphs ({}x{} atlas)", path.filename().string(),
-                  charCount, atlasWidth, atlasHeight);
+    LIMBO_LOG_RENDER_DEBUG("Loaded font '{}' with {} glyphs ({}x{} atlas)", path.filename().string(),
+                           charCount, atlasWidth, atlasHeight);
 
     return font;
 }

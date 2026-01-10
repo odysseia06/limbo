@@ -5,8 +5,8 @@
 #include "limbo/platform/Input.hpp"
 #include "limbo/physics/2d/Physics2D.hpp"
 #include "limbo/physics/2d/PhysicsComponents2D.hpp"
+#include "limbo/debug/Log.hpp"
 
-#include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
 
 namespace limbo {
@@ -28,7 +28,7 @@ bool ScriptEngine::init() {
     registerBindings();
 
     m_initialized = true;
-    spdlog::info("ScriptEngine initialized");
+    LIMBO_LOG_SCRIPT_INFO("ScriptEngine initialized");
     return true;
 }
 
@@ -39,7 +39,7 @@ void ScriptEngine::shutdown() {
 
     m_boundWorld = nullptr;
     m_initialized = false;
-    spdlog::info("ScriptEngine shutdown");
+    LIMBO_LOG_SCRIPT_INFO("ScriptEngine shutdown");
 }
 
 bool ScriptEngine::loadScript(const std::filesystem::path& path) {
@@ -53,14 +53,14 @@ bool ScriptEngine::loadScript(const std::filesystem::path& path) {
         if (!result.valid()) {
             sol::error const err = result;
             m_lastError = err.what();
-            spdlog::error("Lua script error in {}: {}", path.string(), m_lastError);
+            LIMBO_LOG_SCRIPT_ERROR("Lua script error in {}: {}", path.string(), m_lastError);
             return false;
         }
-        spdlog::debug("Loaded script: {}", path.string());
+        LIMBO_LOG_SCRIPT_DEBUG("Loaded script: {}", path.string());
         return true;
     } catch (const sol::error& e) {
         m_lastError = e.what();
-        spdlog::error("Lua exception in {}: {}", path.string(), m_lastError);
+        LIMBO_LOG_SCRIPT_ERROR("Lua exception in {}: {}", path.string(), m_lastError);
         return false;
     }
 }
@@ -76,13 +76,13 @@ bool ScriptEngine::executeString(const String& code) {
         if (!result.valid()) {
             sol::error const err = result;
             m_lastError = err.what();
-            spdlog::error("Lua error: {}", m_lastError);
+            LIMBO_LOG_SCRIPT_ERROR("Lua error: {}", m_lastError);
             return false;
         }
         return true;
     } catch (const sol::error& e) {
         m_lastError = e.what();
-        spdlog::error("Lua exception: {}", m_lastError);
+        LIMBO_LOG_SCRIPT_ERROR("Lua exception: {}", m_lastError);
         return false;
     }
 }
@@ -336,12 +336,12 @@ void ScriptEngine::bindComponentTypes() {
 
 void ScriptEngine::bindUtilityFunctions() {
     // Logging
-    m_lua["print"] = [](const String& msg) { spdlog::info("[Lua] {}", msg); };
+    m_lua["print"] = [](const String& msg) { LIMBO_LOG_SCRIPT_INFO("[Lua] {}", msg); };
     m_lua["log"] = m_lua.create_table_with(
-        "info", [](const String& msg) { spdlog::info("[Lua] {}", msg); }, "warn",
-        [](const String& msg) { spdlog::warn("[Lua] {}", msg); }, "error",
-        [](const String& msg) { spdlog::error("[Lua] {}", msg); }, "debug",
-        [](const String& msg) { spdlog::debug("[Lua] {}", msg); });
+        "info", [](const String& msg) { LIMBO_LOG_SCRIPT_INFO("[Lua] {}", msg); }, "warn",
+        [](const String& msg) { LIMBO_LOG_SCRIPT_WARN("[Lua] {}", msg); }, "error",
+        [](const String& msg) { LIMBO_LOG_SCRIPT_ERROR("[Lua] {}", msg); }, "debug",
+        [](const String& msg) { LIMBO_LOG_SCRIPT_DEBUG("[Lua] {}", msg); });
 
     // Time (will be set each frame by ScriptSystem)
     m_lua["Time"] = m_lua.create_table_with("deltaTime", 0.0f, "totalTime", 0.0f);

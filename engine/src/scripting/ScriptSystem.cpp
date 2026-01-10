@@ -1,8 +1,8 @@
 #include "limbo/scripting/ScriptSystem.hpp"
 #include "limbo/scripting/ScriptComponent.hpp"
 #include "limbo/ecs/Entity.hpp"
+#include "limbo/debug/Log.hpp"
 
-#include <spdlog/spdlog.h>
 #include <regex>
 
 namespace limbo {
@@ -58,9 +58,9 @@ void setScriptError(ScriptComponent& script, const String& errorStr) {
 
     // Log with file:line info if available
     if (parsed.line > 0) {
-        spdlog::error("Script error at {}:{}: {}", parsed.file, parsed.line, parsed.message);
+        LIMBO_LOG_SCRIPT_ERROR("Script error at {}:{}: {}", parsed.file, parsed.line, parsed.message);
     } else {
-        spdlog::error("Script error: {}", errorStr);
+        LIMBO_LOG_SCRIPT_ERROR("Script error: {}", errorStr);
     }
 }
 
@@ -75,13 +75,13 @@ void ScriptSystem::onAttach(World& world) {
     // Set up hot reload callback for logging
     m_hotReloadManager.setReloadCallback([](const std::filesystem::path& path, bool success) {
         if (success) {
-            spdlog::info("Script reloaded successfully: {}", path.string());
+            LIMBO_LOG_SCRIPT_INFO("Script reloaded successfully: {}", path.string());
         } else {
-            spdlog::error("Script reload failed: {}", path.string());
+            LIMBO_LOG_SCRIPT_ERROR("Script reload failed: {}", path.string());
         }
     });
 
-    spdlog::debug("ScriptSystem initialized with hot reload support");
+    LIMBO_LOG_SCRIPT_DEBUG("ScriptSystem initialized with hot reload support");
 }
 
 void ScriptSystem::update(World& world, f32 deltaTime) {
@@ -139,12 +139,12 @@ void ScriptSystem::onDetach(World& world) {
             auto result = script.onDestroy();
             if (!result.valid()) {
                 sol::error const err = result;
-                spdlog::error("Script onDestroy error: {}", err.what());
+                LIMBO_LOG_SCRIPT_ERROR("Script onDestroy error: {}", err.what());
             }
         }
     });
 
-    spdlog::debug("ScriptSystem shutdown");
+    LIMBO_LOG_SCRIPT_DEBUG("ScriptSystem shutdown");
 }
 
 void ScriptSystem::initializeScript(World& world, World::EntityId entityId) {
@@ -161,7 +161,7 @@ void ScriptSystem::initializeScript(World& world, World::EntityId entityId) {
     if (!std::filesystem::exists(script.scriptPath)) {
         script.lastError = "Script file not found";
         script.enabled = false;
-        spdlog::error("Script file not found: {}", script.scriptPath.string());
+        LIMBO_LOG_SCRIPT_ERROR("Script file not found: {}", script.scriptPath.string());
         return;
     }
 
@@ -197,7 +197,7 @@ void ScriptSystem::initializeScript(World& world, World::EntityId entityId) {
         script.onTriggerExit = script.environment["onTriggerExit"];
 
         script.initialized = true;
-        spdlog::debug("Loaded script: {}", script.scriptPath.string());
+        LIMBO_LOG_SCRIPT_DEBUG("Loaded script: {}", script.scriptPath.string());
 
         // Register with hot reload manager
         m_hotReloadManager.watchScript(script.scriptPath, entityId);

@@ -1,6 +1,6 @@
 #include "limbo/assets/HotReloadManager.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 #include <algorithm>
 #include <queue>
@@ -13,7 +13,7 @@ void HotReloadManager::watchAsset(AssetId id, const std::filesystem::path& path)
 
 void HotReloadManager::watchAsset(AssetId id, const std::vector<std::filesystem::path>& paths) {
     if (!id.isValid()) {
-        spdlog::warn("HotReloadManager: Cannot watch invalid asset ID");
+        LIMBO_LOG_ASSET_WARN("HotReloadManager: Cannot watch invalid asset ID");
         return;
     }
 
@@ -26,7 +26,7 @@ void HotReloadManager::watchAsset(AssetId id, const std::vector<std::filesystem:
 
     for (const auto& path : paths) {
         if (!std::filesystem::exists(path)) {
-            spdlog::warn("HotReloadManager: Path does not exist: {}", path.string());
+            LIMBO_LOG_ASSET_WARN("HotReloadManager: Path does not exist: {}", path.string());
             continue;
         }
 
@@ -38,7 +38,8 @@ void HotReloadManager::watchAsset(AssetId id, const std::vector<std::filesystem:
     }
 
     m_watchedAssets[id] = std::move(watched);
-    spdlog::debug("HotReloadManager: Watching asset {} ({} files)", id.toString(), paths.size());
+    LIMBO_LOG_ASSET_DEBUG("HotReloadManager: Watching asset {} ({} files)", id.toString(),
+                          paths.size());
 }
 
 void HotReloadManager::unwatchAsset(AssetId id) {
@@ -64,7 +65,7 @@ void HotReloadManager::unwatchAsset(AssetId id) {
     m_dependents.erase(id);
     m_pendingReloads.erase(id);
 
-    spdlog::debug("HotReloadManager: Unwatched asset {}", id.toString());
+    LIMBO_LOG_ASSET_DEBUG("HotReloadManager: Unwatched asset {}", id.toString());
 }
 
 void HotReloadManager::unwatchAll() {
@@ -74,7 +75,7 @@ void HotReloadManager::unwatchAll() {
     m_dependencies.clear();
     m_dependents.clear();
     m_pendingReloads.clear();
-    spdlog::debug("HotReloadManager: Unwatched all assets");
+    LIMBO_LOG_ASSET_DEBUG("HotReloadManager: Unwatched all assets");
 }
 
 bool HotReloadManager::isWatching(AssetId id) const {
@@ -87,15 +88,15 @@ void HotReloadManager::addDependency(AssetId assetId, AssetId dependencyId) {
     }
 
     if (assetId == dependencyId) {
-        spdlog::warn("HotReloadManager: Asset cannot depend on itself");
+        LIMBO_LOG_ASSET_WARN("HotReloadManager: Asset cannot depend on itself");
         return;
     }
 
     m_dependencies[assetId].insert(dependencyId);
     m_dependents[dependencyId].insert(assetId);
 
-    spdlog::debug("HotReloadManager: {} now depends on {}", assetId.toString(),
-                  dependencyId.toString());
+    LIMBO_LOG_ASSET_DEBUG("HotReloadManager: {} now depends on {}", assetId.toString(),
+                          dependencyId.toString());
 }
 
 void HotReloadManager::removeDependency(AssetId assetId, AssetId dependencyId) {
@@ -170,8 +171,8 @@ void HotReloadManager::triggerReload(AssetId id) {
         m_pendingReloads.insert(affectedId);
     }
 
-    spdlog::info("HotReloadManager: Triggered reload for {} ({} assets affected)", id.toString(),
-                 affected.size());
+    LIMBO_LOG_ASSET_INFO("HotReloadManager: Triggered reload for {} ({} assets affected)",
+                         id.toString(), affected.size());
 
     // If not batching, process immediately
     if (!m_batchReloads) {
@@ -199,7 +200,7 @@ void HotReloadManager::processPendingReloads() {
     }
 
     if (!m_reloadHandler) {
-        spdlog::warn("HotReloadManager: No reload handler set");
+        LIMBO_LOG_ASSET_WARN("HotReloadManager: No reload handler set");
         m_pendingReloads.clear();
         return;
     }
@@ -207,12 +208,12 @@ void HotReloadManager::processPendingReloads() {
     // Sort assets in topological order (dependencies first)
     std::vector<AssetId> sortedAssets = topologicalSort(m_pendingReloads);
 
-    spdlog::info("HotReloadManager: Processing {} pending reloads", sortedAssets.size());
+    LIMBO_LOG_ASSET_INFO("HotReloadManager: Processing {} pending reloads", sortedAssets.size());
 
     for (AssetId id : sortedAssets) {
         // Check before-reload callback
         if (m_beforeReloadCallback && !m_beforeReloadCallback(id)) {
-            spdlog::debug("HotReloadManager: Reload cancelled for {}", id.toString());
+            LIMBO_LOG_ASSET_DEBUG("HotReloadManager: Reload cancelled for {}", id.toString());
             continue;
         }
 
@@ -229,9 +230,9 @@ void HotReloadManager::processPendingReloads() {
 
         if (!success) {
             m_failedReloads++;
-            spdlog::error("HotReloadManager: Failed to reload {}", id.toString());
+            LIMBO_LOG_ASSET_ERROR("HotReloadManager: Failed to reload {}", id.toString());
         } else {
-            spdlog::info("HotReloadManager: Reloaded {}", id.toString());
+            LIMBO_LOG_ASSET_INFO("HotReloadManager: Reloaded {}", id.toString());
         }
 
         // Call after-reload callback
@@ -255,12 +256,14 @@ void HotReloadManager::onFileChanged(const std::filesystem::path& path) {
 
     auto it = m_pathToAsset.find(pathKey);
     if (it == m_pathToAsset.end()) {
-        spdlog::debug("HotReloadManager: Changed file not mapped to any asset: {}", path.string());
+        LIMBO_LOG_ASSET_DEBUG("HotReloadManager: Changed file not mapped to any asset: {}",
+                              path.string());
         return;
     }
 
     AssetId id = it->second;
-    spdlog::info("HotReloadManager: File changed for asset {}: {}", id.toString(), path.string());
+    LIMBO_LOG_ASSET_INFO("HotReloadManager: File changed for asset {}: {}", id.toString(),
+                         path.string());
 
     triggerReload(id);
 }
@@ -352,7 +355,7 @@ HotReloadManager::topologicalSort(const std::unordered_set<AssetId>& assets) con
 
     // If we didn't process all assets, there's a cycle
     if (result.size() != assets.size()) {
-        spdlog::warn(
+        LIMBO_LOG_ASSET_WARN(
             "HotReloadManager: Dependency cycle detected, falling back to arbitrary order");
         // Just add remaining assets in arbitrary order
         for (AssetId id : assets) {

@@ -1,6 +1,6 @@
 #include "limbo/assets/TextureAsset.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 namespace limbo {
 
@@ -10,13 +10,14 @@ bool TextureAsset::load() {
     auto result = m_texture->loadFromFile(getPath());
     if (!result) {
         setError(result.error());
-        spdlog::error("Failed to load texture '{}': {}", getPath().string(), result.error());
+        LIMBO_LOG_ASSET_ERROR("Failed to load texture '{}': {}", getPath().string(),
+                              result.error());
         m_texture.reset();
         return false;
     }
 
-    spdlog::debug("Loaded texture: {} ({}x{})", getPath().string(), m_texture->getWidth(),
-                  m_texture->getHeight());
+    LIMBO_LOG_ASSET_DEBUG("Loaded texture: {} ({}x{})", getPath().string(), m_texture->getWidth(),
+                          m_texture->getHeight());
     return true;
 }
 

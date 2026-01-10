@@ -1,7 +1,7 @@
 #include <limbo/Limbo.hpp>
+#include <limbo/debug/Log.hpp>
 
 #include <imgui.h>
-#include <spdlog/spdlog.h>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <filesystem>
@@ -74,12 +74,12 @@ public:
 
 protected:
     void onInit() override {
-        spdlog::info("Sandbox initialized");
+        LIMBO_LOG_CORE_INFO("Sandbox initialized");
 
         // Create render context
         m_renderContext = limbo::RenderContext::create();
         if (!m_renderContext->init(getWindow())) {
-            spdlog::critical("Failed to initialize render context");
+            LIMBO_LOG_CORE_CRITICAL("Failed to initialize render context");
             requestExit();
             return;
         }
@@ -89,7 +89,7 @@ protected:
 
         // Initialize ImGui
         if (!m_imguiLayer.init(getWindow().getNativeHandle())) {
-            spdlog::error("Failed to initialize ImGui");
+            LIMBO_LOG_CORE_ERROR("Failed to initialize ImGui");
         }
 
         // Initialize camera
@@ -102,12 +102,12 @@ protected:
 
         // Initialize audio
         if (!m_audioEngine.init()) {
-            spdlog::error("Failed to initialize audio engine");
+            LIMBO_LOG_AUDIO_ERROR("Failed to initialize audio engine");
         }
 
         // Initialize scripting
         if (!m_scriptEngine.init()) {
-            spdlog::error("Failed to initialize script engine");
+            LIMBO_LOG_SCRIPT_ERROR("Failed to initialize script engine");
         }
 
         // Setup AssetManager
@@ -119,17 +119,17 @@ protected:
         // Create entities
         createEntities();
 
-        spdlog::info("Rendering setup complete");
-        spdlog::info("Controls:");
-        spdlog::info("  WASD/Arrow keys - Move camera");
-        spdlog::info("  Q/E - Rotate camera");
-        spdlog::info("  Mouse scroll - Zoom in/out");
-        spdlog::info("  Space - Reset camera");
-        spdlog::info("  Escape - Exit");
-        spdlog::info("");
-        spdlog::info("ECS Demo: {} entities created", getWorld().entityCount());
-        spdlog::info("Assets loaded: {}", m_assetManager.assetCount());
-        spdlog::info("Press F1 to toggle ImGui panels");
+        LIMBO_LOG_CORE_INFO("Rendering setup complete");
+        LIMBO_LOG_CORE_INFO("Controls:");
+        LIMBO_LOG_CORE_INFO("  WASD/Arrow keys - Move camera");
+        LIMBO_LOG_CORE_INFO("  Q/E - Rotate camera");
+        LIMBO_LOG_CORE_INFO("  Mouse scroll - Zoom in/out");
+        LIMBO_LOG_CORE_INFO("  Space - Reset camera");
+        LIMBO_LOG_CORE_INFO("  Escape - Exit");
+        LIMBO_LOG_CORE_INFO("");
+        LIMBO_LOG_CORE_INFO("ECS Demo: {} entities created", getWorld().entityCount());
+        LIMBO_LOG_CORE_INFO("Assets loaded: {}", m_assetManager.assetCount());
+        LIMBO_LOG_CORE_INFO("Press F1 to toggle ImGui panels");
     }
 
     void setupAssets() {
@@ -152,18 +152,18 @@ protected:
 
         if (std::filesystem::exists(assetsPath)) {
             m_assetManager.setAssetRoot(assetsPath);
-            spdlog::info("Asset root set to: {}", assetsPath.string());
+            LIMBO_LOG_ASSET_INFO("Asset root set to: {}", assetsPath.string());
 
             // Enable hot-reloading for development
             m_assetManager.setHotReloadEnabled(true);
-            spdlog::info("Hot-reload enabled");
+            LIMBO_LOG_ASSET_INFO("Hot-reload enabled");
 
             // Load shader asset
             auto shaderAsset = m_assetManager.load<limbo::ShaderAsset>("shaders/sprite");
             if (shaderAsset && shaderAsset->getState() == limbo::AssetState::Loaded) {
-                spdlog::info("Loaded shader asset: shaders/sprite");
+                LIMBO_LOG_ASSET_INFO("Loaded shader asset: shaders/sprite");
             } else {
-                spdlog::warn("Failed to load shader asset");
+                LIMBO_LOG_ASSET_WARN("Failed to load shader asset");
             }
 
             // Load texture asset
@@ -171,13 +171,14 @@ protected:
                 m_assetManager.load<limbo::TextureAsset>("textures/checkerboard.png");
             if (m_checkerboardTexture &&
                 m_checkerboardTexture->getState() == limbo::AssetState::Loaded) {
-                spdlog::info("Loaded texture asset: textures/checkerboard.png ({}x{})",
-                             m_checkerboardTexture->getWidth(), m_checkerboardTexture->getHeight());
+                LIMBO_LOG_ASSET_INFO("Loaded texture asset: textures/checkerboard.png ({}x{})",
+                                     m_checkerboardTexture->getWidth(),
+                                     m_checkerboardTexture->getHeight());
             } else {
-                spdlog::warn("Failed to load texture asset");
+                LIMBO_LOG_ASSET_WARN("Failed to load texture asset");
             }
         } else {
-            spdlog::warn("Assets directory not found, using default path");
+            LIMBO_LOG_ASSET_WARN("Assets directory not found, using default path");
         }
     }
 
@@ -336,8 +337,8 @@ protected:
         tilemapComp.tilemap = m_tilemap;
         tilemapComp.tileset = m_tileset;
 
-        spdlog::info("Created tilemap: {}x{} tiles, {} layers", m_tilemap->getWidth(),
-                     m_tilemap->getHeight(), m_tilemap->getLayerCount());
+        LIMBO_LOG_RENDER_INFO("Created tilemap: {}x{} tiles, {} layers", m_tilemap->getWidth(),
+                              m_tilemap->getHeight(), m_tilemap->getLayerCount());
     }
 
     void createUIDemo() {
@@ -372,7 +373,7 @@ protected:
         button->setOnClick([this, clickLabel]() {
             m_buttonClickCount++;
             clickLabel->setText("Clicks: " + std::to_string(m_buttonClickCount));
-            spdlog::info("Button clicked! Count: {}", m_buttonClickCount);
+            LIMBO_LOG_CORE_INFO("Button clicked! Count: {}", m_buttonClickCount);
         });
         panel->addChild(button);
 
@@ -416,7 +417,7 @@ protected:
         uiComp.canvas = m_uiCanvas;
         uiComp.screenSpace = true;
 
-        spdlog::info("Created UI demo with panels, buttons, and progress bar");
+        LIMBO_LOG_CORE_INFO("Created UI demo with panels, buttons, and progress bar");
     }
 
     void createTilesetTexture() {
@@ -516,7 +517,7 @@ protected:
         m_tileset->setTileFlags(2, limbo::TileFlags::Solid);  // Stone is solid
         m_tileset->setTileFlags(3, limbo::TileFlags::Water);  // Water
 
-        spdlog::info("Created tileset: {}x{} tiles", cols, rows);
+        LIMBO_LOG_RENDER_INFO("Created tileset: {}x{} tiles", cols, rows);
     }
 
     void createParticleEntities() {
@@ -580,7 +581,7 @@ protected:
             particleEmitter.props.emissionRate = 15.0f;
         }
 
-        spdlog::info("Created 3 particle emitter entities");
+        LIMBO_LOG_CORE_INFO("Created 3 particle emitter entities");
     }
 
     void createScriptedEntities() {
@@ -591,8 +592,9 @@ protected:
             m_assetManager.getAssetRoot() / "scripts" / "player.lua";
 
         if (!std::filesystem::exists(scriptPath)) {
-            spdlog::warn("Script not found: {}", scriptPath.string());
-            spdlog::info("Create apps/sandbox/assets/scripts/player.lua to enable scripting demo");
+            LIMBO_LOG_SCRIPT_WARN("Script not found: {}", scriptPath.string());
+            LIMBO_LOG_SCRIPT_INFO(
+                "Create apps/sandbox/assets/scripts/player.lua to enable scripting demo");
             return;
         }
 
@@ -610,8 +612,8 @@ protected:
         auto& script = scriptedEntity.addComponent<limbo::ScriptComponent>();
         script.scriptPath = scriptPath;
 
-        spdlog::info("Created scripted entity with script: {}", scriptPath.string());
-        spdlog::info("  Use I/J/K/L keys to move the green square");
+        LIMBO_LOG_SCRIPT_INFO("Created scripted entity with script: {}", scriptPath.string());
+        LIMBO_LOG_SCRIPT_INFO("  Use I/J/K/L keys to move the green square");
     }
 
     void createAnimatedEntities() {
@@ -661,7 +663,7 @@ protected:
         animator2.defaultClip = "bounce";
         animator2.playOnStart = true;
 
-        spdlog::info("Created {} animated entities", 2);
+        LIMBO_LOG_CORE_INFO("Created {} animated entities", 2);
     }
 
     void createAnimationSpriteSheet() {
@@ -730,8 +732,8 @@ protected:
         m_animSpriteSheet.setTexture(m_animTexture.get());
         m_animSpriteSheet.createFromGrid(frameWidth, frameHeight);
 
-        spdlog::info("Created animation sprite sheet ({}x{}, {} frames)", texWidth, texHeight,
-                     m_animSpriteSheet.getFrameCount());
+        LIMBO_LOG_RENDER_INFO("Created animation sprite sheet ({}x{}, {} frames)", texWidth,
+                              texHeight, m_animSpriteSheet.getFrameCount());
     }
 
     void createPhysicsEntities() {
@@ -884,7 +886,7 @@ protected:
                                  static_cast<float>(getWindow().getHeight());
             m_camera.setProjection(-aspect * m_zoom, aspect * m_zoom, -m_zoom, m_zoom);
 
-            spdlog::info("Camera reset");
+            LIMBO_LOG_CORE_INFO("Camera reset");
         }
     }
 
@@ -1130,7 +1132,7 @@ protected:
             m_renderContext->shutdown();
             m_renderContext.reset();
         }
-        spdlog::info("Sandbox shutdown");
+        LIMBO_LOG_CORE_INFO("Sandbox shutdown");
     }
 
 private:
@@ -1203,7 +1205,7 @@ int main() {
 
     auto result = app.init(config);
     if (!result) {
-        spdlog::critical("Failed to initialize application: {}", result.error());
+        LIMBO_LOG_CORE_CRITICAL("Failed to initialize application: {}", result.error());
         limbo::debug::shutdown();
         return 1;
     }

@@ -3,8 +3,7 @@
 #include "limbo/platform/Input.hpp"
 #include "limbo/render/2d/Renderer2D.hpp"
 #include "limbo/render/common/Camera.hpp"
-
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 #include <algorithm>
 #include <ranges>
 
@@ -98,7 +97,7 @@ void UICanvas::onMouseUp(const glm::vec2& mousePos, const glm::vec2& screenSize)
 
 void UISystem::onAttach(World& world) {
     (void)world;
-    spdlog::debug("UISystem attached");
+    LIMBO_LOG_CORE_DEBUG("UISystem attached");
 }
 
 void UISystem::update(World& world, f32 deltaTime) {
@@ -129,7 +128,7 @@ void UISystem::update(World& world, f32 deltaTime) {
 
 void UISystem::onDetach(World& world) {
     (void)world;
-    spdlog::debug("UISystem detached");
+    LIMBO_LOG_CORE_DEBUG("UISystem detached");
 }
 
 void UISystem::render(World& world) {

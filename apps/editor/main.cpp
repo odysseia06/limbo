@@ -1,6 +1,6 @@
 #include "EditorApp.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 int main() {
     // Initialize debug/logging
@@ -17,7 +17,7 @@ int main() {
 
     auto result = editor.init(config);
     if (!result) {
-        spdlog::critical("Failed to initialize editor: {}", result.error());
+        LIMBO_LOG_EDITOR_CRITICAL("Failed to initialize editor: {}", result.error());
         limbo::debug::shutdown();
         return 1;
     }

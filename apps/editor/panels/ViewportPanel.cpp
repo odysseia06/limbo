@@ -1,7 +1,9 @@
 #include "ViewportPanel.hpp"
-#include "EditorApp.hpp"
+
 #include "../commands/EntityCommands.hpp"
 #include "../commands/PropertyCommands.hpp"
+#include "EditorApp.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -177,18 +179,19 @@ void ViewportPanel::handleAssetDrop() {
                         e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
 
                         // TODO: Load texture and assign to sprite
-                        spdlog::info("Created sprite from: {}", assetPath);
+                        LIMBO_LOG_EDITOR_INFO("Created sprite from: {}", assetPath);
 
                         m_editor.selectEntity(e);
                     });
                 m_editor.executeCommand(std::move(cmd));
             } else if (ext == ".prefab" || ext == ".json") {
                 // Try to instantiate as prefab
-                spdlog::info("Dropped prefab/scene at ({}, {}): {}", worldPos.x, worldPos.y,
-                             assetPath);
+                LIMBO_LOG_EDITOR_INFO("Dropped prefab/scene at ({}, {}): {}", worldPos.x,
+                                      worldPos.y, assetPath);
                 // TODO: Load and instantiate prefab at position
             } else {
-                spdlog::info("Dropped asset at ({}, {}): {}", worldPos.x, worldPos.y, assetPath);
+                LIMBO_LOG_EDITOR_INFO("Dropped asset at ({}, {}): {}", worldPos.x, worldPos.y,
+                                      assetPath);
             }
         }
         ImGui::EndDragDropTarget();

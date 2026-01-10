@@ -1,7 +1,8 @@
 #include "limbo/platform/Platform.hpp"
 
+#include "limbo/debug/Log.hpp"
+
 #include <GLFW/glfw3.h>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -66,10 +67,10 @@ Result<Window> Window::create(const WindowConfig& config) {
     // Set up resize callback
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow* win, int width, int height) {
         LIMBO_UNUSED(win);
-        spdlog::debug("Window resized to {}x{}", width, height);
+        LIMBO_LOG_CORE_DEBUG("Window resized to {}x{}", width, height);
     });
 
-    spdlog::info("Window created: {} ({}x{})", config.title, config.width, config.height);
+    LIMBO_LOG_CORE_INFO("Window created: {} ({}x{})", config.title, config.width, config.height);
 
     return Window(window, config.width, config.height);
 }
@@ -97,7 +98,7 @@ namespace platform {
 static bool s_initialized = false;
 
 static void glfwErrorCallback(int error, const char* description) {
-    spdlog::error("GLFW Error ({}): {}", error, description);
+    LIMBO_LOG_CORE_ERROR("GLFW Error ({}): {}", error, description);
 }
 
 bool init() {
@@ -108,11 +109,11 @@ bool init() {
     glfwSetErrorCallback(glfwErrorCallback);
 
     if (glfwInit() == GLFW_FALSE) {
-        spdlog::critical("Failed to initialize GLFW");
+        LIMBO_LOG_CORE_CRITICAL("Failed to initialize GLFW");
         return false;
     }
 
-    spdlog::info("GLFW initialized: {}", glfwGetVersionString());
+    LIMBO_LOG_CORE_INFO("GLFW initialized: {}", glfwGetVersionString());
     s_initialized = true;
     return true;
 }
@@ -121,7 +122,7 @@ void shutdown() {
     if (s_initialized) {
         glfwTerminate();
         s_initialized = false;
-        spdlog::info("GLFW terminated");
+        LIMBO_LOG_CORE_INFO("GLFW terminated");
     }
 }
 

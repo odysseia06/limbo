@@ -1,6 +1,6 @@
 #include "limbo/physics/2d/Physics2D.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/debug/Log.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -102,21 +102,21 @@ Physics2D::~Physics2D() {
 
 void Physics2D::init(const glm::vec2& gravity) {
     if (m_world) {
-        spdlog::warn("Physics2D already initialized");
+        LIMBO_LOG_PHYSICS_WARN("Physics2D already initialized");
         return;
     }
 
     b2Vec2 const b2Gravity(gravity.x, gravity.y);
     m_world = new b2World(b2Gravity);
 
-    spdlog::info("Physics2D initialized (gravity: {}, {})", gravity.x, gravity.y);
+    LIMBO_LOG_PHYSICS_INFO("Physics2D initialized (gravity: {}, {})", gravity.x, gravity.y);
 }
 
 void Physics2D::shutdown() {
     if (m_world) {
         delete m_world;
         m_world = nullptr;
-        spdlog::info("Physics2D shutdown");
+        LIMBO_LOG_PHYSICS_INFO("Physics2D shutdown");
     }
 }
 

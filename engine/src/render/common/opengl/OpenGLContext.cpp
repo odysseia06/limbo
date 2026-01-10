@@ -2,10 +2,10 @@
 #include "limbo/render/common/Buffer.hpp"
 #include "limbo/platform/Platform.hpp"
 #include "limbo/core/Base.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -20,14 +20,14 @@ public:
         // Load OpenGL functions via GLAD2
         int const version = gladLoadGL(glfwGetProcAddress);
         if (version == 0) {
-            spdlog::critical("Failed to initialize GLAD");
+            LIMBO_LOG_RENDER_CRITICAL("Failed to initialize GLAD");
             return false;
         }
 
-        spdlog::info("OpenGL Context initialized");
-        spdlog::info("  Vendor:   {}", reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
-        spdlog::info("  Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
-        spdlog::info("  Version:  {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+        LIMBO_LOG_RENDER_INFO("OpenGL Context initialized");
+        LIMBO_LOG_RENDER_INFO("  Vendor:   {}", reinterpret_cast<const char*>(glGetString(GL_VENDOR)));
+        LIMBO_LOG_RENDER_INFO("  Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+        LIMBO_LOG_RENDER_INFO("  Version:  {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
 
 #ifdef LIMBO_DEBUG
         // Enable debug output if available
@@ -38,7 +38,7 @@ public:
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             glDebugMessageCallback(debugCallback, nullptr);
             glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-            spdlog::info("OpenGL debug output enabled");
+            LIMBO_LOG_RENDER_INFO("OpenGL debug output enabled");
         }
 #endif
 
@@ -142,19 +142,19 @@ private:
 
         switch (severity) {
         case GL_DEBUG_SEVERITY_HIGH:
-            spdlog::error("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
+            LIMBO_LOG_RENDER_ERROR("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         case GL_DEBUG_SEVERITY_MEDIUM:
-            spdlog::warn("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
+            LIMBO_LOG_RENDER_WARN("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         case GL_DEBUG_SEVERITY_LOW:
-            spdlog::info("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
+            LIMBO_LOG_RENDER_INFO("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         case GL_DEBUG_SEVERITY_NOTIFICATION:
-            spdlog::debug("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
+            LIMBO_LOG_RENDER_DEBUG("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         default:
-            spdlog::debug("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
+            LIMBO_LOG_RENDER_DEBUG("GL {} [{}] ({}): {}", typeStr, sourceStr, id, message);
             break;
         }
     }

@@ -1,10 +1,10 @@
 #include "limbo/render/common/Shader.hpp"
 #include "limbo/util/FileIO.hpp"
 #include "limbo/core/Assert.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -76,7 +76,7 @@ Result<void, String> Shader::loadFromSource(StringView vertexSource, StringView 
     m_programId = program;
     m_uniformLocationCache.clear();
 
-    spdlog::debug("Shader program created (ID: {})", m_programId);
+    LIMBO_LOG_RENDER_DEBUG("Shader program created (ID: {})", m_programId);
     return {};
 }
 
@@ -114,7 +114,7 @@ i32 Shader::getUniformLocation(StringView name) const {
 
     i32 const location = glGetUniformLocation(m_programId, nameStr.c_str());
     if (location == -1) {
-        spdlog::warn("Uniform '{}' not found in shader", name);
+        LIMBO_LOG_RENDER_WARN("Uniform '{}' not found in shader", name);
     }
 
     m_uniformLocationCache[nameStr] = location;
@@ -177,7 +177,7 @@ Result<u32, String> Shader::compileShader(u32 type, StringView source) {
 void Shader::destroy() {
     if (m_programId != 0) {
         glDeleteProgram(m_programId);
-        spdlog::debug("Shader program destroyed (ID: {})", m_programId);
+        LIMBO_LOG_RENDER_DEBUG("Shader program destroyed (ID: {})", m_programId);
         m_programId = 0;
     }
     m_uniformLocationCache.clear();

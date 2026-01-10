@@ -1,14 +1,14 @@
 #include "limbo/runtime/Application.hpp"
-#include "limbo/core/Time.hpp"
-#include "limbo/core/FrameAllocator.hpp"
-#include "limbo/core/ThreadPool.hpp"
-#include "limbo/core/MainThreadQueue.hpp"
-#include "limbo/assets/AssetLoader.hpp"
-#include "limbo/platform/Input.hpp"
-#include "limbo/input/InputManager.hpp"
-#include "limbo/debug/Profiler.hpp"
 
-#include <spdlog/spdlog.h>
+#include "limbo/assets/AssetLoader.hpp"
+#include "limbo/core/FrameAllocator.hpp"
+#include "limbo/core/MainThreadQueue.hpp"
+#include "limbo/core/ThreadPool.hpp"
+#include "limbo/core/Time.hpp"
+#include "limbo/debug/Log.hpp"
+#include "limbo/debug/Profiler.hpp"
+#include "limbo/input/InputManager.hpp"
+#include "limbo/platform/Input.hpp"
 
 namespace limbo {
 
@@ -26,7 +26,7 @@ Result<void> Application::init(const ApplicationConfig& config) {
     }
     s_instance = this;
 
-    spdlog::info("Initializing application: {}", config.appName);
+    LIMBO_LOG_CORE_INFO("Initializing application: {}", config.appName);
 
     // Initialize platform
     if (!platform::init()) {
@@ -64,14 +64,14 @@ Result<void> Application::init(const ApplicationConfig& config) {
     // Initialize systems after user has added them in onInit
     m_systems.init(m_world);
 
-    spdlog::info("Application initialized successfully");
+    LIMBO_LOG_CORE_INFO("Application initialized successfully");
     return {};
 }
 
 void Application::run() {
     m_running = true;
 
-    spdlog::info("Entering main loop");
+    LIMBO_LOG_CORE_INFO("Entering main loop");
 
     while (m_running && !m_window->shouldClose()) {
         // Begin frame timing and profiling
@@ -139,11 +139,11 @@ void Application::run() {
         profiler::Profiler::endFrame();
     }
 
-    spdlog::info("Exiting main loop");
+    LIMBO_LOG_CORE_INFO("Exiting main loop");
 }
 
 void Application::shutdown() {
-    spdlog::info("Shutting down application");
+    LIMBO_LOG_CORE_INFO("Shutting down application");
 
     // Shutdown systems first
     m_systems.shutdown(m_world);
@@ -174,7 +174,7 @@ void Application::shutdown() {
     m_window.reset();
     platform::shutdown();
 
-    spdlog::info("Application shutdown complete");
+    LIMBO_LOG_CORE_INFO("Application shutdown complete");
 }
 
 void Application::requestExit() {

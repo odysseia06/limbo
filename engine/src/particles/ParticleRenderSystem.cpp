@@ -3,9 +3,9 @@
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
 #include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/debug/Log.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
-#include <spdlog/spdlog.h>
 
 namespace limbo {
 
@@ -13,7 +13,7 @@ ParticleRenderSystem::ParticleRenderSystem(u32 maxParticles) : m_pool(maxParticl
 
 void ParticleRenderSystem::onAttach(World& world) {
     (void)world;
-    spdlog::debug("ParticleRenderSystem attached (max particles: {})", m_pool.getMaxParticles());
+    LIMBO_LOG_RENDER_DEBUG("ParticleRenderSystem attached (max particles: {})", m_pool.getMaxParticles());
 }
 
 void ParticleRenderSystem::update(World& world, f32 deltaTime) {
@@ -58,7 +58,7 @@ void ParticleRenderSystem::update(World& world, f32 deltaTime) {
 void ParticleRenderSystem::onDetach(World& world) {
     (void)world;
     m_pool.clear();
-    spdlog::debug("ParticleRenderSystem detached");
+    LIMBO_LOG_RENDER_DEBUG("ParticleRenderSystem detached");
 }
 
 void ParticleRenderSystem::render() {
