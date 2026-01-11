@@ -273,7 +273,7 @@ The engine keeps a dedicated main thread for all frame-critical work, while back
 - Audio mixing (via miniaudio's internal thread)
 - Processing the `MainThreadQueue` for jobs that must run on the main thread
 
-Worker threads are for background, CPU-bound tasks only. Do not issue OpenGL or ImGui calls from worker threads; instead, enqueue main-thread work via `MainThreadQueue` so the render/UI thread performs those actions.
+Worker threads are for background tasks (including file I/O and data processing). Do not issue OpenGL or ImGui calls from worker threads; instead, enqueue main-thread work via `MainThreadQueue` so the render/UI thread performs those actions.
 
 ## Extending the Engine
 
