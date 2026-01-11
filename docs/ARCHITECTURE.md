@@ -266,11 +266,14 @@ EnTT manages component storage internally with contiguous arrays for cache effic
 
 ## Threading Model
 
-Currently single-threaded. The main thread handles:
+The engine keeps a dedicated main thread for all frame-critical work, while background tasks can be scheduled through the `ThreadPool`. The main thread handles:
 - Window events
 - Game logic
 - Rendering
 - Audio mixing (via miniaudio's internal thread)
+- Processing the `MainThreadQueue` for jobs that must run on the main thread
+
+Worker threads are for background, CPU-bound tasks only. Do not issue OpenGL or ImGui calls from worker threads; instead, enqueue main-thread work via `MainThreadQueue` so the render/UI thread performs those actions.
 
 ## Extending the Engine
 
