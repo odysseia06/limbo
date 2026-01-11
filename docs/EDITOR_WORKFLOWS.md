@@ -8,7 +8,7 @@ This document describes the common workflows and features available in the Limbo
 - [Editor Layout](#editor-layout)
 - [Entity Management](#entity-management)
 - [Transform Gizmos](#transform-gizmos)
-- [Undo/Redo System](#undoredo-system)
+- [Undo/Redo System](#undo-redo-system)
 - [Play Mode](#play-mode)
 - [Asset Browser](#asset-browser)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
