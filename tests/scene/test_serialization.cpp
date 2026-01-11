@@ -139,6 +139,46 @@ TEST_CASE("SceneSerializer handles invalid input", "[scene][serialization]") {
     }
 }
 
+TEST_CASE("SceneSerializer migrates legacy scene defaults", "[scene][serialization]") {
+    limbo::World world;
+    limbo::SceneSerializer serializer(world);
+
+    limbo::String json = R"({
+  "version": "1.0",
+  "entities": [
+    {
+      "name": "LegacyEntity",
+      "components": {
+        "Transform": {}
+      }
+    }
+  ]
+})";
+
+    bool success = serializer.deserialize(json);
+    REQUIRE(success);
+    REQUIRE(world.entityCount() == 1);
+
+    bool found = false;
+    world.each<limbo::NameComponent, limbo::TransformComponent>(
+        [&](auto, const limbo::NameComponent& name, const limbo::TransformComponent& transform) {
+            if (name.name == "LegacyEntity") {
+                found = true;
+                REQUIRE_THAT(transform.position.x, WithinAbs(0.0f, 0.001f));
+                REQUIRE_THAT(transform.position.y, WithinAbs(0.0f, 0.001f));
+                REQUIRE_THAT(transform.position.z, WithinAbs(0.0f, 0.001f));
+                REQUIRE_THAT(transform.rotation.x, WithinAbs(0.0f, 0.001f));
+                REQUIRE_THAT(transform.rotation.y, WithinAbs(0.0f, 0.001f));
+                REQUIRE_THAT(transform.rotation.z, WithinAbs(0.0f, 0.001f));
+                REQUIRE_THAT(transform.scale.x, WithinAbs(1.0f, 0.001f));
+                REQUIRE_THAT(transform.scale.y, WithinAbs(1.0f, 0.001f));
+                REQUIRE_THAT(transform.scale.z, WithinAbs(1.0f, 0.001f));
+            }
+        });
+
+    REQUIRE(found);
+}
+
 // Note: CameraComponent serialization is not yet implemented in SceneSerializer
 // This test will be enabled once CameraComponent serialization is added
 TEST_CASE("SceneSerializer preserves entity with multiple components", "[scene][serialization]") {
