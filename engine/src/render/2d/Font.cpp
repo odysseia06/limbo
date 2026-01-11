@@ -118,8 +118,8 @@ Result<Unique<Font>, String> Font::loadFromFile(const std::filesystem::path& pat
         return unexpected<String>("Failed to create font atlas texture: " + createResult.error());
     }
 
-    LIMBO_LOG_RENDER_DEBUG("Loaded font '{}' with {} glyphs ({}x{} atlas)", path.filename().string(),
-                           charCount, atlasWidth, atlasHeight);
+    LIMBO_LOG_RENDER_DEBUG("Loaded font '{}' with {} glyphs ({}x{} atlas)",
+                           path.filename().string(), charCount, atlasWidth, atlasHeight);
 
     return font;
 }

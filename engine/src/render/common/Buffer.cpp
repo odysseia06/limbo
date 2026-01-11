@@ -44,7 +44,8 @@ void VertexBuffer::create(u32 size) {
     glCreateBuffers(1, &m_bufferId);
     glNamedBufferData(m_bufferId, size, nullptr, GL_DYNAMIC_DRAW);
 
-    LIMBO_LOG_RENDER_DEBUG("VertexBuffer created (ID: {}, size: {} bytes, dynamic)", m_bufferId, size);
+    LIMBO_LOG_RENDER_DEBUG("VertexBuffer created (ID: {}, size: {} bytes, dynamic)", m_bufferId,
+                           size);
 }
 
 void VertexBuffer::setData(const void* data, u32 size) {

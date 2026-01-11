@@ -38,7 +38,8 @@ u32 Tilemap::addLayer(const String& name, i32 zOrder) {
     // Find the index of the layer we just added
     for (u32 i = 0; i < m_layers.size(); ++i) {
         if (m_layers[i].name == name) {
-            LIMBO_LOG_RENDER_DEBUG("Added tilemap layer '{}' at index {} (zOrder: {})", name, i, zOrder);
+            LIMBO_LOG_RENDER_DEBUG("Added tilemap layer '{}' at index {} (zOrder: {})", name, i,
+                                   zOrder);
             return i;
         }
     }

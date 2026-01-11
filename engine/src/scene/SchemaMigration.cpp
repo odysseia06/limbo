@@ -50,7 +50,8 @@ bool SchemaMigration::migrate(json& data, i32 fromVersion, i32 toVersion) {
         data["version"] = version + 1;
     }
 
-    LIMBO_LOG_CORE_INFO("SchemaMigration: Successfully migrated from v{} to v{}", fromVersion, toVersion);
+    LIMBO_LOG_CORE_INFO("SchemaMigration: Successfully migrated from v{} to v{}", fromVersion,
+                        toVersion);
     return true;
 }
 
