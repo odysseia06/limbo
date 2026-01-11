@@ -34,11 +34,11 @@ bool CommandHistory::execute(CommandPtr command) {
         auto& lastCommand = m_commands[static_cast<usize>(m_currentIndex)];
         if (lastCommand->getTypeId() == command->getTypeId() &&
             lastCommand->canMergeWith(*command)) {
-            discardRedoHistory();
             // Execute the new command first
             if (!command->execute()) {
                 return false;
             }
+            discardRedoHistory();
             // Merge into the existing command
             lastCommand->mergeWith(*command);
             notifyHistoryChanged();
