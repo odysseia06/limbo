@@ -18,11 +18,23 @@ bool CommandHistory::execute(CommandPtr command) {
         return false;
     }
 
+    auto discardRedoHistory = [&]() {
+        // Remove any commands after current position (discard redo history)
+        if (m_currentIndex < static_cast<i32>(m_commands.size()) - 1) {
+            m_commands.erase(m_commands.begin() + m_currentIndex + 1, m_commands.end());
+            // If we were past the clean state, we can never get back to it
+            if (m_cleanIndex > m_currentIndex) {
+                m_cleanIndex = -2;  // Impossible to reach
+            }
+        }
+    };
+
     // Try to merge with the last command if merging is enabled
     if (m_mergingEnabled && m_currentIndex >= 0) {
         auto& lastCommand = m_commands[static_cast<usize>(m_currentIndex)];
         if (lastCommand->getTypeId() == command->getTypeId() &&
             lastCommand->canMergeWith(*command)) {
+            discardRedoHistory();
             // Execute the new command first
             if (!command->execute()) {
                 return false;
@@ -40,14 +52,7 @@ bool CommandHistory::execute(CommandPtr command) {
         return false;
     }
 
-    // Remove any commands after current position (discard redo history)
-    if (m_currentIndex < static_cast<i32>(m_commands.size()) - 1) {
-        m_commands.erase(m_commands.begin() + m_currentIndex + 1, m_commands.end());
-        // If we were past the clean state, we can never get back to it
-        if (m_cleanIndex > m_currentIndex) {
-            m_cleanIndex = -2;  // Impossible to reach
-        }
-    }
+    discardRedoHistory();
 
     // Add command to history
     m_commands.push_back(std::move(command));
