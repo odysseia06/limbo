@@ -2,6 +2,7 @@
 
 #include <limbo/Limbo.hpp>
 #include <limbo/scripting/ScriptComponent.hpp>
+#include <limbo/scene/Prefab.hpp>
 
 namespace limbo::editor {
 
@@ -25,11 +26,15 @@ public:
 private:
     void drawComponents();
     void drawAddComponentMenu();
+    void drawPrefabSection();
 
     // Component drawers
     void drawNameComponent(NameComponent& component);
     void drawTransformComponent(TransformComponent& component);
     void drawSpriteRendererComponent(SpriteRendererComponent& component);
+    void drawQuadRendererComponent(QuadRendererComponent& component);
+    void drawCircleRendererComponent(CircleRendererComponent& component);
+    void drawTextRendererComponent(TextRendererComponent& component);
     void drawRigidbody2DComponent(Rigidbody2DComponent& component);
     void drawBoxCollider2DComponent(BoxCollider2DComponent& component);
     void drawCircleCollider2DComponent(CircleCollider2DComponent& component);

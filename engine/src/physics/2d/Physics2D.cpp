@@ -114,9 +114,12 @@ void Physics2D::init(const glm::vec2& gravity) {
 
 void Physics2D::shutdown() {
     if (m_world) {
+        // Only log if logging system is still initialized (may be called during static destruction)
+        if (log::isInitialized()) {
+            LIMBO_LOG_PHYSICS_INFO("Physics2D shutdown");
+        }
         delete m_world;
         m_world = nullptr;
-        LIMBO_LOG_PHYSICS_INFO("Physics2D shutdown");
     }
 }
 

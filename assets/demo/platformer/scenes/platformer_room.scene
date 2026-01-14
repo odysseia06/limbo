@@ -1,0 +1,459 @@
+{
+  "version": 2,
+  "engine": "Limbo",
+  "entities": [
+    {
+      "name": "Main Camera",
+      "components": {
+        "Transform": {
+          "position": [0.0, 2.0, 10.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "Camera": {
+          "projectionType": "orthographic",
+          "fov": 45.0,
+          "orthoSize": 8.0,
+          "nearClip": 0.1,
+          "farClip": 100.0,
+          "primary": true
+        }
+      }
+    },
+    {
+      "name": "Ground",
+      "components": {
+        "Transform": {
+          "position": [0.0, -3.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.4, 0.3, 0.2, 1.0],
+          "size": [20.0, 1.0],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 1.0,
+          "fixedRotation": false,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [10.0, 0.5],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        }
+      }
+    },
+    {
+      "name": "Platform Left",
+      "components": {
+        "Transform": {
+          "position": [-4.0, 0.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.5, 0.4, 0.3, 1.0],
+          "size": [3.0, 0.4],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 1.0,
+          "fixedRotation": false,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [1.5, 0.2],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        }
+      }
+    },
+    {
+      "name": "Platform Right",
+      "components": {
+        "Transform": {
+          "position": [4.0, 1.5, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.5, 0.4, 0.3, 1.0],
+          "size": [3.0, 0.4],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 1.0,
+          "fixedRotation": false,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [1.5, 0.2],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        }
+      }
+    },
+    {
+      "name": "Platform Top",
+      "components": {
+        "Transform": {
+          "position": [0.0, 3.5, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.5, 0.4, 0.3, 1.0],
+          "size": [4.0, 0.4],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 1.0,
+          "fixedRotation": false,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [2.0, 0.2],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        }
+      }
+    },
+    {
+      "name": "Moving Platform",
+      "components": {
+        "Transform": {
+          "position": [-6.0, 2.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.6, 0.6, 0.6, 1.0],
+          "size": [2.5, 0.3],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 1,
+          "gravityScale": 0.0,
+          "fixedRotation": true,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [1.25, 0.15],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.8,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        },
+        "Script": {
+          "scriptPath": "assets/demo/platformer/scripts/moving_platform.lua",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "Player",
+      "components": {
+        "Transform": {
+          "position": [-2.0, -1.5, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.2, 0.4, 0.9, 1.0],
+          "size": [0.5, 1.0],
+          "sortingLayer": 1,
+          "sortingOrder": 10
+        },
+        "Rigidbody2D": {
+          "type": 2,
+          "gravityScale": 1.0,
+          "fixedRotation": true,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [0.25, 0.5],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.3,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        },
+        "Script": {
+          "scriptPath": "assets/demo/platformer/scripts/player_controller.lua",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "Coin 1",
+      "components": {
+        "Transform": {
+          "position": [-4.0, 1.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "CircleRenderer": {
+          "color": [1.0, 0.85, 0.0, 1.0],
+          "radius": 0.25,
+          "segments": 24,
+          "sortingLayer": 1,
+          "sortingOrder": 5
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 0.0,
+          "fixedRotation": true,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "CircleCollider2D": {
+          "radius": 0.25,
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.0,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": true
+        },
+        "Script": {
+          "scriptPath": "assets/demo/platformer/scripts/coin.lua",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "Coin 2",
+      "components": {
+        "Transform": {
+          "position": [4.0, 2.5, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "CircleRenderer": {
+          "color": [1.0, 0.85, 0.0, 1.0],
+          "radius": 0.25,
+          "segments": 24,
+          "sortingLayer": 1,
+          "sortingOrder": 5
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 0.0,
+          "fixedRotation": true,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "CircleCollider2D": {
+          "radius": 0.25,
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.0,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": true
+        },
+        "Script": {
+          "scriptPath": "assets/demo/platformer/scripts/coin.lua",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "Coin 3",
+      "components": {
+        "Transform": {
+          "position": [0.0, 4.5, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "CircleRenderer": {
+          "color": [1.0, 0.85, 0.0, 1.0],
+          "radius": 0.25,
+          "segments": 24,
+          "sortingLayer": 1,
+          "sortingOrder": 5
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 0.0,
+          "fixedRotation": true,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "CircleCollider2D": {
+          "radius": 0.25,
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.0,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": true
+        },
+        "Script": {
+          "scriptPath": "assets/demo/platformer/scripts/coin.lua",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "Enemy",
+      "components": {
+        "Transform": {
+          "position": [5.0, -2.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.9, 0.2, 0.2, 1.0],
+          "size": [0.6, 0.6],
+          "sortingLayer": 1,
+          "sortingOrder": 8
+        },
+        "Rigidbody2D": {
+          "type": 2,
+          "gravityScale": 1.0,
+          "fixedRotation": true,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [0.3, 0.3],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.3,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        },
+        "Script": {
+          "scriptPath": "assets/demo/platformer/scripts/enemy.lua",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "name": "Left Wall",
+      "components": {
+        "Transform": {
+          "position": [-10.5, 2.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.35, 0.25, 0.15, 1.0],
+          "size": [1.0, 12.0],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 1.0,
+          "fixedRotation": false,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [0.5, 6.0],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        }
+      }
+    },
+    {
+      "name": "Right Wall",
+      "components": {
+        "Transform": {
+          "position": [10.5, 2.0, 0.0],
+          "rotation": [0.0, 0.0, 0.0],
+          "scale": [1.0, 1.0, 1.0]
+        },
+        "QuadRenderer": {
+          "color": [0.35, 0.25, 0.15, 1.0],
+          "size": [1.0, 12.0],
+          "sortingLayer": 0,
+          "sortingOrder": 0
+        },
+        "Rigidbody2D": {
+          "type": 0,
+          "gravityScale": 1.0,
+          "fixedRotation": false,
+          "linearVelocity": [0.0, 0.0],
+          "angularVelocity": 0.0,
+          "linearDamping": 0.0,
+          "angularDamping": 0.0
+        },
+        "BoxCollider2D": {
+          "size": [0.5, 6.0],
+          "offset": [0.0, 0.0],
+          "density": 1.0,
+          "friction": 0.5,
+          "restitution": 0.0,
+          "restitutionThreshold": 0.5,
+          "isTrigger": false
+        }
+      }
+    }
+  ]
+}

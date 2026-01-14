@@ -49,6 +49,12 @@ private:
     [[nodiscard]] glm::vec4 getLevelColor(spdlog::level::level_enum level) const;
     [[nodiscard]] const char* getLevelIcon(spdlog::level::level_enum level) const;
 
+    /**
+     * Extract file:line reference from a log message if present
+     * Returns empty string if no file:line pattern found
+     */
+    [[nodiscard]] String extractFileLineRef(const String& message) const;
+
 private:
     EditorApp& m_editor;
     bool m_open = true;
@@ -69,6 +75,9 @@ private:
     // View settings
     bool m_autoScroll = true;
     bool m_scrollToBottom = false;
+
+    // Selection
+    int m_selectedEntry = -1;
 
     // Category filter (empty = show all)
     String m_categoryFilter;

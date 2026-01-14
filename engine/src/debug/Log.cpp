@@ -118,7 +118,9 @@ void clearLogCallbacks() {
 }
 
 void shutdown() {
-    SPDLOG_LOGGER_INFO(s_coreLogger, "Logging system shutdown");
+    if (s_coreLogger) {
+        SPDLOG_LOGGER_INFO(s_coreLogger, "Logging system shutdown");
+    }
 
     s_coreLogger.reset();
     s_renderLogger.reset();
@@ -129,8 +131,13 @@ void shutdown() {
     s_assetLogger.reset();
     s_inputLogger.reset();
     s_ecsLogger.reset();
+    s_callbackSink.reset();
 
     spdlog::shutdown();
+}
+
+bool isInitialized() {
+    return s_coreLogger != nullptr;
 }
 
 spdlog::logger& core() {

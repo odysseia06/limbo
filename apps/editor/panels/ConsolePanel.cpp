@@ -2,6 +2,7 @@
 #include "../EditorApp.hpp"
 
 #include <imgui.h>
+#include <regex>
 
 namespace limbo::editor {
 
@@ -46,7 +47,9 @@ void ConsolePanel::render() {
 
     ImGui::SetNextWindowSize(ImVec2(600, 300), ImGuiCond_FirstUseEver);
 
-    if (ImGui::Begin("Console", &m_open, ImGuiWindowFlags_MenuBar)) {
+    ImGuiWindowFlags const windowFlags =
+        ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    if (ImGui::Begin("Console", &m_open, windowFlags)) {
         drawToolbar();
         drawLogEntries();
     }
@@ -132,22 +135,45 @@ void ConsolePanel::drawLogEntries() {
             usize entryIndex = visibleIndices[static_cast<usize>(row)];
             const auto& entry = m_entries[entryIndex];
 
-            // Level icon and color
+            // Build the full log line for selection/copying
+            const char* icon = getLevelIcon(entry.level);
+            String fullLine = String(icon) + " [" + entry.category + "] " + entry.message;
+
+            // Level color
             glm::vec4 color = getLevelColor(entry.level);
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
 
-            // Format: [LEVEL] [CATEGORY] message
-            const char* icon = getLevelIcon(entry.level);
-            ImGui::TextUnformatted(icon);
-            ImGui::SameLine();
+            // Use Selectable for the entire line - allows clicking to select
+            ImGui::PushID(static_cast<int>(entryIndex));
+            bool isSelected = (m_selectedEntry == static_cast<int>(entryIndex));
+            if (ImGui::Selectable(fullLine.c_str(), isSelected,
+                                  ImGuiSelectableFlags_AllowDoubleClick)) {
+                m_selectedEntry = static_cast<int>(entryIndex);
+            }
 
-            // Category in brackets
-            ImGui::TextDisabled("[%s]", entry.category.c_str());
-            ImGui::SameLine();
+            // Right-click context menu for copying
+            if (ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem("Copy")) {
+                    ImGui::SetClipboardText(fullLine.c_str());
+                }
+                if (ImGui::MenuItem("Copy Message Only")) {
+                    ImGui::SetClipboardText(entry.message.c_str());
+                }
 
-            // Message
-            ImGui::TextUnformatted(entry.message.c_str());
+                // Check for file:line reference in the message
+                String fileLineRef = extractFileLineRef(entry.message);
+                if (!fileLineRef.empty()) {
+                    ImGui::Separator();
+                    String menuLabel = "Copy Location: " + fileLineRef;
+                    if (ImGui::MenuItem(menuLabel.c_str())) {
+                        ImGui::SetClipboardText(fileLineRef.c_str());
+                    }
+                }
 
+                ImGui::EndPopup();
+            }
+
+            ImGui::PopID();
             ImGui::PopStyleColor();
         }
     }
@@ -243,6 +269,30 @@ const char* ConsolePanel::getLevelIcon(spdlog::level::level_enum level) const {
     default:
         return "[ ]";
     }
+}
+
+String ConsolePanel::extractFileLineRef(const String& message) const {
+    // Pattern 1: [string "path"]:line: (Sol2 Lua error format)
+    std::regex const pattern1(R"(\[string \"([^\"]+)\"\]:(\d+):)");
+    std::smatch match;
+    if (std::regex_search(message, match, pattern1)) {
+        return match[1].str() + ":" + match[2].str();
+    }
+
+    // Pattern 2: path:line: (direct file reference)
+    // Match common script extensions (.lua) or paths with slashes
+    std::regex const pattern2(R"(([^\s:]+\.lua):(\d+):)");
+    if (std::regex_search(message, match, pattern2)) {
+        return match[1].str() + ":" + match[2].str();
+    }
+
+    // Pattern 3: Generic path:line (e.g., "at file.lua:15")
+    std::regex const pattern3(R"(at\s+([^\s:]+):(\d+))");
+    if (std::regex_search(message, match, pattern3)) {
+        return match[1].str() + ":" + match[2].str();
+    }
+
+    return "";
 }
 
 }  // namespace limbo::editor

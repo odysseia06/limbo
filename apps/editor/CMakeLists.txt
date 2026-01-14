@@ -4,6 +4,8 @@ add_executable(limbo_editor
     main.cpp
     EditorApp.cpp
     EditorApp.hpp
+    PrefabStage.cpp
+    PrefabStage.hpp
     # Command system
     commands/Command.hpp
     commands/CommandHistory.cpp
@@ -26,6 +28,10 @@ add_executable(limbo_editor
     panels/AssetPipelinePanel.hpp
     panels/ConsolePanel.cpp
     panels/ConsolePanel.hpp
+    panels/PrefabOverridesPanel.cpp
+    panels/PrefabOverridesPanel.hpp
+    panels/ScriptDebugPanel.cpp
+    panels/ScriptDebugPanel.hpp
 )
 
 target_link_libraries(limbo_editor

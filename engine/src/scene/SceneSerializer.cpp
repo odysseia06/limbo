@@ -5,6 +5,7 @@
 #include "limbo/ecs/Entity.hpp"
 #include "limbo/ecs/Hierarchy.hpp"
 #include "limbo/physics/2d/PhysicsComponents2D.hpp"
+#include "limbo/scripting/ScriptComponent.hpp"
 #include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
@@ -234,6 +235,44 @@ String SceneSerializer::serialize() {
             componentsJson["SpriteRenderer"] = spriteJson;
         }
 
+        // QuadRenderer component
+        if (m_world.hasComponent<QuadRendererComponent>(entityId)) {
+            const auto& quad = m_world.getComponent<QuadRendererComponent>(entityId);
+            json quadJson;
+            quadJson["color"] = serializeVec4(quad.color);
+            quadJson["size"] = serializeVec2(quad.size);
+            quadJson["sortingLayer"] = quad.sortingLayer;
+            quadJson["sortingOrder"] = quad.sortingOrder;
+            componentsJson["QuadRenderer"] = quadJson;
+        }
+
+        // CircleRenderer component
+        if (m_world.hasComponent<CircleRendererComponent>(entityId)) {
+            const auto& circle = m_world.getComponent<CircleRendererComponent>(entityId);
+            json circleJson;
+            circleJson["color"] = serializeVec4(circle.color);
+            circleJson["radius"] = circle.radius;
+            circleJson["segments"] = circle.segments;
+            circleJson["sortingLayer"] = circle.sortingLayer;
+            circleJson["sortingOrder"] = circle.sortingOrder;
+            componentsJson["CircleRenderer"] = circleJson;
+        }
+
+        // TextRenderer component
+        if (m_world.hasComponent<TextRendererComponent>(entityId)) {
+            const auto& textComp = m_world.getComponent<TextRendererComponent>(entityId);
+            json textJson;
+            textJson["text"] = textComp.text;
+            if (textComp.fontId.isValid()) {
+                textJson["fontId"] = textComp.fontId.uuid().toString();
+            }
+            textJson["scale"] = textComp.scale;
+            textJson["color"] = serializeVec4(textComp.color);
+            textJson["sortingLayer"] = textComp.sortingLayer;
+            textJson["sortingOrder"] = textComp.sortingOrder;
+            componentsJson["TextRenderer"] = textJson;
+        }
+
         // Camera component
         if (m_world.hasComponent<CameraComponent>(entityId)) {
             const auto& camera = m_world.getComponent<CameraComponent>(entityId);
@@ -263,20 +302,23 @@ String SceneSerializer::serialize() {
             const auto& prefabInstance = m_world.getComponent<PrefabInstanceComponent>(entityId);
             json prefabJson;
             prefabJson["prefabId"] = prefabInstance.prefabId.toString();
-            prefabJson["entityIndex"] = prefabInstance.entityIndex;
+            prefabJson["instanceId"] = prefabInstance.instanceId.toString();
+            prefabJson["localId"] = prefabInstance.localId;
             prefabJson["isRoot"] = prefabInstance.isRoot;
 
-            // Serialize overrides
+            // Serialize overrides with actual values
             if (!prefabInstance.overrides.empty()) {
-                json overridesJson = json::object();
-                for (const auto& [key, value] : prefabInstance.overrides) {
-                    if (value) {
-                        overridesJson[key] = true;
-                    }
+                json overridesArray = json::array();
+                for (const auto& ov : prefabInstance.overrides) {
+                    json ovJson;
+                    ovJson["kind"] = static_cast<int>(ov.kind);
+                    ovJson["targetLocalId"] = ov.targetLocalId;
+                    ovJson["component"] = ov.component;
+                    ovJson["property"] = ov.property;
+                    ovJson["value"] = ov.value;
+                    overridesArray.push_back(ovJson);
                 }
-                if (!overridesJson.empty()) {
-                    prefabJson["overrides"] = overridesJson;
-                }
+                prefabJson["overrides"] = overridesArray;
             }
 
             componentsJson["PrefabInstance"] = prefabJson;
@@ -322,6 +364,15 @@ String SceneSerializer::serialize() {
             circleJson["restitutionThreshold"] = circle.restitutionThreshold;
             circleJson["isTrigger"] = circle.isTrigger;
             componentsJson["CircleCollider2D"] = circleJson;
+        }
+
+        // Script component
+        if (m_world.hasComponent<ScriptComponent>(entityId)) {
+            const auto& script = m_world.getComponent<ScriptComponent>(entityId);
+            json scriptJson;
+            scriptJson["scriptPath"] = script.scriptPath.string();
+            scriptJson["enabled"] = script.enabled;
+            componentsJson["Script"] = scriptJson;
         }
 
         entityJson["components"] = componentsJson;
@@ -448,6 +499,73 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                 }
             }
 
+            // QuadRenderer
+            if (components.contains("QuadRenderer")) {
+                const auto& quadJson = components["QuadRenderer"];
+                auto& quad = m_world.addComponent<QuadRendererComponent>(entityId);
+
+                if (quadJson.contains("color")) {
+                    quad.color = deserializeVec4(quadJson["color"]);
+                }
+                if (quadJson.contains("size")) {
+                    quad.size = deserializeVec2(quadJson["size"]);
+                }
+                if (quadJson.contains("sortingLayer")) {
+                    quad.sortingLayer = quadJson["sortingLayer"].get<i32>();
+                }
+                if (quadJson.contains("sortingOrder")) {
+                    quad.sortingOrder = quadJson["sortingOrder"].get<i32>();
+                }
+            }
+
+            // CircleRenderer
+            if (components.contains("CircleRenderer")) {
+                const auto& circleJson = components["CircleRenderer"];
+                auto& circle = m_world.addComponent<CircleRendererComponent>(entityId);
+
+                if (circleJson.contains("color")) {
+                    circle.color = deserializeVec4(circleJson["color"]);
+                }
+                if (circleJson.contains("radius")) {
+                    circle.radius = circleJson["radius"].get<f32>();
+                }
+                if (circleJson.contains("segments")) {
+                    circle.segments = circleJson["segments"].get<i32>();
+                }
+                if (circleJson.contains("sortingLayer")) {
+                    circle.sortingLayer = circleJson["sortingLayer"].get<i32>();
+                }
+                if (circleJson.contains("sortingOrder")) {
+                    circle.sortingOrder = circleJson["sortingOrder"].get<i32>();
+                }
+            }
+
+            // TextRenderer
+            if (components.contains("TextRenderer")) {
+                const auto& textJson = components["TextRenderer"];
+                auto& textComp = m_world.addComponent<TextRendererComponent>(entityId);
+
+                if (textJson.contains("text")) {
+                    textComp.text = textJson["text"].get<String>();
+                }
+                if (textJson.contains("fontId")) {
+                    String uuidStr = textJson["fontId"].get<String>();
+                    textComp.fontId = AssetId(UUID::fromString(uuidStr));
+                }
+                if (textJson.contains("scale")) {
+                    textComp.scale = textJson["scale"].get<f32>();
+                }
+                if (textJson.contains("color")) {
+                    textComp.color = deserializeVec4(textJson["color"]);
+                }
+                if (textJson.contains("sortingLayer")) {
+                    textComp.sortingLayer = textJson["sortingLayer"].get<i32>();
+                }
+                if (textJson.contains("sortingOrder")) {
+                    textComp.sortingOrder = textJson["sortingOrder"].get<i32>();
+                }
+            }
+
             // Camera
             if (components.contains("Camera")) {
                 const auto& cameraJson = components["Camera"];
@@ -493,16 +611,56 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                     prefabInstance.prefabId =
                         UUID::fromString(prefabJson["prefabId"].get<String>());
                 }
-                if (prefabJson.contains("entityIndex")) {
-                    prefabInstance.entityIndex = prefabJson["entityIndex"].get<i32>();
+                if (prefabJson.contains("instanceId")) {
+                    prefabInstance.instanceId =
+                        UUID::fromString(prefabJson["instanceId"].get<String>());
+                }
+                if (prefabJson.contains("localId")) {
+                    prefabInstance.localId = prefabJson["localId"].get<String>();
                 }
                 if (prefabJson.contains("isRoot")) {
                     prefabInstance.isRoot = prefabJson["isRoot"].get<bool>();
                 }
                 if (prefabJson.contains("overrides")) {
-                    for (auto& [key, value] : prefabJson["overrides"].items()) {
-                        if (value.is_boolean() && value.get<bool>()) {
-                            prefabInstance.overrides[key] = true;
+                    const auto& overridesJson = prefabJson["overrides"];
+                    if (overridesJson.is_array()) {
+                        // New format: array of override objects
+                        for (const auto& ovJson : overridesJson) {
+                            PrefabOverride ov;
+                            if (ovJson.contains("kind")) {
+                                ov.kind =
+                                    static_cast<PrefabOverride::Kind>(ovJson["kind"].get<int>());
+                            }
+                            if (ovJson.contains("targetLocalId")) {
+                                ov.targetLocalId = ovJson["targetLocalId"].get<String>();
+                            }
+                            if (ovJson.contains("component")) {
+                                ov.component = ovJson["component"].get<String>();
+                            }
+                            if (ovJson.contains("property")) {
+                                ov.property = ovJson["property"].get<String>();
+                            }
+                            if (ovJson.contains("value")) {
+                                ov.value = ovJson["value"];
+                            }
+                            prefabInstance.overrides.push_back(ov);
+                        }
+                    } else if (overridesJson.is_object()) {
+                        // Legacy format: object with "Component.property": true
+                        for (auto& [key, value] : overridesJson.items()) {
+                            if (value.is_boolean() && value.get<bool>()) {
+                                // Parse "Component.property" format
+                                auto dotPos = key.find('.');
+                                if (dotPos != String::npos) {
+                                    PrefabOverride ov;
+                                    ov.kind = PrefabOverride::Kind::Property;
+                                    ov.targetLocalId = prefabInstance.localId;
+                                    ov.component = key.substr(0, dotPos);
+                                    ov.property = key.substr(dotPos + 1);
+                                    // Value not available in legacy format
+                                    prefabInstance.overrides.push_back(ov);
+                                }
+                            }
                         }
                     }
                 }
@@ -536,14 +694,10 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                 auto& box = m_world.addComponent<BoxCollider2DComponent>(entityId);
 
                 if (boxJson.contains("size")) {
-                    const auto& sizeJson = boxJson["size"];
-                    box.size.x = sizeJson["x"].get<float>();
-                    box.size.y = sizeJson["y"].get<float>();
+                    box.size = deserializeVec2(boxJson["size"]);
                 }
                 if (boxJson.contains("offset")) {
-                    const auto& offsetJson = boxJson["offset"];
-                    box.offset.x = offsetJson["x"].get<float>();
-                    box.offset.y = offsetJson["y"].get<float>();
+                    box.offset = deserializeVec2(boxJson["offset"]);
                 }
                 if (boxJson.contains("density")) {
                     box.density = boxJson["density"].get<float>();
@@ -568,9 +722,7 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                     circle.radius = circleJson["radius"].get<float>();
                 }
                 if (circleJson.contains("offset")) {
-                    const auto& offsetJson = circleJson["offset"];
-                    circle.offset.x = offsetJson["x"].get<float>();
-                    circle.offset.y = offsetJson["y"].get<float>();
+                    circle.offset = deserializeVec2(circleJson["offset"]);
                 }
                 if (circleJson.contains("density")) {
                     circle.density = circleJson["density"].get<float>();
@@ -583,6 +735,19 @@ bool SceneSerializer::deserialize(const String& jsonStr) {
                 }
                 if (circleJson.contains("isTrigger")) {
                     circle.isTrigger = circleJson["isTrigger"].get<bool>();
+                }
+            }
+
+            // Script component
+            if (components.contains("Script")) {
+                const auto& scriptJson = components["Script"];
+                auto& script = m_world.addComponent<ScriptComponent>(entityId);
+
+                if (scriptJson.contains("scriptPath")) {
+                    script.scriptPath = scriptJson["scriptPath"].get<String>();
+                }
+                if (scriptJson.contains("enabled")) {
+                    script.enabled = scriptJson["enabled"].get<bool>();
                 }
             }
         }

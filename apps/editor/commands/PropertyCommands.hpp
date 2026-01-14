@@ -4,6 +4,7 @@
 
 #include <limbo/ecs/World.hpp>
 #include <limbo/ecs/Components.hpp>
+#include <limbo/physics/2d/PhysicsComponents2D.hpp>
 
 #include <glm/glm.hpp>
 
@@ -286,6 +287,127 @@ private:
     World::EntityId m_entityId;
     CameraComponent m_newValue;
     CameraComponent m_oldValue;
+};
+
+/**
+ * FitColliderToVisualCommand - Resize collider to match visual component size
+ *
+ * Works with:
+ * - QuadRenderer + BoxCollider2D: sets box half-extents to quad size / 2
+ * - CircleRenderer + CircleCollider2D: sets collider radius to circle radius
+ */
+class FitColliderToVisualCommand : public Command {
+public:
+    enum class ColliderType { Box, Circle };
+
+    FitColliderToVisualCommand(World& world, World::EntityId entity, ColliderType type)
+        : m_world(world), m_entityId(entity), m_colliderType(type) {}
+
+    bool execute() override {
+        if (!m_world.isValid(m_entityId)) {
+            return false;
+        }
+
+        if (m_colliderType == ColliderType::Box) {
+            return executeBoxFit();
+        } else {
+            return executeCircleFit();
+        }
+    }
+
+    bool undo() override {
+        if (!m_world.isValid(m_entityId)) {
+            return false;
+        }
+
+        if (m_colliderType == ColliderType::Box) {
+            return undoBoxFit();
+        } else {
+            return undoCircleFit();
+        }
+    }
+
+    [[nodiscard]] String getDescription() const override { return "Fit Collider to Visual"; }
+
+    COMMAND_TYPE_ID()
+
+private:
+    bool executeBoxFit() {
+        if (!m_world.hasComponent<BoxCollider2DComponent>(m_entityId)) {
+            return false;
+        }
+
+        auto& box = m_world.getComponent<BoxCollider2DComponent>(m_entityId);
+        m_oldBoxSize = box.size;
+
+        // Try QuadRenderer first
+        if (m_world.hasComponent<QuadRendererComponent>(m_entityId)) {
+            auto& quad = m_world.getComponent<QuadRendererComponent>(m_entityId);
+            box.size = quad.size * 0.5f;  // Box2D uses half-extents
+            return true;
+        }
+
+        // Try SpriteRenderer (assume 1x1 unit size scaled by transform)
+        if (m_world.hasComponent<SpriteRendererComponent>(m_entityId) &&
+            m_world.hasComponent<TransformComponent>(m_entityId)) {
+            auto& transform = m_world.getComponent<TransformComponent>(m_entityId);
+            box.size = glm::vec2(transform.scale.x, transform.scale.y) * 0.5f;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool undoBoxFit() {
+        if (!m_world.hasComponent<BoxCollider2DComponent>(m_entityId)) {
+            return false;
+        }
+
+        m_world.getComponent<BoxCollider2DComponent>(m_entityId).size = m_oldBoxSize;
+        return true;
+    }
+
+    bool executeCircleFit() {
+        if (!m_world.hasComponent<CircleCollider2DComponent>(m_entityId)) {
+            return false;
+        }
+
+        auto& circle = m_world.getComponent<CircleCollider2DComponent>(m_entityId);
+        m_oldCircleRadius = circle.radius;
+
+        // Try CircleRenderer
+        if (m_world.hasComponent<CircleRendererComponent>(m_entityId)) {
+            auto& circleRenderer = m_world.getComponent<CircleRendererComponent>(m_entityId);
+            circle.radius = circleRenderer.radius;
+            return true;
+        }
+
+        // Try QuadRenderer (use half of smaller dimension)
+        if (m_world.hasComponent<QuadRendererComponent>(m_entityId)) {
+            auto& quad = m_world.getComponent<QuadRendererComponent>(m_entityId);
+            circle.radius = glm::min(quad.size.x, quad.size.y) * 0.5f;
+            return true;
+        }
+
+        return false;
+    }
+
+    bool undoCircleFit() {
+        if (!m_world.hasComponent<CircleCollider2DComponent>(m_entityId)) {
+            return false;
+        }
+
+        m_world.getComponent<CircleCollider2DComponent>(m_entityId).radius = m_oldCircleRadius;
+        return true;
+    }
+
+    World& m_world;
+    World::EntityId m_entityId;
+    ColliderType m_colliderType;
+
+    // Stored old values for undo
+    glm::vec2 m_oldBoxSize{0.5f};
+    f32 m_oldCircleRadius{0.5f};
 };
 
 }  // namespace limbo::editor

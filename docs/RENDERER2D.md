@@ -1,283 +1,394 @@
-# Renderer2D - 2D Rendering System
+# Limbo Engine - 2D Renderer Guide
 
-The Renderer2D is a high-performance batched 2D rendering system designed for sprite-based games. It efficiently renders thousands of quads per frame by batching draw calls and minimizing state changes.
+This document covers the 2D rendering system in Limbo Engine, including the batched renderer, materials, text rendering, and debug visualization.
 
-## Architecture Overview
+## Overview
 
-### Batching System
+The 2D rendering system consists of:
 
-The renderer uses a batched approach to minimize draw calls:
+- **Renderer2D**: Batched sprite and primitive renderer
+- **SpriteMaterial**: Custom shader/uniform system for sprite effects
+- **TextRenderer**: Bitmap font text rendering
+- **GPUTimer**: GPU-side performance measurement
+- **Debug visualization**: Entity bounds, physics shapes, and more
 
-- **Quad Batching**: Up to 10,000 quads per batch
-- **Texture Slots**: Up to 32 textures per batch (GPU-dependent)
-- **Line Batching**: Up to 10,000 lines per batch (separate batch)
+## Renderer2D
 
-When a batch fills up (too many quads or textures), it automatically flushes and starts a new batch.
+The `Renderer2D` class provides efficient batched rendering for 2D games. It automatically batches draw calls to minimize GPU state changes.
 
-### Vertex Format
-
-**QuadVertex:**
-- `position` (vec3) - World position
-- `color` (vec4) - RGBA color
-- `texCoord` (vec2) - Texture coordinates
-- `texIndex` (float) - Texture slot index
-- `tilingFactor` (float) - Texture repeat factor
-
-**LineVertex:**
-- `position` (vec3) - World position
-- `color` (vec4) - RGBA color
-
-## Basic Usage
+### Basic Usage
 
 ```cpp
-#include <limbo/Limbo.hpp>
+#include "limbo/render/2d/Renderer2D.hpp"
+#include "limbo/render/common/Camera.hpp"
 
-// Initialize once at startup
+// Initialize (call once at startup)
 Renderer2D::init();
 
-// Each frame
-void render() {
-    Renderer2D::resetStats();  // Reset per-frame statistics
-    
-    Renderer2D::beginScene(camera);
-    
-    // Draw colored quads
-    Renderer2D::drawQuad({0, 0}, {1, 1}, {1, 0, 0, 1});  // Red quad
-    
-    // Draw textured quads
-    Renderer2D::drawQuad({2, 0}, {1, 1}, texture);
-    
-    // Draw rotated quads
-    Renderer2D::drawRotatedQuad({4, 0}, {1, 1}, glm::radians(45.0f), {0, 1, 0, 1});
-    
-    Renderer2D::endScene();
-}
+// Each frame:
+Renderer2D::resetStats();
+Renderer2D::beginScene(camera);
 
-// Cleanup at shutdown
+// Draw colored quad
+Renderer2D::drawQuad({0, 0}, {1, 1}, {1, 0, 0, 1});  // Red quad at origin
+
+// Draw textured quad
+Renderer2D::drawQuad({2, 0}, {1, 1}, myTexture);
+
+// Draw rotated quad
+Renderer2D::drawRotatedQuad({4, 0}, {1, 1}, glm::radians(45.0f), {0, 1, 0, 1});
+
+// Draw with transform matrix
+glm::mat4 transform = entity.getComponent<TransformComponent>().getMatrix();
+Renderer2D::drawQuad(transform, {1, 1, 1, 1});
+
+Renderer2D::endScene();
+
+// Shutdown (call once at exit)
 Renderer2D::shutdown();
 ```
 
-## API Reference
+### Draw Methods
 
-### Lifecycle
-
+#### Colored Quads
 ```cpp
-static void init();      // Initialize renderer (call once)
-static void shutdown();  // Release resources (call once)
+// 2D position (z = 0)
+drawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
+
+// 3D position
+drawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color);
+
+// With transform matrix
+drawQuad(const glm::mat4& transform, const glm::vec4& color);
 ```
 
-### Scene Management
-
+#### Textured Quads
 ```cpp
-static void beginScene(const OrthographicCamera& camera);  // Start rendering
-static void endScene();                                     // End and flush
-static void flush();                                        // Manual flush
+// Basic textured quad
+drawQuad(const glm::vec3& position, const glm::vec2& size, const Texture2D& texture,
+         f32 tilingFactor = 1.0f, const glm::vec4& tintColor = glm::vec4(1.0f));
+
+// With custom UV coordinates (for sprite sheets)
+drawQuad(const glm::vec3& position, const glm::vec2& size, const Texture2D& texture,
+         const glm::vec2& uvMin, const glm::vec2& uvMax,
+         const glm::vec4& tintColor = glm::vec4(1.0f));
 ```
 
-### Drawing Quads
-
-**Colored Quads:**
+#### Rotated Quads
 ```cpp
-static void drawQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
-static void drawQuad(const glm::vec3& position, const glm::vec2& size, const glm::vec4& color);
-static void drawQuad(const glm::mat4& transform, const glm::vec4& color);
+drawRotatedQuad(const glm::vec3& position, const glm::vec2& size, f32 rotation,
+                const glm::vec4& color);
+
+drawRotatedQuad(const glm::vec3& position, const glm::vec2& size, f32 rotation,
+                const Texture2D& texture, f32 tilingFactor = 1.0f,
+                const glm::vec4& tintColor = glm::vec4(1.0f));
 ```
 
-**Textured Quads:**
+#### Debug Primitives
 ```cpp
-static void drawQuad(const glm::vec2& position, const glm::vec2& size, 
-                     const Texture2D& texture, f32 tilingFactor = 1.0f,
-                     const glm::vec4& tintColor = glm::vec4(1.0f));
+// Lines
+drawLine(const glm::vec2& p0, const glm::vec2& p1, const glm::vec4& color);
 
-// With custom UVs (for sprite sheets)
-static void drawQuad(const glm::vec3& position, const glm::vec2& size,
-                     const Texture2D& texture, const glm::vec2& uvMin, const glm::vec2& uvMax,
-                     const glm::vec4& tintColor = glm::vec4(1.0f));
-```
+// Wireframe rectangle
+drawRect(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
+drawRect(const glm::vec3& position, const glm::vec2& size, f32 rotation, const glm::vec4& color);
 
-**Rotated Quads:**
-```cpp
-static void drawRotatedQuad(const glm::vec2& position, const glm::vec2& size, 
-                            f32 rotation, const glm::vec4& color);
-static void drawRotatedQuad(const glm::vec3& position, const glm::vec2& size,
-                            f32 rotation, const Texture2D& texture, f32 tilingFactor = 1.0f,
-                            const glm::vec4& tintColor = glm::vec4(1.0f));
-```
+// Wireframe circle
+drawCircle(const glm::vec2& center, f32 radius, const glm::vec4& color, i32 segments = 32);
 
-### Debug Primitives
-
-**Lines:**
-```cpp
-static void drawLine(const glm::vec2& p0, const glm::vec2& p1, const glm::vec4& color);
-static void drawLine(const glm::vec3& p0, const glm::vec3& p1, const glm::vec4& color);
-```
-
-**Wireframe Shapes:**
-```cpp
-static void drawRect(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color);
-static void drawRect(const glm::vec2& position, const glm::vec2& size, f32 rotation, const glm::vec4& color);
-static void drawCircle(const glm::vec2& center, f32 radius, const glm::vec4& color, i32 segments = 32);
-```
-
-**Filled Shapes:**
-```cpp
-static void drawFilledCircle(const glm::vec2& center, f32 radius, const glm::vec4& color, i32 segments = 32);
+// Filled circle
+drawFilledCircle(const glm::vec2& center, f32 radius, const glm::vec4& color, i32 segments = 32);
 ```
 
 ### Statistics
 
 ```cpp
-struct Statistics {
-    u32 drawCalls;     // Number of GPU draw calls
-    u32 quadCount;     // Total quads rendered
-    u32 lineCount;     // Total lines rendered
-    u32 textureBinds;  // Total texture binds
-    u32 batchCount;    // Number of batches used
-    
-    u32 vertexCount() const;  // Computed: quadCount * 4 + lineCount * 2
-    u32 indexCount() const;   // Computed: quadCount * 6
-};
+Renderer2D::Statistics stats = Renderer2D::getStats();
 
-static Statistics getStats();
-static void resetStats();  // Call at start of frame
+// Available stats:
+stats.drawCalls;    // Number of GPU draw calls
+stats.quadCount;    // Number of quads rendered
+stats.lineCount;    // Number of lines rendered
+stats.textureBinds; // Number of texture binds
+stats.batchCount;   // Number of batches
+stats.vertexCount(); // Total vertices (computed)
 ```
 
-## Text Rendering
-
-Text rendering is provided through the `Font` and `TextRenderer` classes.
-
-### Loading Fonts
-
-```cpp
-auto fontResult = Font::loadFromFile("assets/fonts/arial.ttf", 32.0f);
-if (fontResult) {
-    m_font = std::move(fontResult.value());
-}
-```
-
-### Drawing Text
-
-```cpp
-// Draw text (must be between beginScene/endScene)
-TextRenderer::drawText("Hello World", {10, 100}, *m_font, 1.0f, {1, 1, 1, 1});
-
-// Measure text bounds
-glm::vec2 size = TextRenderer::measureText("Hello World", *m_font, 1.0f);
-```
-
-### Font Class
-
-```cpp
-class Font {
-    static Result<Unique<Font>, String> loadFromFile(const std::filesystem::path& path,
-                                                     f32 fontSize, i32 firstChar = 32,
-                                                     i32 charCount = 95);
-    
-    const Glyph& getGlyph(char c) const;
-    const Texture2D* getAtlas() const;
-    f32 getFontSize() const;
-    f32 getLineHeight() const;
-    f32 getAscent() const;
-    f32 getDescent() const;
-};
-```
-
-## Sprite Materials
+## SpriteMaterial System
 
 The `SpriteMaterial` class allows custom shaders and uniforms for sprite effects.
 
-### Creating Materials
+### Creating a Material
 
 ```cpp
-// Default material
+#include "limbo/render/2d/SpriteMaterial.hpp"
+
+// Create with default shader
 auto material = SpriteMaterial::create();
 
-// With custom shader
-auto material = SpriteMaterial::create(customShader);
+// Create with custom shader
+auto shader = std::make_shared<Shader>();
+shader->loadFromFile("assets/shaders/2d/outline.vert", "assets/shaders/2d/outline.frag");
+auto material = SpriteMaterial::create(shader);
 ```
 
 ### Setting Properties
 
 ```cpp
-material->setColor({1, 0.5f, 0.5f, 1});  // Tint color
-material->setTexture(texture);
-material->setTilingFactor(2.0f);
+// Common properties
+material->setColor({1, 0, 0, 1});      // Tint color
+material->setTexture(myTexture);        // Main texture
+material->setTilingFactor(2.0f);        // Texture repeat
 
-// Custom uniforms for shader effects
-material->setFloat("u_Time", time);
-material->setVector2("u_Offset", offset);
-material->setVector4("u_OutlineColor", outlineColor);
+// Custom uniforms (for custom shaders)
+material->setFloat("u_OutlineWidth", 2.0f);
+material->setInt("u_UseEffect", 1);
+material->setVector2("u_Offset", {0.5f, 0.5f});
+material->setVector3("u_LightDir", {1, 1, 0});
+material->setVector4("u_EdgeColor", {1, 0.5f, 0, 1});
 ```
 
-### Using Materials
+### Using with ECS
+
+Add a `SpriteMaterialComponent` to entities that need custom materials:
 
 ```cpp
-material->bind();
-// Draw sprites...
-material->unbind();
+#include "limbo/ecs/Components.hpp"
+
+// Create entity with sprite and material
+auto entity = world.createEntity("EffectSprite");
+entity.addComponent<TransformComponent>(glm::vec3(0, 0, 0));
+entity.addComponent<SpriteRendererComponent>(glm::vec4(1, 1, 1, 1));
+entity.addComponent<SpriteMaterialComponent>(material);
 ```
 
-## Sprite Sorting
+**Note**: Entities with `SpriteMaterialComponent` are rendered separately from the batch, which impacts performance. Use sparingly for special effects.
 
-Sprites are sorted by layer and order for correct rendering:
+### SpriteRenderSystem Integration
+
+The `SpriteRenderSystem` automatically handles both batched and material-based sprites:
 
 ```cpp
-struct SpriteRendererComponent {
-    glm::vec4 color;
-    AssetId textureId;
-    i32 sortingLayer = 0;  // Layer takes priority
-    i32 sortingOrder = 0;  // Order within layer
-    glm::vec2 uvMin, uvMax;
-};
+SpriteRenderSystem spriteSystem;
+spriteSystem.setCamera(&camera);
+spriteSystem.setAssetManager(&assetManager);  // Required for texture lookup
+spriteSystem.onAttach(world);
+
+// Each frame:
+spriteSystem.update(world, deltaTime);
 ```
 
-Lower values render first (behind higher values). The `SpriteRenderSystem` automatically sorts sprites before rendering.
+## Example Shaders
 
-## Performance Guidelines
+Limbo includes example shaders in `assets/shaders/2d/`:
 
-1. **Minimize Texture Switches**: Group sprites by texture when possible
-2. **Use Sprite Atlases**: Combine multiple sprites into one texture
-3. **Batch Similar Sprites**: Same texture and similar properties batch together
-4. **Monitor Statistics**: Use `getStats()` to track draw calls and batches
-5. **Reset Stats Each Frame**: Call `resetStats()` at the start of each frame
-
-### Typical Performance
-
-- 10,000+ quads per batch
-- 1-3 draw calls for simple scenes
-- 60 FPS with thousands of sprites on modest hardware
-
-## Debug Rendering Guide
-
-Debug primitives are useful for visualizing game state:
+### Outline Effect (`outline.frag`)
+Renders a colored outline around sprites.
 
 ```cpp
-// Draw entity bounds
-Renderer2D::drawRect(entity.position, entity.size, {0, 1, 0, 1});
+auto material = SpriteMaterial::create(outlineShader);
+material->setFloat("u_OutlineWidth", 2.0f);
+material->setVector4("u_OutlineColor", {1, 0, 0, 1});  // Red outline
+material->setVector2("u_TextureSize", {64, 64});
+```
 
-// Draw physics colliders
-for (auto& collider : colliders) {
-    if (collider.isCircle) {
-        Renderer2D::drawCircle(collider.center, collider.radius, {1, 0, 0, 1});
-    } else {
-        Renderer2D::drawRect(collider.center, collider.size, collider.rotation, {1, 0, 0, 1});
-    }
+### Dissolve Effect (`dissolve.frag`)
+Creates a dissolve/burn effect using procedural noise.
+
+```cpp
+auto material = SpriteMaterial::create(dissolveShader);
+material->setFloat("u_DissolveAmount", 0.5f);  // 0 = visible, 1 = dissolved
+material->setVector4("u_EdgeColor", {1, 0.5f, 0, 1});  // Orange burn edge
+material->setFloat("u_EdgeWidth", 0.1f);
+material->setFloat("u_NoiseScale", 10.0f);
+```
+
+### Flash Effect (`flash.frag`)
+Overlays a solid color for damage/hit effects.
+
+```cpp
+auto material = SpriteMaterial::create(flashShader);
+material->setFloat("u_FlashAmount", 1.0f);  // 0 = normal, 1 = fully white
+material->setVector4("u_FlashColor", {1, 1, 1, 1});  // White flash
+```
+
+## Text Rendering
+
+### Font Loading
+
+```cpp
+#include "limbo/render/2d/Font.hpp"
+#include "limbo/assets/FontAsset.hpp"
+
+// Direct loading
+auto result = Font::loadFromFile("assets/fonts/roboto.ttf", 32);
+if (result.isOk()) {
+    Unique<Font> font = std::move(result.value());
 }
 
-// Draw velocity vectors
-Renderer2D::drawLine(entity.position, entity.position + entity.velocity, {1, 1, 0, 1});
-
-// Draw path waypoints
-for (size_t i = 0; i < path.size() - 1; i++) {
-    Renderer2D::drawLine(path[i], path[i + 1], {0, 0, 1, 1});
-}
+// Via AssetManager
+auto fontAsset = assetManager.load<FontAsset>("fonts/roboto.ttf");
 ```
 
-## Statistics Interpretation
+### Drawing Text
 
-| Metric | Ideal | Action if High |
-|--------|-------|----------------|
-| drawCalls | 1-5 | Reduce texture variety, use atlases |
-| batchCount | 1-2 | Group sprites by texture |
-| textureBinds | < 10 | Use sprite atlases |
-| quadCount | N/A | Cull off-screen sprites |
+```cpp
+#include "limbo/render/2d/TextRenderer.hpp"
+
+// Initialize (call once)
+TextRenderer::init();
+
+// Draw text
+TextRenderer::drawText(*font, "Hello World", {100, 100}, 1.0f, {1, 1, 1, 1});
+
+// Measure text
+glm::vec2 size = TextRenderer::measureText(*font, "Hello World", 1.0f);
+```
+
+### TextRendererComponent
+
+```cpp
+auto entity = world.createEntity("Label");
+entity.addComponent<TransformComponent>(glm::vec3(0, 0, 0));
+entity.addComponent<TextRendererComponent>("Hello World", fontAssetId);
+
+// Configure
+auto& text = entity.getComponent<TextRendererComponent>();
+text.scale = 2.0f;
+text.color = {1, 1, 0, 1};  // Yellow
+text.sortingLayer = 10;     // Render on top
+```
+
+## GPU Profiling
+
+### GPUTimer Usage
+
+```cpp
+#include "limbo/debug/GPUTimer.hpp"
+
+GPUTimer gpuTimer;
+gpuTimer.init();
+
+// Each frame:
+gpuTimer.beginFrame();
+
+gpuTimer.begin("SceneRender");
+// ... render scene ...
+gpuTimer.end();
+
+gpuTimer.begin("PostProcess");
+// ... post processing ...
+gpuTimer.end();
+
+gpuTimer.endFrame();
+
+// Get results (from previous frame due to double-buffering)
+f64 sceneMs = gpuTimer.getTimeMs("SceneRender");
+f64 totalMs = gpuTimer.getTotalTimeMs();
+```
+
+### Scoped Timer
+
+```cpp
+{
+    ScopedGPUTimer timer(gpuTimer, "RenderSection");
+    // ... rendering code ...
+}  // automatically calls end()
+```
+
+### Integration with Stats Panel
+
+```cpp
+#include "limbo/imgui/DebugPanels.hpp"
+
+// Pass GPUTimer to stats panel for display
+DebugPanels::showStatsPanel(deltaTime, &gpuTimer);
+```
+
+## Debug Visualization
+
+### Entity Bounds
+
+```cpp
+#include "limbo/imgui/DebugPanels.hpp"
+
+// Within a Renderer2D scene:
+Renderer2D::beginScene(camera);
+
+// Draw your game objects...
+
+// Draw debug bounds (call after regular rendering)
+DebugPanels::drawEntityBounds(world,
+    true,  // showTransformBounds
+    true,  // showColliderBounds
+    {0, 1, 0, 0.5f},  // boundsColor (green)
+    {0, 0.5f, 1, 0.5f}  // colliderColor (blue)
+);
+
+Renderer2D::endScene();
+```
+
+### Physics Debug
+
+```cpp
+#include "limbo/physics/2d/PhysicsDebug2D.hpp"
+
+PhysicsDebug2D physicsDebug;
+
+// Configure what to show
+physicsDebug.setShowStatic(true);
+physicsDebug.setShowDynamic(true);
+physicsDebug.setShowSensors(true);
+physicsDebug.setShowAABBs(false);
+
+// Within a scene:
+Renderer2D::beginScene(camera);
+physicsDebug.draw(physicsWorld);
+Renderer2D::endScene();
+```
+
+## Performance Tips
+
+1. **Batch similar sprites**: Sprites with the same texture batch together automatically.
+
+2. **Use SpriteMaterial sparingly**: Custom materials break batching. Use them only for special effects.
+
+3. **Sort by layer**: Use `sortingLayer` and `sortingOrder` in sprite components to control draw order without breaking batches.
+
+4. **Sprite sheets**: Use UV coordinates to render from sprite sheets instead of many small textures.
+
+5. **GPU Timer**: Use `GPUTimer` to identify GPU bottlenecks vs CPU bottlenecks.
+
+6. **Statistics**: Monitor `Renderer2D::getStats()` to track batch efficiency:
+   - High `drawCalls` relative to `quadCount` indicates poor batching
+   - High `textureBinds` suggests texture atlas optimization needed
+
+## API Reference
+
+### Key Classes
+
+| Class | Header | Purpose |
+|-------|--------|---------|
+| `Renderer2D` | `limbo/render/2d/Renderer2D.hpp` | Batched 2D rendering |
+| `SpriteMaterial` | `limbo/render/2d/SpriteMaterial.hpp` | Custom sprite effects |
+| `Font` | `limbo/render/2d/Font.hpp` | Font loading |
+| `TextRenderer` | `limbo/render/2d/TextRenderer.hpp` | Text drawing |
+| `GPUTimer` | `limbo/debug/GPUTimer.hpp` | GPU timing |
+| `PhysicsDebug2D` | `limbo/physics/2d/PhysicsDebug2D.hpp` | Physics visualization |
+
+### Key Components
+
+| Component | Purpose |
+|-----------|---------|
+| `SpriteRendererComponent` | Basic sprite with color, texture, sorting |
+| `SpriteMaterialComponent` | Custom material for shader effects |
+| `QuadRendererComponent` | Colored quad primitive |
+| `CircleRendererComponent` | Colored circle primitive |
+| `TextRendererComponent` | Text display |
+
+### Key Systems
+
+| System | Purpose |
+|--------|---------|
+| `SpriteRenderSystem` | Renders all sprites with sorting |
+| `TextRenderSystem` | Renders all text components |

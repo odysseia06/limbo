@@ -1,10 +1,12 @@
 #include "limbo/imgui/DebugPanels.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
+#include "limbo/physics/2d/PhysicsComponents2D.hpp"
 #include "limbo/assets/AssetManager.hpp"
 #include "limbo/render/2d/Renderer2D.hpp"
 #include "limbo/debug/Log.hpp"
 #include "limbo/debug/Profiler.hpp"
+#include "limbo/debug/GPUTimer.hpp"
 #include "limbo/core/FrameAllocator.hpp"
 #include "limbo/core/ThreadPool.hpp"
 
@@ -20,7 +22,7 @@ namespace DebugPanels {
 // Stats Panel
 // ============================================================================
 
-void showStatsPanel(f32 deltaTime) {
+void showStatsPanel(f32 deltaTime, GPUTimer* gpuTimer) {
     ImGui::Begin("Stats");
 
     // FPS and frame time
@@ -46,7 +48,37 @@ void showStatsPanel(f32 deltaTime) {
     }
 
     ImGui::Text("FPS: %.1f", displayFps);
-    ImGui::Text("Frame Time: %.2f ms", displayMs);
+    ImGui::Text("CPU Frame Time: %.2f ms", displayMs);
+
+    // GPU timing (if available)
+    if (gpuTimer != nullptr && gpuTimer->isInitialized()) {
+        f64 const gpuTimeMs = gpuTimer->getTotalTimeMs();
+        ImGui::Text("GPU Frame Time: %.2f ms", gpuTimeMs);
+
+        // Show GPU vs CPU comparison
+        if (gpuTimeMs > 0.0 && displayMs > 0.0f) {
+            bool const gpuBound = gpuTimeMs > static_cast<f64>(displayMs);
+            if (gpuBound) {
+                ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.3f, 1.0f), "GPU Bound");
+            } else {
+                ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.3f, 1.0f), "CPU Bound");
+            }
+        }
+
+        // Show individual GPU timers if there are multiple
+        if (gpuTimer->getTimerCount() > 1) {
+            if (ImGui::TreeNode("GPU Timers")) {
+                for (u32 i = 0; i < gpuTimer->getTimerCount(); ++i) {
+                    const char* name = gpuTimer->getTimerName(i);
+                    f64 const timeMs = gpuTimer->getTimerTimeMs(i);
+                    if (name != nullptr) {
+                        ImGui::Text("  %s: %.2f ms", name, timeMs);
+                    }
+                }
+                ImGui::TreePop();
+            }
+        }
+    }
 
     // FPS graph
     ImGui::PlotLines("##FPS", fpsHistory, 120, fpsIndex, nullptr, 0.0f, 120.0f, ImVec2(0, 50));
@@ -57,9 +89,11 @@ void showStatsPanel(f32 deltaTime) {
     auto stats = Renderer2D::getStats();
     ImGui::Text("Renderer2D:");
     ImGui::Text("  Draw Calls: %u", stats.drawCalls);
+    ImGui::Text("  Batches: %u", stats.batchCount);
     ImGui::Text("  Quads: %u", stats.quadCount);
-    ImGui::Text("  Vertices: %u", stats.quadCount * 4);
-    ImGui::Text("  Indices: %u", stats.quadCount * 6);
+    ImGui::Text("  Lines: %u", stats.lineCount);
+    ImGui::Text("  Vertices: %u", stats.vertexCount());
+    ImGui::Text("  Texture Binds: %u", stats.textureBinds);
 
     ImGui::End();
 }
@@ -652,6 +686,72 @@ void showProfilerPanel() {
     }
 
     ImGui::End();
+}
+
+// ============================================================================
+// Entity Bounds Visualization
+// ============================================================================
+
+void drawEntityBounds(World& world, bool showTransformBounds, bool showColliderBounds,
+                      const glm::vec4& boundsColor, const glm::vec4& colliderColor) {
+    // Draw transform-based bounds for visual components
+    if (showTransformBounds) {
+        // Quad renderers
+        auto quadView = world.view<TransformComponent, QuadRendererComponent>();
+        for (auto entity : quadView) {
+            const auto& transform = quadView.get<TransformComponent>(entity);
+            const auto& quad = quadView.get<QuadRendererComponent>(entity);
+
+            Renderer2D::drawRect(transform.position, quad.size, transform.rotation.z, boundsColor);
+        }
+
+        // Sprite renderers (assume 1x1 size unless we have scale info)
+        auto spriteView = world.view<TransformComponent, SpriteRendererComponent>();
+        for (auto entity : spriteView) {
+            const auto& transform = spriteView.get<TransformComponent>(entity);
+
+            // Use transform scale as sprite size
+            glm::vec2 const size(transform.scale.x, transform.scale.y);
+            Renderer2D::drawRect(transform.position, size, transform.rotation.z, boundsColor);
+        }
+
+        // Circle renderers
+        auto circleView = world.view<TransformComponent, CircleRendererComponent>();
+        for (auto entity : circleView) {
+            const auto& transform = circleView.get<TransformComponent>(entity);
+            const auto& circle = circleView.get<CircleRendererComponent>(entity);
+
+            Renderer2D::drawCircle(glm::vec2(transform.position), circle.radius, boundsColor,
+                                   circle.segments);
+        }
+    }
+
+    // Draw collider bounds
+    if (showColliderBounds) {
+        // Box colliders
+        auto boxView = world.view<TransformComponent, BoxCollider2DComponent>();
+        for (auto entity : boxView) {
+            const auto& transform = boxView.get<TransformComponent>(entity);
+            const auto& collider = boxView.get<BoxCollider2DComponent>(entity);
+
+            glm::vec3 const pos = transform.position + glm::vec3(collider.offset, 0.0f);
+            // BoxCollider2D uses half-extents, so multiply by 2 for full size
+            glm::vec2 const size = collider.size * 2.0f;
+
+            Renderer2D::drawRect(pos, size, transform.rotation.z, colliderColor);
+        }
+
+        // Circle colliders
+        auto circleColliderView = world.view<TransformComponent, CircleCollider2DComponent>();
+        for (auto entity : circleColliderView) {
+            const auto& transform = circleColliderView.get<TransformComponent>(entity);
+            const auto& collider = circleColliderView.get<CircleCollider2DComponent>(entity);
+
+            glm::vec2 const center = glm::vec2(transform.position) + collider.offset;
+
+            Renderer2D::drawCircle(center, collider.radius, colliderColor);
+        }
+    }
 }
 
 }  // namespace DebugPanels

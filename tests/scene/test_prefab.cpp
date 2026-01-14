@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <limbo/ecs/World.hpp>
 #include <limbo/ecs/Entity.hpp>
 #include <limbo/ecs/Components.hpp>
@@ -41,11 +43,11 @@ TEST_CASE("Prefab: Create from hierarchy", "[scene][prefab]") {
     REQUIRE(prefab.getName() == "Parent");
     REQUIRE(prefab.getEntityCount() == 3);
 
-    // Verify hierarchy structure in prefab
+    // Verify hierarchy structure in prefab (using local IDs)
     const auto& entities = prefab.getEntities();
-    REQUIRE(entities[0].parentIndex == -1);  // Parent is root
-    REQUIRE(entities[1].parentIndex == 0);   // Child1's parent is index 0
-    REQUIRE(entities[2].parentIndex == 0);   // Child2's parent is index 0
+    REQUIRE(entities[0].isRoot());  // Parent is root (empty parentLocalId)
+    REQUIRE(entities[1].parentLocalId == entities[0].localId);  // Child1's parent is root
+    REQUIRE(entities[2].parentLocalId == entities[0].localId);  // Child2's parent is root
 }
 
 TEST_CASE("Prefab: Instantiate single entity", "[scene][prefab]") {
@@ -195,16 +197,21 @@ TEST_CASE("Prefab: Override tracking", "[scene][prefab]") {
     auto& transform = instance.getComponent<limbo::TransformComponent>();
     transform.position = glm::vec3(100.0f, 0.0f, 0.0f);
 
-    // Mark as override
+    // Mark as override with actual value
     auto& prefabInstance = instance.getComponent<limbo::PrefabInstanceComponent>();
-    prefabInstance.setOverride("Transform.position");
+    nlohmann::json positionValue = {{"x", 100.0f}, {"y", 0.0f}, {"z", 0.0f}};
+    prefabInstance.setOverride("Transform", "position", positionValue);
 
+    REQUIRE(prefabInstance.hasOverride("Transform", "position"));
+    REQUIRE_FALSE(prefabInstance.hasOverride("Transform", "rotation"));
+
+    // Legacy API still works
     REQUIRE(prefabInstance.hasOverride("Transform.position"));
     REQUIRE_FALSE(prefabInstance.hasOverride("Transform.rotation"));
 
     // Clear override
-    prefabInstance.clearOverride("Transform.position");
-    REQUIRE_FALSE(prefabInstance.hasOverride("Transform.position"));
+    prefabInstance.clearOverride("Transform", "position");
+    REQUIRE_FALSE(prefabInstance.hasOverride("Transform", "position"));
 }
 
 TEST_CASE("Prefab: Multiple instantiation", "[scene][prefab]") {

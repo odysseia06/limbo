@@ -121,6 +121,25 @@ void ScriptSystem::update(World& world, f32 deltaTime) {
                         setScriptError(script, e.what());
                     }
                 }
+
+                // Call onAfterReload if this was a hot-reload (after onStart completes)
+                if (script.pendingAfterReload) {
+                    script.pendingAfterReload = false;
+                    sol::protected_function onAfterReload = script.environment["onAfterReload"];
+                    if (onAfterReload.valid()) {
+                        try {
+                            auto result = onAfterReload(script.reloadData);
+                            if (!result.valid()) {
+                                sol::error const err = result;
+                                setScriptError(script, err.what());
+                            }
+                        } catch (const sol::error& e) {
+                            setScriptError(script, e.what());
+                        }
+                    }
+                    // Clear the reload data
+                    script.reloadData = sol::object();
+                }
             }
 
             // Call onUpdate each frame

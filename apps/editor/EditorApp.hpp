@@ -12,6 +12,9 @@
 #include "panels/AssetBrowserPanel.hpp"
 #include "panels/AssetPipelinePanel.hpp"
 #include "panels/ConsolePanel.hpp"
+#include "panels/PrefabOverridesPanel.hpp"
+#include "panels/ScriptDebugPanel.hpp"
+#include "PrefabStage.hpp"
 
 #include <filesystem>
 
@@ -50,14 +53,12 @@ protected:
 private:
     // UI rendering
     void renderMenuBar();
-    void renderToolbar();
     void renderDockspace();
-    void renderStatusBar();
+    void setupDockingLayout(ImGuiID dockspaceId);
 
     // File operations
     void newScene();
     void openScene();
-    void loadSceneFromPath(const std::filesystem::path& scenePath);
     void saveScene();
     void saveSceneAs();
 
@@ -72,8 +73,17 @@ public:
     void deselectAll();
     [[nodiscard]] Entity getSelectedEntity() const { return m_selectedEntity; }
 
-    // Scene modification tracking
-    void markSceneModified() { m_sceneModified = true; }
+    // Scene/Prefab modification tracking
+    void markSceneModified() {
+        if (m_prefabStage.isOpen()) {
+            m_prefabStage.markModified();
+        } else {
+            m_sceneModified = true;
+        }
+    }
+
+    // Load scene from file path (used by asset browser)
+    void loadSceneFromPath(const std::filesystem::path& scenePath);
 
     // Physics debug visualization
     [[nodiscard]] PhysicsDebug2D& getPhysicsDebug() { return m_physicsDebug; }
@@ -84,6 +94,10 @@ public:
 
     // Command system access
     CommandHistory& getCommandHistory() { return m_commandHistory; }
+
+    // Prefab stage access
+    PrefabStage& getPrefabStage() { return m_prefabStage; }
+    [[nodiscard]] bool isEditingPrefab() const { return m_prefabStage.isOpen(); }
 
     /**
      * Execute a command through the undo/redo system
@@ -102,6 +116,10 @@ public:
      */
     void redo();
 
+    // Asset manager access
+    [[nodiscard]] AssetManager& getAssetManager() { return m_assetManager; }
+    [[nodiscard]] const AssetManager& getAssetManager() const { return m_assetManager; }
+
 private:
     // Rendering
     Unique<RenderContext> m_renderContext;
@@ -118,6 +136,8 @@ private:
     AssetBrowserPanel m_assetBrowserPanel;
     AssetPipelinePanel m_assetPipelinePanel;
     ConsolePanel m_consolePanel;
+    PrefabOverridesPanel m_prefabOverridesPanel;
+    ScriptDebugPanel m_scriptDebugPanel;
 
     // Assets
     AssetManager m_assetManager;
@@ -144,6 +164,9 @@ private:
     // Command history for undo/redo
     CommandHistory m_commandHistory;
 
+    // Prefab editing
+    PrefabStage m_prefabStage;
+
     // Selection
     Entity m_selectedEntity;
 
@@ -153,9 +176,11 @@ private:
     // UI state
     bool m_showDemoWindow = false;
     bool m_showSceneSelectPopup = false;
+    bool m_showProfiler = false;
 
-    // Layout persistence
-    std::string m_layoutIniPath;
+    // Layout state
+    bool m_layoutInitialized = false;
+    ImGuiID m_dockspaceId = 0;
 };
 
 }  // namespace limbo::editor

@@ -129,12 +129,20 @@ void ScriptHotReloadManager::reloadScript(World& world, const std::filesystem::p
         auto& script = world.getComponent<ScriptComponent>(entityId);
 
         // Call onBeforeReload if it exists (script can save state)
+        // The returned data will be passed to onAfterReload after re-initialization
+        script.reloadData = sol::object();
+        script.pendingAfterReload = false;
+
         if (script.environment.valid()) {
             sol::protected_function onBeforeReload = script.environment["onBeforeReload"];
             if (onBeforeReload.valid()) {
                 try {
                     auto result = onBeforeReload();
-                    if (!result.valid()) {
+                    if (result.valid()) {
+                        // Store the returned data for onAfterReload
+                        script.reloadData = result;
+                        script.pendingAfterReload = true;
+                    } else {
                         sol::error const err = result;
                         LIMBO_LOG_SCRIPT_WARN("Script onBeforeReload error: {}", err.what());
                     }

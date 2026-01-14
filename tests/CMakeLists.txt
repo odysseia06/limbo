@@ -14,6 +14,8 @@ set(TEST_SOURCES
     scene/test_prefab.cpp
     render/test_sprite_atlas.cpp
     assets/test_hot_reload.cpp
+    physics/test_physics2d.cpp
+    scripting/test_scripting.cpp
 )
 
 # Create test executable

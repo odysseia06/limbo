@@ -111,6 +111,8 @@ private:
 
     sol::state m_lua;
     bool m_initialized = false;
+    bool m_entityTypesRegistered = false;
+    bool m_physicsTypesRegistered = false;
     String m_lastError;
     World* m_boundWorld = nullptr;
     Physics2D* m_boundPhysics = nullptr;

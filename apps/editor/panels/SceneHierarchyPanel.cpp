@@ -3,8 +3,12 @@
 #include "../commands/EntityCommands.hpp"
 
 #include <limbo/ecs/Hierarchy.hpp>
+#include <limbo/scene/Prefab.hpp>
+#include <limbo/debug/Log.hpp>
 
 #include <imgui.h>
+
+#include <filesystem>
 
 namespace limbo::editor {
 
@@ -19,7 +23,8 @@ void SceneHierarchyPanel::render() {
         return;
     }
 
-    ImGui::Begin("Hierarchy", &m_open);
+    ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Hierarchy", &m_open, windowFlags);
 
     auto& world = m_editor.getWorld();
 
@@ -102,9 +107,33 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
         flags |= ImGuiTreeNodeFlags_Selected;
     }
 
+    // Check if entity is a prefab instance
+    bool isPrefabInstance = world.hasComponent<PrefabInstanceComponent>(entity.id());
+    bool isPrefabRoot = false;
+    if (isPrefabInstance) {
+        isPrefabRoot = world.getComponent<PrefabInstanceComponent>(entity.id()).isRoot;
+    }
+
+    // Build display name with prefab indicator
+    String displayName = nameComp.name;
+    if (isPrefabRoot) {
+        displayName = "[P] " + displayName;
+    } else if (isPrefabInstance) {
+        displayName = "  " + displayName;  // Indent non-root prefab entities
+    }
+
+    // Color prefab instances differently
+    if (isPrefabInstance) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));  // Cyan for prefabs
+    }
+
     bool const opened = ImGui::TreeNodeEx(
         reinterpret_cast<void*>(static_cast<uintptr_t>(static_cast<u32>(entity.id()))), flags, "%s",
-        nameComp.name.c_str());
+        displayName.c_str());
+
+    if (isPrefabInstance) {
+        ImGui::PopStyleColor();
+    }
 
     // Selection
     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
@@ -154,6 +183,25 @@ void SceneHierarchyPanel::drawEntityNode(Entity entity) {
             deleteEntity(entity);
         }
         ImGui::Separator();
+
+        // Prefab options
+        bool isPrefabInstance = world.hasComponent<PrefabInstanceComponent>(entity.id());
+        if (isPrefabInstance) {
+            const auto& prefabInst = world.getComponent<PrefabInstanceComponent>(entity.id());
+            if (prefabInst.isRoot) {
+                if (ImGui::MenuItem("Unpack Prefab")) {
+                    // Remove prefab link, keep current component values
+                    world.removeComponent<PrefabInstanceComponent>(entity.id());
+                    m_editor.markSceneModified();
+                }
+            }
+        } else {
+            if (ImGui::MenuItem("Create Prefab...")) {
+                createPrefabFromEntity(entity);
+            }
+        }
+        ImGui::Separator();
+
         if (Hierarchy::getParent(world, entity.id()) != World::kNullEntity) {
             if (ImGui::MenuItem("Unparent")) {
                 auto cmd =
@@ -207,5 +255,54 @@ void SceneHierarchyPanel::deleteEntity(Entity entity) {
 }
 
 void SceneHierarchyPanel::drawContextMenu() {}
+
+void SceneHierarchyPanel::createPrefabFromEntity(Entity entity) {
+    if (!entity.isValid()) {
+        return;
+    }
+
+    auto& world = m_editor.getWorld();
+
+    // Get entity name for the prefab
+    String prefabName = "NewPrefab";
+    if (entity.hasComponent<NameComponent>()) {
+        prefabName = entity.getComponent<NameComponent>().name;
+    }
+
+    // Create prefab from entity
+    Prefab prefab = Prefab::createFromEntity(world, entity.id());
+    prefab.setName(prefabName);
+
+    // Determine save path - use assets/prefabs/ directory
+    std::filesystem::path prefabsDir = std::filesystem::current_path() / "assets" / "prefabs";
+    if (!std::filesystem::exists(prefabsDir)) {
+        std::filesystem::create_directories(prefabsDir);
+    }
+
+    // Generate unique filename
+    std::filesystem::path prefabPath = prefabsDir / (prefabName + ".prefab");
+    int counter = 1;
+    while (std::filesystem::exists(prefabPath)) {
+        prefabPath = prefabsDir / (prefabName + "_" + std::to_string(counter) + ".prefab");
+        counter++;
+    }
+
+    // Save the prefab
+    if (prefab.saveToFile(prefabPath)) {
+        LIMBO_LOG_EDITOR_INFO("Created prefab: {}", prefabPath.string());
+
+        // Convert the entity to a prefab instance
+        if (!world.hasComponent<PrefabInstanceComponent>(entity.id())) {
+            auto& prefabInst = world.addComponent<PrefabInstanceComponent>(entity.id());
+            prefabInst.prefabId = prefab.getPrefabId();
+            prefabInst.localId = prefab.getRootLocalId();
+            prefabInst.isRoot = true;
+        }
+
+        m_editor.markSceneModified();
+    } else {
+        LIMBO_LOG_EDITOR_ERROR("Failed to save prefab: {}", prefabPath.string());
+    }
+}
 
 }  // namespace limbo::editor
