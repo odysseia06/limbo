@@ -391,6 +391,15 @@ void PhysicsSystem2D::onRigidbodyDestroyed(entt::registry& registry, entt::entit
         rb.runtimeBody = nullptr;
     }
 
+    // Clear fixture references to avoid stale pointers
+    // (colliders may still exist even though rigidbody is being removed)
+    if (registry.all_of<BoxCollider2DComponent>(entity)) {
+        registry.get<BoxCollider2DComponent>(entity).runtimeFixture = nullptr;
+    }
+    if (registry.all_of<CircleCollider2DComponent>(entity)) {
+        registry.get<CircleCollider2DComponent>(entity).runtimeFixture = nullptr;
+    }
+
     // Remove physics state
     m_physicsStates.erase(static_cast<World::EntityId>(entity));
 

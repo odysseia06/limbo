@@ -347,9 +347,17 @@ ImportResult AssetImporterManager::importAsset(AssetId id) {
     ImportResult result = importer->import(context);
 
     if (result.success) {
-        // Update registry
+        // Update registry with source file metadata for change detection
         u64 sourceHash = AssetRegistry::computeFileHash(context.sourcePath);
         m_registry->updateSourceHash(id, sourceHash);
+
+        // Update mod time and size so getAssetsNeedingReimport() works correctly
+        u64 modTime = 0;
+        u64 fileSize = 0;
+        if (AssetRegistry::getFileMetadata(context.sourcePath, modTime, fileSize)) {
+            m_registry->updateSourceMetadata(id, modTime, fileSize);
+        }
+
         m_registry->markAsImported(id, result.importedPath);
     } else {
         LIMBO_LOG_ASSET_ERROR("Failed to import asset {}: {}", metadata->sourcePath, result.error);

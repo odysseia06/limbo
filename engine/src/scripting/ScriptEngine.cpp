@@ -646,19 +646,25 @@ void ScriptEngine::bindPhysicsTypes() {
     sol::state& lua = m_lua;
 
     // RaycastHit2D result type
-    m_lua.new_usertype<RaycastHit2D>(
-        "RaycastHit2D", sol::no_constructor, "hit", &RaycastHit2D::hit, "point",
-        &RaycastHit2D::point, "normal", &RaycastHit2D::normal, "distance", &RaycastHit2D::distance,
-        "getEntity", [world, &lua](const RaycastHit2D& hit) -> sol::object {
-            if (!hit.hit || !hit.body) {
-                return sol::nil;
-            }
-            auto entityId = static_cast<World::EntityId>(hit.body->GetUserData().pointer);
-            if (world->isValid(entityId)) {
-                return sol::make_object(lua, Entity(entityId, world));
-            }
-            return sol::nil;
-        });
+    m_lua.new_usertype<RaycastHit2D>("RaycastHit2D", sol::no_constructor, "hit", &RaycastHit2D::hit,
+                                     "point", &RaycastHit2D::point, "normal", &RaycastHit2D::normal,
+                                     "distance", &RaycastHit2D::distance, "getEntity",
+                                     [world, &lua](const RaycastHit2D& hit) -> sol::object {
+                                         if (!hit.hit || !hit.body) {
+                                             return sol::nil;
+                                         }
+                                         // Entity IDs are stored as (id + 1) to distinguish entity
+                                         // 0 from null
+                                         uintptr_t userData = hit.body->GetUserData().pointer;
+                                         if (userData == 0) {
+                                             return sol::nil;
+                                         }
+                                         auto entityId = static_cast<World::EntityId>(userData - 1);
+                                         if (world->isValid(entityId)) {
+                                             return sol::make_object(lua, Entity(entityId, world));
+                                         }
+                                         return sol::nil;
+                                     });
 
     // Physics table with query functions
     m_lua["Physics"] = m_lua.create_table_with(
@@ -701,7 +707,12 @@ void ScriptEngine::bindPhysicsTypes() {
             auto bodies = physics->overlapCircle(center, radius, triggers);
             size_t index = 1;
             for (b2Body* body : bodies) {
-                auto entityId = static_cast<World::EntityId>(body->GetUserData().pointer);
+                // Entity IDs are stored as (id + 1) to distinguish entity 0 from null
+                uintptr_t userData = body->GetUserData().pointer;
+                if (userData == 0) {
+                    continue;
+                }
+                auto entityId = static_cast<World::EntityId>(userData - 1);
                 if (world->isValid(entityId)) {
                     results[index++] = Entity(entityId, world);
                 }
@@ -719,7 +730,12 @@ void ScriptEngine::bindPhysicsTypes() {
             auto bodies = physics->overlapBox(center, halfExtents, triggers);
             size_t index = 1;
             for (b2Body* body : bodies) {
-                auto entityId = static_cast<World::EntityId>(body->GetUserData().pointer);
+                // Entity IDs are stored as (id + 1) to distinguish entity 0 from null
+                uintptr_t userData = body->GetUserData().pointer;
+                if (userData == 0) {
+                    continue;
+                }
+                auto entityId = static_cast<World::EntityId>(userData - 1);
                 if (world->isValid(entityId)) {
                     results[index++] = Entity(entityId, world);
                 }

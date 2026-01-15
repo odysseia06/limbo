@@ -108,14 +108,17 @@ TEST_CASE("PhysicsSystem2D entity destruction", "[physics][system][lifecycle]") 
         system.update(world, 0.016f);
     }
 
-    SECTION("removing rigidbody component cleans up body") {
+    SECTION("removing rigidbody component cleans up body and fixture pointers") {
         auto entity = world.createEntity();
         auto id = entity.id();
         world.addComponent<TransformComponent>(id);
         world.addComponent<Rigidbody2DComponent>(id, BodyType::Dynamic);
-        world.addComponent<BoxCollider2DComponent>(id);
+        auto& boxCollider = world.addComponent<BoxCollider2DComponent>(id);
 
         system.update(world, 0.016f);
+
+        // Verify fixture was created
+        REQUIRE(boxCollider.runtimeFixture != nullptr);
 
         // Remove the rigidbody component
         world.removeComponent<Rigidbody2DComponent>(id);
@@ -125,6 +128,10 @@ TEST_CASE("PhysicsSystem2D entity destruction", "[physics][system][lifecycle]") 
 
         // Entity should still exist but without physics
         REQUIRE(world.isValid(id));
+
+        // Fixture pointer should be cleared to avoid dangling pointer
+        auto& colliderAfter = world.getComponent<BoxCollider2DComponent>(id);
+        REQUIRE(colliderAfter.runtimeFixture == nullptr);
     }
 
     SECTION("multiple entities destroyed in same frame") {
