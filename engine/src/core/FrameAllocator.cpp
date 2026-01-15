@@ -15,10 +15,14 @@ namespace limbo {
 FrameAllocator::FrameAllocator(usize capacityBytes) : m_capacity(capacityBytes) {
     if (capacityBytes > 0) {
         // Allocate aligned memory (16-byte aligned for SIMD-friendly access)
+        // Round up to multiple of alignment for POSIX aligned_alloc requirement
+        constexpr usize alignment = 16;
+        usize const allocSize = (capacityBytes + alignment - 1) & ~(alignment - 1);
+
 #if defined(_MSC_VER) || defined(__MINGW32__)
-        m_buffer = static_cast<u8*>(_aligned_malloc(capacityBytes, 16));
+        m_buffer = static_cast<u8*>(_aligned_malloc(allocSize, alignment));
 #else
-        m_buffer = static_cast<u8*>(std::aligned_alloc(16, capacityBytes));
+        m_buffer = static_cast<u8*>(std::aligned_alloc(alignment, allocSize));
 #endif
         LIMBO_ASSERT(m_buffer != nullptr, "Failed to allocate frame allocator buffer");
     }
