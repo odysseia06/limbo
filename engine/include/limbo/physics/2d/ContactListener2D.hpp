@@ -74,6 +74,12 @@ public:
     void setCallback(CollisionCallback callback) { m_callback = std::move(callback); }
 
     /**
+     * Set the world reference for entity validation
+     * Events involving destroyed entities will be filtered out
+     */
+    void setWorld(World* world) { m_world = world; }
+
+    /**
      * Dispatch all buffered events and clear the queue
      * MUST be called after b2World::Step() completes
      */
@@ -110,6 +116,7 @@ private:
 
     std::vector<PendingEvent> m_pendingEvents;
     CollisionCallback m_callback;
+    World* m_world = nullptr;
 };
 
 }  // namespace limbo

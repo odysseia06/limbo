@@ -7,6 +7,8 @@
 #include "limbo/physics/2d/Physics2D.hpp"
 #include "limbo/physics/2d/ContactListener2D.hpp"
 
+#include <entt/entt.hpp>
+
 #include <unordered_map>
 
 namespace limbo {
@@ -86,8 +88,12 @@ private:
     void readCurrentStateFromBodies(World& world);
     void interpolateRenderState(World& world, f32 alpha);
 
+    // Signal handler for component destruction
+    void onRigidbodyDestroyed(entt::registry& registry, entt::entity entity);
+
     Physics2D& m_physics;
     ContactListener2D m_contactListener;
+    World* m_world = nullptr;
 
     // Fixed timestep state
     f32 m_fixedTimestep = 1.0f / 60.0f;

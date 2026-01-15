@@ -98,6 +98,15 @@ void ContactListener2D::dispatchEvents() {
     m_pendingEvents.clear();
 
     for (const auto& pending : events) {
+        // Validate that both entities still exist before dispatching
+        // This prevents crashes when entities are destroyed during the physics step
+        if (m_world != nullptr) {
+            if (!m_world->isValid(pending.entityA) || !m_world->isValid(pending.entityB)) {
+                // One or both entities were destroyed, skip this event
+                continue;
+            }
+        }
+
         // Dispatch to entity A (self=A, other=B, normal from A to B)
         {
             CollisionEvent2D eventA;
@@ -110,6 +119,14 @@ void ContactListener2D::dispatchEvents() {
             eventA.isTrigger = pending.isTrigger;
 
             m_callback(eventA, pending.type);
+        }
+
+        // Re-validate entities after dispatching to A (callback might destroy entities)
+        if (m_world != nullptr) {
+            if (!m_world->isValid(pending.entityA) || !m_world->isValid(pending.entityB)) {
+                // Entity was destroyed during callback, skip dispatch to B
+                continue;
+            }
         }
 
         // Dispatch to entity B (self=B, other=A, normal negated to point from B to A)

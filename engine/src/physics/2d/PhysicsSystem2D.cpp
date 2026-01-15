@@ -10,10 +10,21 @@ namespace limbo {
 PhysicsSystem2D::PhysicsSystem2D(Physics2D& physics) : m_physics(physics) {}
 
 void PhysicsSystem2D::onAttach(World& world) {
+    // Store world reference for signal handlers and contact listener
+    m_world = &world;
+
     // Register contact listener with Box2D world
     if (m_physics.isInitialized()) {
         m_physics.getWorld()->SetContactListener(&m_contactListener);
     }
+
+    // Give contact listener access to world for entity validation
+    m_contactListener.setWorld(&world);
+
+    // Subscribe to component destruction signals to clean up physics bodies
+    auto& registry = world.registry();
+    registry.on_destroy<Rigidbody2DComponent>().connect<&PhysicsSystem2D::onRigidbodyDestroyed>(
+        this);
 
     // Create bodies for all existing entities with physics components
     auto view = world.view<TransformComponent, Rigidbody2DComponent>();
@@ -94,10 +105,18 @@ void PhysicsSystem2D::update(World& world, f32 deltaTime) {
 }
 
 void PhysicsSystem2D::onDetach(World& world) {
+    // Disconnect signals
+    auto& registry = world.registry();
+    registry.on_destroy<Rigidbody2DComponent>().disconnect<&PhysicsSystem2D::onRigidbodyDestroyed>(
+        this);
+
     // Clear contact listener
     if (m_physics.isInitialized()) {
         m_physics.getWorld()->SetContactListener(nullptr);
     }
+
+    // Clear world reference from contact listener
+    m_contactListener.setWorld(nullptr);
 
     // Destroy all physics bodies
     auto view = world.view<Rigidbody2DComponent>();
@@ -107,6 +126,9 @@ void PhysicsSystem2D::onDetach(World& world) {
 
     // Clear physics state cache
     m_physicsStates.clear();
+
+    // Clear world reference
+    m_world = nullptr;
 
     LIMBO_LOG_PHYSICS_DEBUG("PhysicsSystem shutdown");
 }
@@ -352,6 +374,27 @@ void PhysicsSystem2D::syncTransformToBody(World& world, World::EntityId entity) 
         rb.runtimeBody->SetTransform(b2Vec2(transform.position.x, transform.position.y),
                                      transform.rotation.z);
     }
+}
+
+void PhysicsSystem2D::onRigidbodyDestroyed(entt::registry& registry, entt::entity entity) {
+    // Called when Rigidbody2DComponent is about to be destroyed
+    // Clean up the Box2D body before the component is removed
+    if (!m_physics.isInitialized()) {
+        return;
+    }
+
+    // Get the component before it's destroyed (it's still valid in on_destroy)
+    auto& rb = registry.get<Rigidbody2DComponent>(entity);
+    if (rb.runtimeBody) {
+        m_physics.getWorld()->DestroyBody(rb.runtimeBody);
+        rb.runtimeBody = nullptr;
+    }
+
+    // Remove physics state
+    m_physicsStates.erase(static_cast<World::EntityId>(entity));
+
+    LIMBO_LOG_PHYSICS_DEBUG("Destroyed physics body for entity {}",
+                            static_cast<u32>(entity));
 }
 
 }  // namespace limbo
