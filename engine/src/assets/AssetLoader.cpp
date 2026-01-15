@@ -58,18 +58,27 @@ usize AssetLoader::processMainThreadWork() {
     while (!uploads.empty()) {
         auto& request = uploads.front();
 
-        // Update asset state
-        request.asset->setState(AssetState::LoadingGPU);
+        bool success = false;
 
-        // Perform GPU upload (the asset's load method handles this)
-        bool success = request.asset->load();
+        if (!request.ioSucceeded) {
+            // IO failed, just invoke callback
+            success = false;
+        } else if (request.asset->supportsAsyncLoad()) {
+            // Asset supports IO/GPU split - do GPU upload only
+            request.asset->setState(AssetState::LoadingGPU);
+            success = request.asset->uploadGPU();
+        } else {
+            // Fallback: asset doesn't support async, do full load on main thread
+            request.asset->setState(AssetState::LoadingGPU);
+            success = request.asset->load();
+        }
 
         if (success) {
             request.asset->setState(AssetState::Loaded);
             LIMBO_LOG_ASSET_DEBUG("AssetLoader: Loaded {}", request.asset->getPath().string());
         } else {
             request.asset->setState(AssetState::Failed);
-            LIMBO_LOG_ASSET_ERROR("AssetLoader: Failed to upload {} to GPU",
+            LIMBO_LOG_ASSET_ERROR("AssetLoader: Failed to load {}",
                                   request.asset->getPath().string());
         }
 
@@ -105,13 +114,37 @@ void AssetLoader::waitAll() {
 }
 
 void AssetLoader::ioWorker(LoadRequest request) {
-    // This runs on a worker thread
-    // Perform file I/O and decoding
+    // This runs on a worker thread - perform file I/O and decoding
     request.asset->setState(AssetState::LoadingIO);
 
-    // Read and decode the asset data
-    // For now, we queue the GPU upload which will call the asset's load() method
-    // In a more complete implementation, we'd have separate loadIO() and uploadGPU() methods
+    bool ioSuccess = false;
+    if (request.asset->supportsAsyncLoad()) {
+        // Use the proper IO/GPU split
+        ioSuccess = request.asset->loadIO();
+    } else {
+        // Fallback: asset doesn't support async, will do full load on main thread
+        ioSuccess = true;
+    }
+
+    if (!ioSuccess) {
+        // IO failed, invoke callback and decrement counter
+        request.asset->setState(AssetState::Failed);
+        if (request.callback) {
+            // Queue callback for main thread
+            GPUUploadRequest failRequest;
+            failRequest.id = request.id;
+            failRequest.asset = request.asset;
+            failRequest.manager = request.manager;
+            failRequest.callback = std::move(request.callback);
+            failRequest.ioSucceeded = false;
+
+            std::lock_guard<std::mutex> lock(s_mutex);
+            s_gpuQueue.push(std::move(failRequest));
+        } else {
+            s_pendingCount.fetch_sub(1);
+        }
+        return;
+    }
 
     // Queue GPU upload for main thread
     GPUUploadRequest gpuRequest;
@@ -119,6 +152,7 @@ void AssetLoader::ioWorker(LoadRequest request) {
     gpuRequest.asset = request.asset;
     gpuRequest.manager = request.manager;
     gpuRequest.callback = std::move(request.callback);
+    gpuRequest.ioSucceeded = true;
 
     {
         std::lock_guard<std::mutex> lock(s_mutex);

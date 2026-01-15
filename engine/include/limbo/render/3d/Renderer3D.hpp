@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Renderer3D.hpp
+ * @brief EXPERIMENTAL: 3D rendering API (not yet implemented)
+ *
+ * This header defines the planned API for 3D rendering. The implementation
+ * does not exist yet - these are placeholder declarations for future work.
+ * Do not use in production code.
+ */
+
 #include "limbo/core/Types.hpp"
 #include "limbo/render/common/Camera.hpp"
 
@@ -14,6 +23,7 @@ class Model;
 
 /**
  * @brief Static 3D renderer for mesh-based rendering
+ * @warning EXPERIMENTAL: Not yet implemented. API subject to change.
  *
  * Renderer3D provides a forward rendering pipeline for 3D meshes with
  * material support and lighting. It parallels Renderer2D for 2D sprites.

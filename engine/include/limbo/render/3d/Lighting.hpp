@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Lighting.hpp
+ * @brief EXPERIMENTAL: 3D lighting API (not yet implemented)
+ *
+ * This header defines the planned API for 3D lighting. The implementation
+ * does not exist yet - these are placeholder declarations for future work.
+ * Do not use in production code.
+ */
+
 #include "limbo/core/Types.hpp"
 #include "limbo/ecs/System.hpp"
 

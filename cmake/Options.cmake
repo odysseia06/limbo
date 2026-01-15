@@ -4,7 +4,7 @@
 option(LIMBO_BUILD_TESTS "Build unit tests" ON)
 option(LIMBO_BUILD_TOOLS "Build asset tools" ON)
 option(LIMBO_BUILD_SANDBOX "Build sandbox application" ON)
-option(LIMBO_BUILD_EDITOR "Build editor application" OFF)
+option(LIMBO_BUILD_EDITOR "Build editor application" ON)
 
 # Development options
 option(LIMBO_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" OFF)
@@ -36,6 +36,7 @@ message(STATUS "=== Limbo Engine Configuration ===")
 message(STATUS "  Build Type:          ${CMAKE_BUILD_TYPE}")
 message(STATUS "  Build Tests:         ${LIMBO_BUILD_TESTS}")
 message(STATUS "  Build Tools:         ${LIMBO_BUILD_TOOLS}")
+message(STATUS "  Build Editor:        ${LIMBO_BUILD_EDITOR}")
 message(STATUS "  Shared Library:      ${LIMBO_SHARED_LIB}")
 message(STATUS "  Warnings as Errors:  ${LIMBO_WARNINGS_AS_ERRORS}")
 message(STATUS "  Address Sanitizer:   ${LIMBO_ENABLE_ASAN}")

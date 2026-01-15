@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Components3D.hpp
+ * @brief EXPERIMENTAL: 3D ECS components (not yet implemented)
+ *
+ * This header defines the planned 3D components. The implementation
+ * does not exist yet - these are placeholder declarations for future work.
+ * Do not use in production code.
+ */
+
 #include "limbo/core/Types.hpp"
 #include "limbo/assets/AssetId.hpp"
 #include "limbo/render/3d/Lighting.hpp"

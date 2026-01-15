@@ -106,7 +106,7 @@ private:
         Shared<Asset> asset;
         AssetManager* manager;
         AssetLoadCallback callback;
-        std::vector<u8> data;  // Decoded data ready for GPU upload
+        bool ioSucceeded = false;  // Whether IO stage succeeded
     };
 
     static void ioWorker(LoadRequest request);

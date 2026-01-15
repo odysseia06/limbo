@@ -37,7 +37,7 @@ if(LIMBO_BUILD_SANDBOX)
     add_subdirectory(apps/sandbox)
 endif()
 
-if(LIMBO_BUILD_TOOLS)
+if(LIMBO_BUILD_EDITOR)
     add_subdirectory(apps/editor)
 endif()
 

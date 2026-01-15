@@ -4,7 +4,6 @@
 #include "limbo/core/Types.hpp"
 #include "limbo/assets/Asset.hpp"
 #include "limbo/assets/AssetId.hpp"
-#include "limbo/assets/FileWatcher.hpp"
 #include "limbo/assets/HotReloadManager.hpp"
 
 #include <filesystem>
@@ -149,12 +148,6 @@ public:
     void pollHotReload();
 
     /**
-     * Get the file watcher (for advanced configuration)
-     * @deprecated Use getHotReloadManager() instead
-     */
-    [[nodiscard]] FileWatcher& getFileWatcher() { return m_fileWatcher; }
-
-    /**
      * Get the hot reload manager
      */
     [[nodiscard]] HotReloadManager& getHotReloadManager() { return m_hotReloadManager; }
@@ -178,7 +171,6 @@ private:
     std::unordered_map<AssetId, Shared<Asset>> m_assets;
     std::unordered_map<std::type_index, std::vector<AssetId>> m_assetsByType;
 
-    FileWatcher m_fileWatcher;
     HotReloadManager m_hotReloadManager;
     bool m_hotReloadEnabled = false;
     ReloadCallback m_reloadCallback;

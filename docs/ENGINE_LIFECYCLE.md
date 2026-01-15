@@ -2,6 +2,71 @@
 
 This document describes the lifecycle of the Limbo Engine, including initialization, the main game loop, and shutdown procedures.
 
+## Subsystem Architecture
+
+### Global Static State
+
+Several engine subsystems use global static state with explicit `init()`/`shutdown()` functions rather than RAII or a central engine context. This pattern provides:
+
+- Simple, predictable initialization order
+- No singleton overhead or lazy initialization
+- Easy access without dependency injection
+
+**Subsystems using this pattern:**
+
+| Subsystem | Init Function | Shutdown Function | Notes |
+|-----------|---------------|-------------------|-------|
+| `ThreadPool` | `init(numThreads)` | `shutdown()` | Worker threads for background jobs |
+| `Renderer2D` | `init()` | `shutdown()` | Batched 2D rendering state |
+| `FrameAllocator` | `init(capacity)` | `shutdown()` | Per-frame bump allocator |
+| `AssetLoader` | `init()` | `shutdown()` | Async asset loading queue |
+| `MainThreadQueue` | (implicit) | (implicit) | GPU work deferral queue |
+
+### Initialization Order Dependencies
+
+**Critical:** Subsystems must be initialized in the correct order:
+
+```cpp
+// 1. ThreadPool must be first (other systems submit work to it)
+ThreadPool::init(std::thread::hardware_concurrency());
+
+// 2. FrameAllocator before rendering (Renderer2D may use it)
+FrameAllocator::init(4 * 1024 * 1024);  // 4MB
+
+// 3. AssetLoader requires ThreadPool
+AssetLoader::init();
+
+// 4. Renderer2D can now be initialized
+Renderer2D::init();
+```
+
+**Shutdown must occur in reverse order:**
+
+```cpp
+Renderer2D::shutdown();
+AssetLoader::shutdown();
+FrameAllocator::shutdown();
+ThreadPool::shutdown();
+```
+
+### Thread Safety
+
+- `ThreadPool`: Thread-safe job submission
+- `MainThreadQueue`: Thread-safe enqueue, main-thread-only dequeue
+- `Renderer2D`: Main thread only
+- `FrameAllocator`: Main thread only (call `reset()` once per frame)
+- `AssetLoader`: Thread-safe `loadAsync()`, main-thread `processMainThreadWork()`
+
+### Future Consideration: Engine Context
+
+The current static state pattern works well but could be refactored into a central `EngineContext` class for:
+
+- Explicit lifetime management
+- Easier testing with multiple contexts
+- Cleaner dependency injection
+
+This would be a non-trivial change affecting most engine code.
+
 ## Overview
 
 The engine follows a structured lifecycle:

@@ -40,10 +40,8 @@ struct LineVertex {
 };
 
 struct Renderer2DData {
-    // Quad batch data
+    // Quad batch data - VAO owns the VBO and IBO
     Unique<VertexArray> quadVAO;
-    Unique<VertexBuffer> quadVBO;
-    Unique<IndexBuffer> quadIBO;
     Unique<Shader> quadShader;
     Unique<Texture2D> whiteTexture;
 
@@ -56,9 +54,8 @@ struct Renderer2DData {
 
     glm::vec4 quadVertexPositions[4];
 
-    // Line batch data
+    // Line batch data - VAO owns the VBO
     Unique<VertexArray> lineVAO;
-    Unique<VertexBuffer> lineVBO;
     Unique<Shader> lineShader;
 
     u32 lineVertexCount = 0;
@@ -76,42 +73,45 @@ void Renderer2D::init() {
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
     s_MaxTextureSlots = std::min(static_cast<u32>(maxTextureUnits), 32u);
 
-    // Create VAO
+    // Create quad VAO with VBO and IBO
     s_data.quadVAO = make_unique<VertexArray>();
     s_data.quadVAO->create();
 
-    // Create VBO with dynamic storage
-    s_data.quadVBO = make_unique<VertexBuffer>();
-    s_data.quadVBO->create(nullptr, MaxVertices * sizeof(QuadVertex));
-    s_data.quadVBO->setLayout({{ShaderDataType::Float3, "a_Position"},
-                               {ShaderDataType::Float4, "a_Color"},
-                               {ShaderDataType::Float2, "a_TexCoord"},
-                               {ShaderDataType::Float, "a_TexIndex"},
-                               {ShaderDataType::Float, "a_TilingFactor"}});
-    s_data.quadVAO->addVertexBuffer(std::move(*s_data.quadVBO));
+    {
+        // Create and move VBO into VAO (VAO takes ownership)
+        VertexBuffer vbo;
+        vbo.create(nullptr, MaxVertices * sizeof(QuadVertex));
+        vbo.setLayout({{ShaderDataType::Float3, "a_Position"},
+                       {ShaderDataType::Float4, "a_Color"},
+                       {ShaderDataType::Float2, "a_TexCoord"},
+                       {ShaderDataType::Float, "a_TexIndex"},
+                       {ShaderDataType::Float, "a_TilingFactor"}});
+        s_data.quadVAO->addVertexBuffer(std::move(vbo));
+    }
 
     // Allocate CPU-side vertex buffer
     s_data.quadVertexBufferBase = new QuadVertex[MaxVertices];
 
-    // Create index buffer
-    auto* indices = new u32[MaxIndices];
-    u32 offset = 0;
-    for (u32 i = 0; i < MaxIndices; i += 6) {
-        indices[i + 0] = offset + 0;
-        indices[i + 1] = offset + 1;
-        indices[i + 2] = offset + 2;
+    {
+        // Create index buffer with quad indices and move into VAO
+        std::vector<u32> indices(MaxIndices);
+        u32 offset = 0;
+        for (u32 i = 0; i < MaxIndices; i += 6) {
+            indices[i + 0] = offset + 0;
+            indices[i + 1] = offset + 1;
+            indices[i + 2] = offset + 2;
 
-        indices[i + 3] = offset + 2;
-        indices[i + 4] = offset + 3;
-        indices[i + 5] = offset + 0;
+            indices[i + 3] = offset + 2;
+            indices[i + 4] = offset + 3;
+            indices[i + 5] = offset + 0;
 
-        offset += 4;
+            offset += 4;
+        }
+
+        IndexBuffer ibo;
+        ibo.create(indices.data(), MaxIndices);
+        s_data.quadVAO->setIndexBuffer(std::move(ibo));
     }
-
-    s_data.quadIBO = make_unique<IndexBuffer>();
-    s_data.quadIBO->create(indices, MaxIndices);
-    s_data.quadVAO->setIndexBuffer(std::move(*s_data.quadIBO));
-    delete[] indices;
 
     // Create white texture (1x1 white pixel)
     s_data.whiteTexture = make_unique<Texture2D>();
@@ -200,16 +200,18 @@ void Renderer2D::init() {
     // Line Rendering Setup
     // ========================================================================
 
-    // Create line VAO
+    // Create line VAO with VBO (VAO takes ownership)
     s_data.lineVAO = make_unique<VertexArray>();
     s_data.lineVAO->create();
 
-    // Create line VBO
-    s_data.lineVBO = make_unique<VertexBuffer>();
-    s_data.lineVBO->create(nullptr, MaxLineVertices * sizeof(LineVertex));
-    s_data.lineVBO->setLayout(
-        {{ShaderDataType::Float3, "a_Position"}, {ShaderDataType::Float4, "a_Color"}});
-    s_data.lineVAO->addVertexBuffer(std::move(*s_data.lineVBO));
+    {
+        // Create and move VBO into VAO (VAO takes ownership)
+        VertexBuffer vbo;
+        vbo.create(nullptr, MaxLineVertices * sizeof(LineVertex));
+        vbo.setLayout(
+            {{ShaderDataType::Float3, "a_Position"}, {ShaderDataType::Float4, "a_Color"}});
+        s_data.lineVAO->addVertexBuffer(std::move(vbo));
+    }
 
     // Allocate CPU-side line vertex buffer
     s_data.lineVertexBufferBase = new LineVertex[MaxLineVertices];
@@ -261,13 +263,10 @@ void Renderer2D::shutdown() {
     s_data.lineVertexBufferPtr = nullptr;
 
     s_data.quadVAO.reset();
-    s_data.quadVBO.reset();
-    s_data.quadIBO.reset();
     s_data.quadShader.reset();
     s_data.whiteTexture.reset();
 
     s_data.lineVAO.reset();
-    s_data.lineVBO.reset();
     s_data.lineShader.reset();
 }
 

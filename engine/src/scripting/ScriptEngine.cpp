@@ -187,121 +187,62 @@ void ScriptEngine::bindMathTypes() {
 
 // Helper to convert string key names to Key enum
 static Key stringToKey(const String& keyName) {
-    // Letters
-    if (keyName == "A" || keyName == "a")
-        return Key::A;
-    if (keyName == "B" || keyName == "b")
-        return Key::B;
-    if (keyName == "C" || keyName == "c")
-        return Key::C;
-    if (keyName == "D" || keyName == "d")
-        return Key::D;
-    if (keyName == "E" || keyName == "e")
-        return Key::E;
-    if (keyName == "F" || keyName == "f")
-        return Key::F;
-    if (keyName == "G" || keyName == "g")
-        return Key::G;
-    if (keyName == "H" || keyName == "h")
-        return Key::H;
-    if (keyName == "I" || keyName == "i")
-        return Key::I;
-    if (keyName == "J" || keyName == "j")
-        return Key::J;
-    if (keyName == "K" || keyName == "k")
-        return Key::K;
-    if (keyName == "L" || keyName == "l")
-        return Key::L;
-    if (keyName == "M" || keyName == "m")
-        return Key::M;
-    if (keyName == "N" || keyName == "n")
-        return Key::N;
-    if (keyName == "O" || keyName == "o")
-        return Key::O;
-    if (keyName == "P" || keyName == "p")
-        return Key::P;
-    if (keyName == "Q" || keyName == "q")
-        return Key::Q;
-    if (keyName == "R" || keyName == "r")
-        return Key::R;
-    if (keyName == "S" || keyName == "s")
-        return Key::S;
-    if (keyName == "T" || keyName == "t")
-        return Key::T;
-    if (keyName == "U" || keyName == "u")
-        return Key::U;
-    if (keyName == "V" || keyName == "v")
-        return Key::V;
-    if (keyName == "W" || keyName == "w")
-        return Key::W;
-    if (keyName == "X" || keyName == "x")
-        return Key::X;
-    if (keyName == "Y" || keyName == "y")
-        return Key::Y;
-    if (keyName == "Z" || keyName == "z")
-        return Key::Z;
+    // Static lookup table with case variations and aliases
+    // clang-format off
+    static const std::unordered_map<String, Key> keyMap = {
+        // Letters (uppercase and lowercase)
+        {"A", Key::A}, {"a", Key::A},
+        {"B", Key::B}, {"b", Key::B},
+        {"C", Key::C}, {"c", Key::C},
+        {"D", Key::D}, {"d", Key::D},
+        {"E", Key::E}, {"e", Key::E},
+        {"F", Key::F}, {"f", Key::F},
+        {"G", Key::G}, {"g", Key::G},
+        {"H", Key::H}, {"h", Key::H},
+        {"I", Key::I}, {"i", Key::I},
+        {"J", Key::J}, {"j", Key::J},
+        {"K", Key::K}, {"k", Key::K},
+        {"L", Key::L}, {"l", Key::L},
+        {"M", Key::M}, {"m", Key::M},
+        {"N", Key::N}, {"n", Key::N},
+        {"O", Key::O}, {"o", Key::O},
+        {"P", Key::P}, {"p", Key::P},
+        {"Q", Key::Q}, {"q", Key::Q},
+        {"R", Key::R}, {"r", Key::R},
+        {"S", Key::S}, {"s", Key::S},
+        {"T", Key::T}, {"t", Key::T},
+        {"U", Key::U}, {"u", Key::U},
+        {"V", Key::V}, {"v", Key::V},
+        {"W", Key::W}, {"w", Key::W},
+        {"X", Key::X}, {"x", Key::X},
+        {"Y", Key::Y}, {"y", Key::Y},
+        {"Z", Key::Z}, {"z", Key::Z},
+        // Numbers
+        {"0", Key::Num0}, {"1", Key::Num1}, {"2", Key::Num2}, {"3", Key::Num3}, {"4", Key::Num4},
+        {"5", Key::Num5}, {"6", Key::Num6}, {"7", Key::Num7}, {"8", Key::Num8}, {"9", Key::Num9},
+        // Special keys (with case variations and aliases)
+        {"Space", Key::Space}, {"space", Key::Space},
+        {"Enter", Key::Enter}, {"enter", Key::Enter}, {"Return", Key::Enter},
+        {"Escape", Key::Escape}, {"escape", Key::Escape}, {"Esc", Key::Escape},
+        {"Tab", Key::Tab}, {"tab", Key::Tab},
+        {"Backspace", Key::Backspace}, {"backspace", Key::Backspace},
+        // Arrow keys
+        {"Up", Key::Up}, {"up", Key::Up},
+        {"Down", Key::Down}, {"down", Key::Down},
+        {"Left", Key::Left}, {"left", Key::Left},
+        {"Right", Key::Right}, {"right", Key::Right},
+        // Modifiers (with aliases)
+        {"Shift", Key::LeftShift}, {"shift", Key::LeftShift}, {"LeftShift", Key::LeftShift},
+        {"RightShift", Key::RightShift},
+        {"Control", Key::LeftControl}, {"control", Key::LeftControl}, {"Ctrl", Key::LeftControl},
+        {"LeftControl", Key::LeftControl}, {"RightControl", Key::RightControl},
+        {"Alt", Key::LeftAlt}, {"alt", Key::LeftAlt}, {"LeftAlt", Key::LeftAlt},
+        {"RightAlt", Key::RightAlt},
+    };
+    // clang-format on
 
-    // Special keys
-    if (keyName == "Space" || keyName == "space")
-        return Key::Space;
-    if (keyName == "Enter" || keyName == "enter" || keyName == "Return")
-        return Key::Enter;
-    if (keyName == "Escape" || keyName == "escape" || keyName == "Esc")
-        return Key::Escape;
-    if (keyName == "Tab" || keyName == "tab")
-        return Key::Tab;
-    if (keyName == "Backspace" || keyName == "backspace")
-        return Key::Backspace;
-
-    // Arrow keys
-    if (keyName == "Up" || keyName == "up")
-        return Key::Up;
-    if (keyName == "Down" || keyName == "down")
-        return Key::Down;
-    if (keyName == "Left" || keyName == "left")
-        return Key::Left;
-    if (keyName == "Right" || keyName == "right")
-        return Key::Right;
-
-    // Modifiers
-    if (keyName == "Shift" || keyName == "shift" || keyName == "LeftShift")
-        return Key::LeftShift;
-    if (keyName == "RightShift")
-        return Key::RightShift;
-    if (keyName == "Control" || keyName == "control" || keyName == "Ctrl" ||
-        keyName == "LeftControl")
-        return Key::LeftControl;
-    if (keyName == "RightControl")
-        return Key::RightControl;
-    if (keyName == "Alt" || keyName == "alt" || keyName == "LeftAlt")
-        return Key::LeftAlt;
-    if (keyName == "RightAlt")
-        return Key::RightAlt;
-
-    // Numbers
-    if (keyName == "0")
-        return Key::Num0;
-    if (keyName == "1")
-        return Key::Num1;
-    if (keyName == "2")
-        return Key::Num2;
-    if (keyName == "3")
-        return Key::Num3;
-    if (keyName == "4")
-        return Key::Num4;
-    if (keyName == "5")
-        return Key::Num5;
-    if (keyName == "6")
-        return Key::Num6;
-    if (keyName == "7")
-        return Key::Num7;
-    if (keyName == "8")
-        return Key::Num8;
-    if (keyName == "9")
-        return Key::Num9;
-
-    // Default - unknown key
-    return Key::Unknown;
+    auto it = keyMap.find(keyName);
+    return (it != keyMap.end()) ? it->second : Key::Unknown;
 }
 
 void ScriptEngine::bindInputTypes() {

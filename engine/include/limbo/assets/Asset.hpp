@@ -103,10 +103,31 @@ protected:
     friend class AssetLoader;
 
     /**
-     * Load the asset from disk
+     * Load the asset from disk (synchronous, does both IO and GPU work)
      * @return true on success, false on failure
      */
     virtual bool load() = 0;
+
+    /**
+     * Load asset data from disk (can run on worker thread)
+     * Default implementation calls load() for backwards compatibility
+     * @return true on success, false on failure
+     */
+    virtual bool loadIO() { return load(); }
+
+    /**
+     * Upload asset data to GPU (must run on main thread)
+     * Called after loadIO() succeeds
+     * Default implementation returns true (no-op for assets without GPU resources)
+     * @return true on success, false on failure
+     */
+    virtual bool uploadGPU() { return true; }
+
+    /**
+     * Check if this asset type supports async loading with IO/GPU split
+     * @return true if loadIO() and uploadGPU() are properly implemented
+     */
+    [[nodiscard]] virtual bool supportsAsyncLoad() const { return false; }
 
     /**
      * Unload the asset and free resources

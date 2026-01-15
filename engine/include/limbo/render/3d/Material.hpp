@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Material.hpp
+ * @brief EXPERIMENTAL: 3D material API (not yet implemented)
+ *
+ * This header defines the planned API for 3D materials. The implementation
+ * does not exist yet - these are placeholder declarations for future work.
+ * Do not use in production code.
+ */
+
 #include "limbo/core/Types.hpp"
 #include "limbo/assets/AssetId.hpp"
 #include "limbo/render/common/Shader.hpp"

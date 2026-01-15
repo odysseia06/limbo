@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Model.hpp
+ * @brief EXPERIMENTAL: 3D model API (not yet implemented)
+ *
+ * This header defines the planned API for 3D models. The implementation
+ * does not exist yet - these are placeholder declarations for future work.
+ * Do not use in production code.
+ */
+
 #include "limbo/core/Types.hpp"
 #include "limbo/render/3d/Mesh.hpp"
 #include "limbo/render/3d/Material.hpp"

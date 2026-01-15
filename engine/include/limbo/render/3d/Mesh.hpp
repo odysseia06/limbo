@@ -1,5 +1,14 @@
 #pragma once
 
+/**
+ * @file Mesh.hpp
+ * @brief EXPERIMENTAL: 3D mesh API (not yet implemented)
+ *
+ * This header defines the planned API for 3D meshes. The implementation
+ * does not exist yet - these are placeholder declarations for future work.
+ * Do not use in production code.
+ */
+
 #include "limbo/core/Types.hpp"
 #include "limbo/render/common/Buffer.hpp"
 

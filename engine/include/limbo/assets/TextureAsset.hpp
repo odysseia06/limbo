@@ -3,6 +3,8 @@
 #include "limbo/assets/Asset.hpp"
 #include "limbo/render/common/Texture.hpp"
 
+#include <vector>
+
 namespace limbo {
 
 /**
@@ -10,6 +12,9 @@ namespace limbo {
  *
  * Wraps a Texture2D and provides asset management features like
  * loading from disk and hot-reloading.
+ *
+ * Supports async loading: loadIO() decodes the image on a worker thread,
+ * uploadGPU() creates the OpenGL texture on the main thread.
  */
 class LIMBO_API TextureAsset : public Asset {
 public:
@@ -41,12 +46,20 @@ public:
 
 protected:
     friend class AssetManager;
+    friend class AssetLoader;
 
     bool load() override;
+    bool loadIO() override;
+    bool uploadGPU() override;
+    [[nodiscard]] bool supportsAsyncLoad() const override { return true; }
     void unload() override;
 
 private:
     Unique<Texture2D> m_texture;
+
+    // Intermediate data for async loading (populated by loadIO, consumed by uploadGPU)
+    std::vector<u8> m_pendingData;
+    TextureSpec m_pendingSpec;
 };
 
 }  // namespace limbo
