@@ -32,21 +32,18 @@ void ContactListener2D::enqueueEvent(b2Contact* contact, CollisionEventType type
     }
 
     // Get entity IDs from body user data
-    void* userDataA = bodyA->GetUserData().pointer
-                          ? reinterpret_cast<void*>(bodyA->GetUserData().pointer)
-                          : nullptr;
-    void* userDataB = bodyB->GetUserData().pointer
-                          ? reinterpret_cast<void*>(bodyB->GetUserData().pointer)
-                          : nullptr;
+    // Entity IDs are stored as (entity + 1) to distinguish entity 0 from "no entity"
+    uintptr_t userDataA = bodyA->GetUserData().pointer;
+    uintptr_t userDataB = bodyB->GetUserData().pointer;
 
-    // Both bodies must have entity associations
-    if (!userDataA || !userDataB) {
+    // Both bodies must have entity associations (0 means no entity)
+    if (userDataA == 0 || userDataB == 0) {
         return;
     }
 
-    // Decode entity IDs (stored as uintptr_t)
-    auto entityA = static_cast<World::EntityId>(bodyA->GetUserData().pointer);
-    auto entityB = static_cast<World::EntityId>(bodyB->GetUserData().pointer);
+    // Decode entity IDs (subtract 1 to get actual entity ID)
+    auto entityA = static_cast<World::EntityId>(userDataA - 1);
+    auto entityB = static_cast<World::EntityId>(userDataB - 1);
 
     // Get fixture indices from fixture user data
     i32 fixtureIndexA = static_cast<i32>(fixtureA->GetUserData().pointer);

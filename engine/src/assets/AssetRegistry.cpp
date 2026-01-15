@@ -484,8 +484,7 @@ bool AssetRegistry::getFileMetadata(const std::filesystem::path& path, u64& outM
     }
 
     outSize = static_cast<u64>(fileSize);
-    outModTime =
-        static_cast<u64>(modTime.time_since_epoch().count());
+    outModTime = static_cast<u64>(modTime.time_since_epoch().count());
 
     return true;
 }

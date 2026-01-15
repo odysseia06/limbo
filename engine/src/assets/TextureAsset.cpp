@@ -55,8 +55,8 @@ bool TextureAsset::loadIO() {
     }
 
     // Store decoded data for GPU upload
-    usize const dataSize = static_cast<usize>(width) * static_cast<usize>(height) *
-                           static_cast<usize>(channels);
+    usize const dataSize =
+        static_cast<usize>(width) * static_cast<usize>(height) * static_cast<usize>(channels);
     m_pendingData.assign(data, data + dataSize);
     stbi_image_free(data);
 

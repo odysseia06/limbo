@@ -6,6 +6,7 @@ set(TEST_SOURCES
     test_main.cpp
     core/test_types.cpp
     core/test_asset_id.cpp
+    core/test_thread_pool.cpp
     util/test_file_io.cpp
     math/test_transform.cpp
     ecs/test_world.cpp
@@ -13,8 +14,10 @@ set(TEST_SOURCES
     scene/test_serialization.cpp
     scene/test_prefab.cpp
     render/test_sprite_atlas.cpp
+    render/test_camera.cpp
     assets/test_hot_reload.cpp
     physics/test_physics2d.cpp
+    physics/test_physics_system.cpp
     scripting/test_scripting.cpp
 )
 

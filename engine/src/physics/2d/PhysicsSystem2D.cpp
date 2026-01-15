@@ -266,7 +266,8 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
     rb.runtimeBody = b2world->CreateBody(&bodyDef);
 
     // Store entity ID in body user data for collision callbacks
-    rb.runtimeBody->GetUserData().pointer = static_cast<uintptr_t>(entity);
+    // Add 1 to distinguish entity 0 from "no entity" (0 pointer)
+    rb.runtimeBody->GetUserData().pointer = static_cast<uintptr_t>(entity) + 1;
 
     // Track fixture index for multiple colliders per entity
     i32 fixtureIndex = 0;
@@ -393,8 +394,7 @@ void PhysicsSystem2D::onRigidbodyDestroyed(entt::registry& registry, entt::entit
     // Remove physics state
     m_physicsStates.erase(static_cast<World::EntityId>(entity));
 
-    LIMBO_LOG_PHYSICS_DEBUG("Destroyed physics body for entity {}",
-                            static_cast<u32>(entity));
+    LIMBO_LOG_PHYSICS_DEBUG("Destroyed physics body for entity {}", static_cast<u32>(entity));
 }
 
 }  // namespace limbo

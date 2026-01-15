@@ -265,3 +265,239 @@ TEST_CASE("HotReloadManager configuration", "[assets][hotreload]") {
         REQUIRE_FALSE(manager.isEnabled());
     }
 }
+
+TEST_CASE("HotReloadManager shared dependency paths", "[assets][hotreload]") {
+    HotReloadManager manager;
+    manager.setEnabled(true);
+    manager.setBatchReloads(false);
+
+    // Simulate multiple assets sharing the same source file
+    // (e.g., multiple sprite regions from same texture atlas)
+    AssetId atlasA = AssetId::generate();
+    AssetId atlasB = AssetId::generate();
+    AssetId spriteA = AssetId::generate();
+    AssetId spriteB = AssetId::generate();
+
+    std::vector<AssetId> reloadedAssets;
+    manager.setReloadHandler([&reloadedAssets](AssetId id) {
+        reloadedAssets.push_back(id);
+        return true;
+    });
+
+    SECTION("multiple assets can watch same path") {
+        // Both atlases watch the same texture file
+        std::filesystem::path sharedPath = "textures/shared_atlas.png";
+
+        manager.watchAsset(atlasA, sharedPath);
+        manager.watchAsset(atlasB, sharedPath);
+
+        REQUIRE(manager.isWatching(atlasA));
+        REQUIRE(manager.isWatching(atlasB));
+    }
+
+    SECTION("both assets reload when shared path changes") {
+        std::filesystem::path sharedPath = "textures/shared_atlas.png";
+
+        manager.watchAsset(atlasA, sharedPath);
+        manager.watchAsset(atlasB, sharedPath);
+
+        // Sprites depend on their respective atlases
+        manager.addDependency(spriteA, atlasA);
+        manager.addDependency(spriteB, atlasB);
+
+        // Trigger reload for atlasA (simulating file change)
+        manager.triggerReload(atlasA);
+
+        // Should reload atlasA and spriteA
+        bool hasAtlasA = false;
+        bool hasSpriteA = false;
+        for (AssetId id : reloadedAssets) {
+            if (id == atlasA)
+                hasAtlasA = true;
+            if (id == spriteA)
+                hasSpriteA = true;
+        }
+        REQUIRE(hasAtlasA);
+        REQUIRE(hasSpriteA);
+    }
+
+    SECTION("unwatching one asset doesn't affect others watching same path") {
+        std::filesystem::path sharedPath = "textures/shared_atlas.png";
+
+        manager.watchAsset(atlasA, sharedPath);
+        manager.watchAsset(atlasB, sharedPath);
+
+        manager.unwatchAsset(atlasA);
+
+        REQUIRE_FALSE(manager.isWatching(atlasA));
+        REQUIRE(manager.isWatching(atlasB));  // Should still be watched
+    }
+}
+
+TEST_CASE("HotReloadManager unwatch behavior", "[assets][hotreload]") {
+    HotReloadManager manager;
+    manager.setEnabled(true);
+    manager.setBatchReloads(false);
+
+    AssetId assetA = AssetId::generate();
+    AssetId assetB = AssetId::generate();
+    AssetId dependentC = AssetId::generate();
+
+    std::vector<AssetId> reloadedAssets;
+    manager.setReloadHandler([&reloadedAssets](AssetId id) {
+        reloadedAssets.push_back(id);
+        return true;
+    });
+
+    SECTION("unwatchAsset removes file watching") {
+        manager.watchAsset(assetA, "path/to/asset.png");
+        REQUIRE(manager.isWatching(assetA));
+
+        manager.unwatchAsset(assetA);
+        REQUIRE_FALSE(manager.isWatching(assetA));
+    }
+
+    SECTION("unwatchAll removes all watches") {
+        manager.watchAsset(assetA, "path/to/asset_a.png");
+        manager.watchAsset(assetB, "path/to/asset_b.png");
+
+        REQUIRE(manager.isWatching(assetA));
+        REQUIRE(manager.isWatching(assetB));
+
+        manager.unwatchAll();
+
+        REQUIRE_FALSE(manager.isWatching(assetA));
+        REQUIRE_FALSE(manager.isWatching(assetB));
+    }
+
+    SECTION("triggerReload on unwatched asset still works") {
+        // Even if not watching file, we can still manually trigger reload
+        manager.triggerReload(assetA);
+
+        REQUIRE(reloadedAssets.size() == 1);
+        REQUIRE(reloadedAssets[0] == assetA);
+    }
+
+    SECTION("unwatching asset preserves its dependencies") {
+        manager.watchAsset(assetA, "path/to/asset.png");
+        manager.addDependency(dependentC, assetA);
+
+        manager.unwatchAsset(assetA);
+
+        // Dependencies should still exist
+        std::vector<AssetId> deps = manager.getDependencies(dependentC);
+        REQUIRE(deps.size() == 1);
+        REQUIRE(deps[0] == assetA);
+    }
+
+    SECTION("clearDependencies removes asset from dependency graph") {
+        manager.addDependency(dependentC, assetA);
+        manager.addDependency(dependentC, assetB);
+
+        REQUIRE(manager.getDependencies(dependentC).size() == 2);
+
+        manager.clearDependencies(dependentC);
+
+        REQUIRE(manager.getDependencies(dependentC).empty());
+        REQUIRE(manager.getDependents(assetA).empty());
+        REQUIRE(manager.getDependents(assetB).empty());
+    }
+}
+
+TEST_CASE("HotReloadManager complex dependency chains", "[assets][hotreload]") {
+    HotReloadManager manager;
+    manager.setEnabled(true);
+    manager.setBatchReloads(true);
+
+    // Create a complex dependency graph:
+    // textureA <- materialA <- modelA
+    // textureA <- materialB <- modelA
+    // textureB <- materialB
+    // (modelA depends on both materialA and materialB, which share textureA)
+
+    AssetId textureA = AssetId::generate();
+    AssetId textureB = AssetId::generate();
+    AssetId materialA = AssetId::generate();
+    AssetId materialB = AssetId::generate();
+    AssetId modelA = AssetId::generate();
+
+    manager.addDependency(materialA, textureA);
+    manager.addDependency(materialB, textureA);
+    manager.addDependency(materialB, textureB);
+    manager.addDependency(modelA, materialA);
+    manager.addDependency(modelA, materialB);
+
+    std::vector<AssetId> reloadedAssets;
+    manager.setReloadHandler([&reloadedAssets](AssetId id) {
+        reloadedAssets.push_back(id);
+        return true;
+    });
+
+    SECTION("changing textureA reloads entire dependent chain") {
+        manager.triggerReload(textureA);
+        manager.processPendingReloads();
+
+        // Should reload: textureA, materialA, materialB, modelA
+        REQUIRE(reloadedAssets.size() == 4);
+
+        // Check all expected assets are present
+        auto contains = [&](AssetId id) {
+            return std::find(reloadedAssets.begin(), reloadedAssets.end(), id) !=
+                   reloadedAssets.end();
+        };
+
+        REQUIRE(contains(textureA));
+        REQUIRE(contains(materialA));
+        REQUIRE(contains(materialB));
+        REQUIRE(contains(modelA));
+    }
+
+    SECTION("changing textureB only reloads partial chain") {
+        manager.triggerReload(textureB);
+        manager.processPendingReloads();
+
+        // Should reload: textureB, materialB, modelA
+        REQUIRE(reloadedAssets.size() == 3);
+
+        auto contains = [&](AssetId id) {
+            return std::find(reloadedAssets.begin(), reloadedAssets.end(), id) !=
+                   reloadedAssets.end();
+        };
+
+        REQUIRE(contains(textureB));
+        REQUIRE(contains(materialB));
+        REQUIRE(contains(modelA));
+        REQUIRE_FALSE(contains(textureA));
+        REQUIRE_FALSE(contains(materialA));
+    }
+
+    SECTION("reloads are deduplicated in dependency order") {
+        manager.triggerReload(textureA);
+        manager.processPendingReloads();
+
+        // Find indices
+        usize textureAIdx = 0;
+        usize materialAIdx = 0;
+        usize materialBIdx = 0;
+        usize modelAIdx = 0;
+
+        for (usize i = 0; i < reloadedAssets.size(); ++i) {
+            if (reloadedAssets[i] == textureA)
+                textureAIdx = i;
+            if (reloadedAssets[i] == materialA)
+                materialAIdx = i;
+            if (reloadedAssets[i] == materialB)
+                materialBIdx = i;
+            if (reloadedAssets[i] == modelA)
+                modelAIdx = i;
+        }
+
+        // textureA should come before materials
+        REQUIRE(textureAIdx < materialAIdx);
+        REQUIRE(textureAIdx < materialBIdx);
+
+        // materials should come before model
+        REQUIRE(materialAIdx < modelAIdx);
+        REQUIRE(materialBIdx < modelAIdx);
+    }
+}

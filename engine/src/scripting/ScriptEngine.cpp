@@ -62,9 +62,8 @@ void ScriptEngine::setSandboxed(bool sandboxed) {
 
     if (!sandboxed) {
         // Enable os and io libraries (dangerous for untrusted scripts!)
-        LIMBO_LOG_SCRIPT_WARN(
-            "ScriptEngine: Sandbox disabled - os/io libraries enabled. "
-            "Only use with trusted scripts!");
+        LIMBO_LOG_SCRIPT_WARN("ScriptEngine: Sandbox disabled - os/io libraries enabled. "
+                              "Only use with trusted scripts!");
         m_lua.open_libraries(sol::lib::os, sol::lib::io);
     } else {
         // Remove os and io libraries by setting them to nil
