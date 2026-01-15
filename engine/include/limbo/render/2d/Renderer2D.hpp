@@ -308,6 +308,21 @@ public:
                                  i32 segments = 32);
 
     // ========================================================================
+    // Immediate Mode Drawing (for custom materials)
+    // ========================================================================
+
+    /**
+     * Draw a quad immediately using the currently bound shader
+     * Does not use batching - draws a single quad with a single draw call
+     * Caller is responsible for binding their shader before calling
+     * @param transform The model transform matrix
+     * @param texture The texture to use (optional, pass nullptr for no texture)
+     * @param color Tint color
+     */
+    static void drawQuadImmediate(const glm::mat4& transform, const Texture2D* texture,
+                                  const glm::vec4& color);
+
+    // ========================================================================
     // Statistics
     // ========================================================================
 

@@ -21,7 +21,7 @@ void SpriteRenderSystem::onAttach(World& world) {
 
     // Also watch TransformComponent since entities need both
     registry.on_construct<TransformComponent>().connect<&SpriteRenderSystem::markDirty>(this);
-    registry.on_destroy<TransformComponent>().disconnect<&SpriteRenderSystem::markDirty>(this);
+    registry.on_destroy<TransformComponent>().connect<&SpriteRenderSystem::markDirty>(this);
 
     // Watch SpriteMaterialComponent for material-based sprites
     registry.on_construct<SpriteMaterialComponent>().connect<&SpriteRenderSystem::markDirty>(this);
@@ -118,26 +118,25 @@ void SpriteRenderSystem::renderMaterialSprite(World& world, World::EntityId enti
     material.setColor(sprite.color);
 
     // Resolve and set texture if present
+    Texture2D* texture = nullptr;
     if (sprite.textureId.isValid() && m_assetManager != nullptr) {
         auto textureAsset = m_assetManager->get<TextureAsset>(sprite.textureId);
         if (textureAsset != nullptr && textureAsset->getTexture() != nullptr) {
-            material.setTexture(textureAsset->getTexture());
+            texture = textureAsset->getTexture();
+            material.setTexture(texture);
         }
     }
 
-    // Bind material and render
+    // Bind material (activates custom shader and sets uniforms)
     material.bind();
 
     glm::mat4 const transformMatrix = transform.getMatrix();
 
-    // For custom materials, we draw a simple quad
-    // The material's shader handles all the rendering
-    Renderer2D::drawQuad(transformMatrix, sprite.color);
+    // Use immediate draw path so the material's shader is actually used
+    // (batched drawQuad would use the built-in batch shader on flush)
+    Renderer2D::drawQuadImmediate(transformMatrix, texture, sprite.color);
 
     material.unbind();
-
-    // Force a new batch after custom material
-    Renderer2D::flush();
 }
 
 void SpriteRenderSystem::update(World& world, f32 /*deltaTime*/) {
@@ -156,8 +155,9 @@ void SpriteRenderSystem::update(World& world, f32 /*deltaTime*/) {
     // Render all sprites using cached sorted order
     for (auto entity : m_sortedEntities) {
         // Validate entity still exists and has required components
-        if (!world.isValid(entity) || !world.hasComponent<SpriteRendererComponent>(entity)) {
-            // Entity was removed but we haven't rebuilt yet - mark dirty for next frame
+        if (!world.isValid(entity) || !world.hasComponent<SpriteRendererComponent>(entity) ||
+            !world.hasComponent<TransformComponent>(entity)) {
+            // Entity was removed or lost required component - mark dirty for next frame
             m_sortDirty = true;
             continue;
         }
