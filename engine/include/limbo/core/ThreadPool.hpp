@@ -56,12 +56,18 @@ public:
      * Submit a job that returns a value
      * @tparam T Return type
      * @param job The function to execute
-     * @return Future containing the result
+     * @return Future containing the result (exception set if pool not initialized)
      */
     template <typename T>
     static std::future<T> submit(std::function<T()> job) {
         auto promise = std::make_shared<std::promise<T>>();
         auto future = promise->get_future();
+
+        if (!s_running.load()) {
+            promise->set_exception(
+                std::make_exception_ptr(std::runtime_error("ThreadPool not initialized")));
+            return future;
+        }
 
         submit([promise = std::move(promise), job = std::move(job)]() {
             try {

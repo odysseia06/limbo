@@ -134,6 +134,14 @@ AssetId AssetLoader::loadAsync(AssetManager& manager, const std::filesystem::pat
     String const pathStr = path.generic_string();
     AssetId const id(pathStr);
 
+    // Check if loader and thread pool are initialized
+    if (!isInitialized() || !ThreadPool::isInitialized()) {
+        if (callback) {
+            callback(id, false);
+        }
+        return id;
+    }
+
     // Check if already loaded or loading
     auto existing = manager.get<T>(path);
     if (existing) {
@@ -149,6 +157,9 @@ AssetId AssetLoader::loadAsync(AssetManager& manager, const std::filesystem::pat
     asset->setId(id);
     asset->setPath(manager.resolvePath(path));
     asset->setState(AssetState::Queued);
+
+    // Register with manager immediately so get() can find it
+    manager.registerAsset<T>(asset);
 
     // Increment pending count
     s_pendingCount.fetch_add(1);

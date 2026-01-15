@@ -116,6 +116,16 @@ public:
     [[nodiscard]] usize assetCount() const { return m_assets.size(); }
 
     /**
+     * Register an asset for async loading
+     * The asset will be stored with its current state (typically Queued)
+     * Used internally by AssetLoader
+     * @tparam T Asset type (must derive from Asset)
+     * @param asset The asset to register
+     */
+    template <typename T>
+    void registerAsset(Shared<T> asset);
+
+    /**
      * Resolve a relative path to an absolute path using the asset root
      */
     [[nodiscard]] std::filesystem::path
@@ -247,6 +257,22 @@ void AssetManager::unloadAll() {
     }
 
     m_assetsByType.erase(typeIt);
+}
+
+template <typename T>
+void AssetManager::registerAsset(Shared<T> asset) {
+    static_assert(std::is_base_of_v<Asset, T>, "T must derive from Asset");
+
+    AssetId const id = asset->getId();
+
+    // Don't overwrite existing assets
+    if (m_assets.find(id) != m_assets.end()) {
+        return;
+    }
+
+    // Cache it
+    m_assets[id] = asset;
+    m_assetsByType[std::type_index(typeid(T))].push_back(id);
 }
 
 }  // namespace limbo

@@ -70,6 +70,14 @@ std::future<void> ThreadPool::submit(JobFunction job) {
     auto promise = std::make_shared<std::promise<void>>();
     auto future = promise->get_future();
 
+    if (!s_running.load()) {
+        LIMBO_LOG_CORE_ERROR(
+            "ThreadPool::submit() called before init() - job will not be executed");
+        promise->set_exception(
+            std::make_exception_ptr(std::runtime_error("ThreadPool not initialized")));
+        return future;
+    }
+
     {
         std::lock_guard<std::mutex> lock(s_queueMutex);
         s_jobQueue.push([promise = std::move(promise), job = std::move(job)]() {
