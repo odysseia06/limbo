@@ -21,9 +21,12 @@ bool ScriptEngine::init() {
         return true;
     }
 
-    // Open standard Lua libraries
+    // Open safe Lua libraries only
+    // NOTE: os and io libraries are intentionally excluded for security
+    // They allow filesystem access and command execution which is dangerous
+    // for untrusted scripts. Use setSandboxed(false) to enable them if needed.
     m_lua.open_libraries(sol::lib::base, sol::lib::package, sol::lib::string, sol::lib::math,
-                         sol::lib::table, sol::lib::os, sol::lib::io);
+                         sol::lib::table);
 
     // Register engine bindings
     registerBindings();
@@ -42,8 +45,35 @@ void ScriptEngine::shutdown() {
     m_boundPhysics = nullptr;
     m_entityTypesRegistered = false;
     m_physicsTypesRegistered = false;
+    m_sandboxed = true;
     m_initialized = false;
     LIMBO_LOG_SCRIPT_INFO("ScriptEngine shutdown");
+}
+
+void ScriptEngine::setSandboxed(bool sandboxed) {
+    if (!m_initialized) {
+        LIMBO_LOG_SCRIPT_WARN("ScriptEngine::setSandboxed called before init()");
+        return;
+    }
+
+    if (sandboxed == m_sandboxed) {
+        return;  // No change
+    }
+
+    if (!sandboxed) {
+        // Enable os and io libraries (dangerous for untrusted scripts!)
+        LIMBO_LOG_SCRIPT_WARN(
+            "ScriptEngine: Sandbox disabled - os/io libraries enabled. "
+            "Only use with trusted scripts!");
+        m_lua.open_libraries(sol::lib::os, sol::lib::io);
+    } else {
+        // Remove os and io libraries by setting them to nil
+        m_lua["os"] = sol::nil;
+        m_lua["io"] = sol::nil;
+        LIMBO_LOG_SCRIPT_INFO("ScriptEngine: Sandbox enabled - os/io libraries disabled");
+    }
+
+    m_sandboxed = sandboxed;
 }
 
 bool ScriptEngine::loadScript(const std::filesystem::path& path) {

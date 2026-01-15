@@ -101,6 +101,20 @@ public:
      */
     [[nodiscard]] const String& getLastError() const { return m_lastError; }
 
+    /**
+     * Enable or disable sandbox mode
+     * When sandboxed (default), os and io libraries are disabled for security
+     * Disabling sandbox opens os/io libraries for filesystem access
+     * WARNING: Only disable sandbox for trusted scripts!
+     * Must be called after init()
+     */
+    void setSandboxed(bool sandboxed);
+
+    /**
+     * Check if sandbox mode is enabled
+     */
+    [[nodiscard]] bool isSandboxed() const { return m_sandboxed; }
+
 private:
     void bindMathTypes();
     void bindInputTypes();
@@ -111,6 +125,7 @@ private:
 
     sol::state m_lua;
     bool m_initialized = false;
+    bool m_sandboxed = true;
     bool m_entityTypesRegistered = false;
     bool m_physicsTypesRegistered = false;
     String m_lastError;
