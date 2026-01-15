@@ -253,6 +253,16 @@ public:
                          const glm::vec4& color);
 
     /**
+     * Draw a wireframe rectangle with z-depth and rotation
+     * @param position Center position with z-depth
+     * @param size Width and height
+     * @param rotation Rotation in radians
+     * @param color Line color
+     */
+    static void drawRect(const glm::vec3& position, const glm::vec2& size, f32 rotation,
+                         const glm::vec4& color);
+
+    /**
      * Draw a wireframe circle
      * @param center Circle center
      * @param radius Circle radius
@@ -260,6 +270,16 @@ public:
      * @param segments Number of segments (default 32)
      */
     static void drawCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
+                           i32 segments = 32);
+
+    /**
+     * Draw a wireframe circle with z-depth
+     * @param center Circle center with z-depth
+     * @param radius Circle radius
+     * @param color Line color
+     * @param segments Number of segments (default 32)
+     */
+    static void drawCircle(const glm::vec3& center, f32 radius, const glm::vec4& color,
                            i32 segments = 32);
 
     /**
@@ -286,6 +306,21 @@ public:
      */
     static void drawFilledCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
                                  i32 segments = 32);
+
+    // ========================================================================
+    // Immediate Mode Drawing (for custom materials)
+    // ========================================================================
+
+    /**
+     * Draw a quad immediately using the currently bound shader
+     * Does not use batching - draws a single quad with a single draw call
+     * Caller is responsible for binding their shader before calling
+     * @param transform The model transform matrix
+     * @param texture The texture to use (optional, pass nullptr for no texture)
+     * @param color Tint color
+     */
+    static void drawQuadImmediate(const glm::mat4& transform, const Texture2D* texture,
+                                  const glm::vec4& color);
 
     // ========================================================================
     // Statistics

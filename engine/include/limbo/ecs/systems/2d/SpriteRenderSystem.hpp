@@ -11,6 +11,7 @@ namespace limbo {
 
 // Forward declarations
 class OrthographicCamera;
+class AssetManager;
 
 /**
  * SpriteRenderSystem - Renders all entities with SpriteRendererComponent
@@ -18,12 +19,21 @@ class OrthographicCamera;
  * This system uses the batched Renderer2D to efficiently draw all sprites
  * in the world. It should run during the render phase.
  *
+ * Features:
+ * - Batched rendering for optimal performance
+ * - Texture support via AssetManager
+ * - Custom materials via SpriteMaterialComponent (breaks batching)
+ * - Sorting by layer and order
+ *
  * Optimization: Uses a dirty flag pattern to cache sorted entity order.
  * Only re-sorts when sprites are added, removed, or sorting properties change.
  *
  * Required components:
  * - TransformComponent: Position, rotation, scale
  * - SpriteRendererComponent: Color, texture, sorting
+ *
+ * Optional components:
+ * - SpriteMaterialComponent: Custom shader/material (renders separately from batch)
  */
 class LIMBO_API SpriteRenderSystem : public System {
 public:
@@ -37,6 +47,12 @@ public:
     void setCamera(const OrthographicCamera* camera) { m_camera = camera; }
 
     /**
+     * Set the asset manager for resolving texture IDs
+     * Must be called before update() for textured sprites to work
+     */
+    void setAssetManager(AssetManager* assetManager) { m_assetManager = assetManager; }
+
+    /**
      * Mark the sort order as dirty
      * Call this when sorting properties change
      */
@@ -48,8 +64,11 @@ public:
 
 private:
     void rebuildSortedList(World& world);
+    void renderBatchedSprite(World& world, World::EntityId entity);
+    void renderMaterialSprite(World& world, World::EntityId entity);
 
     const OrthographicCamera* m_camera = nullptr;
+    AssetManager* m_assetManager = nullptr;
 
     // Cached sorted entity list
     std::vector<World::EntityId> m_sortedEntities;

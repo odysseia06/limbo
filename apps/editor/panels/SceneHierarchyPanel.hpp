@@ -27,6 +27,7 @@ private:
     void drawContextMenu();
     void duplicateEntity(Entity entity);
     void deleteEntity(Entity entity);
+    void createPrefabFromEntity(Entity entity);
 
 private:
     EditorApp& m_editor;

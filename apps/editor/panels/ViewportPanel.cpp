@@ -4,10 +4,14 @@
 #include "../commands/PropertyCommands.hpp"
 #include "EditorApp.hpp"
 #include "limbo/debug/Log.hpp"
+#include "limbo/scene/Prefab.hpp"
 
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include <cmath>
 #include <filesystem>
+#include <limits>
 
 namespace limbo::editor {
 
@@ -29,12 +33,15 @@ void ViewportPanel::init() {
 void ViewportPanel::shutdown() {}
 
 void ViewportPanel::update(f32 deltaTime) {
-    if (m_viewportFocused || m_viewportHovered) {
+    // Only handle editor camera/gizmo input when NOT in play mode
+    bool const isPlaying = m_editor.getEditorState() != EditorState::Edit;
+
+    if (!isPlaying && (m_viewportFocused || m_viewportHovered)) {
         handleCameraInput(deltaTime);
     }
 
-    // Handle gizmo mode switching with keyboard shortcuts
-    if (m_viewportFocused) {
+    // Handle gizmo mode switching with keyboard shortcuts (only in edit mode)
+    if (!isPlaying && m_viewportFocused) {
         if (Input::isKeyPressed(Key::W)) {
             m_gizmo.setMode(GizmoMode::Translate);
         }
@@ -44,11 +51,25 @@ void ViewportPanel::update(f32 deltaTime) {
         if (Input::isKeyPressed(Key::R)) {
             m_gizmo.setMode(GizmoMode::Scale);
         }
+        // Toggle raycast mode with T key
+        if (Input::isKeyPressed(Key::T)) {
+            m_raycastMode = !m_raycastMode;
+            if (!m_raycastMode) {
+                m_raycastDragging = false;
+                m_lastRaycastHit = RaycastHit2D{};
+            }
+        }
     }
 
-    // Handle gizmo interaction
-    if (m_viewportHovered) {
+    // Handle gizmo interaction and entity picking (only when not in raycast mode)
+    if (m_viewportHovered && !m_raycastMode) {
         handleGizmoInput();
+        handleEntityPicking();
+    }
+
+    // Handle raycast tool interaction
+    if (m_viewportHovered && m_raycastMode) {
+        handleRaycastTool();
     }
 }
 
@@ -99,7 +120,13 @@ void ViewportPanel::render() {
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("Viewport", &m_open);
+    ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Viewport", &m_open, windowFlags);
+
+    // Render toolbar at the top (before viewport content)
+    ImGui::PopStyleVar();  // Temporarily restore padding for toolbar
+    renderToolbar();
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
     // Get viewport info
     m_viewportFocused = ImGui::IsWindowFocused();
@@ -184,11 +211,23 @@ void ViewportPanel::handleAssetDrop() {
                         m_editor.selectEntity(e);
                     });
                 m_editor.executeCommand(std::move(cmd));
-            } else if (ext == ".prefab" || ext == ".json") {
-                // Try to instantiate as prefab
-                LIMBO_LOG_EDITOR_INFO("Dropped prefab/scene at ({}, {}): {}", worldPos.x,
-                                      worldPos.y, assetPath);
-                // TODO: Load and instantiate prefab at position
+            } else if (ext == ".prefab") {
+                // Load and instantiate prefab at drop position
+                Prefab prefab;
+                if (prefab.loadFromFile(path)) {
+                    Entity instance =
+                        prefab.instantiate(m_editor.getWorld(), glm::vec3(worldPos, 0.0f));
+                    if (instance.isValid()) {
+                        m_editor.selectEntity(instance);
+                        m_editor.markSceneModified();
+                        LIMBO_LOG_EDITOR_INFO("Instantiated prefab '{}' at ({}, {})",
+                                              prefab.getName(), worldPos.x, worldPos.y);
+                    } else {
+                        LIMBO_LOG_EDITOR_ERROR("Failed to instantiate prefab: {}", assetPath);
+                    }
+                } else {
+                    LIMBO_LOG_EDITOR_ERROR("Failed to load prefab: {}", assetPath);
+                }
             } else {
                 LIMBO_LOG_EDITOR_INFO("Dropped asset at ({}, {}): {}", worldPos.x, worldPos.y,
                                       assetPath);
@@ -210,28 +249,48 @@ void ViewportPanel::renderScene() {
         drawGrid();
     }
 
-    // Render all entities
+    // Draw physics debug visualization BEFORE sprites so sprites render on top
+    // Always draw from ECS components (TransformComponent) so debug shapes match
+    // the interpolated sprite positions in both edit and play mode
+    if (m_editor.isPhysicsDebugEnabled()) {
+        drawPhysicsShapes();
+        // Flush physics debug lines before drawing sprites on top
+        Renderer2D::flush();
+    }
+
+    // Render all entities (sprites render on top of physics debug)
     auto& world = m_editor.getWorld();
     world.each<TransformComponent, SpriteRendererComponent>(
         [](World::EntityId, TransformComponent& transform, SpriteRendererComponent& sprite) {
             Renderer2D::drawQuad(transform.getMatrix(), sprite.color);
         });
 
-    // Draw gizmos for selected entity
+    // Render QuadRendererComponent entities
+    world.each<TransformComponent, QuadRendererComponent>(
+        [](World::EntityId, TransformComponent& transform, QuadRendererComponent& quad) {
+            // Build transform matrix with quad size
+            glm::mat4 mat = glm::translate(glm::mat4(1.0f), transform.position);
+            mat = glm::rotate(mat, transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+            mat = glm::rotate(mat, transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+            mat = glm::rotate(mat, transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+            mat = glm::scale(mat, glm::vec3(quad.size.x * transform.scale.x,
+                                            quad.size.y * transform.scale.y, 1.0f));
+            Renderer2D::drawQuad(mat, quad.color);
+        });
+
+    // Render CircleRendererComponent entities
+    world.each<TransformComponent, CircleRendererComponent>(
+        [](World::EntityId, TransformComponent& transform, CircleRendererComponent& circle) {
+            glm::vec2 pos{transform.position.x, transform.position.y};
+            f32 scale = glm::max(transform.scale.x, transform.scale.y);
+            Renderer2D::drawFilledCircle(pos, circle.radius * scale, circle.color, circle.segments);
+        });
+
+    // Draw gizmos for selected entity (on top of everything)
     drawGizmos();
 
-    // Draw physics debug visualization
-    // In Play mode: draws actual Box2D world state
-    // In Edit mode: draws collider shapes from components (for scene setup)
-    if (m_editor.isPhysicsDebugEnabled()) {
-        if (m_editor.getEditorState() == EditorState::Play) {
-            // Draw from actual physics world
-            m_editor.getPhysicsDebug().draw(m_editor.getPhysics());
-        } else {
-            // Draw from components in edit mode
-            drawPhysicsShapes();
-        }
-    }
+    // Draw raycast debug visualization
+    drawRaycastDebug();
 
     Renderer2D::endScene();
 }
@@ -406,6 +465,9 @@ void ViewportPanel::drawPhysicsShapes() {
     // Draw physics collider shapes from ECS components (for edit mode visualization)
     auto& world = m_editor.getWorld();
 
+    // Draw physics debug behind sprites (negative z)
+    constexpr f32 debugZ = -0.5f;
+
     // Colors for different states
     glm::vec4 const staticColor{0.5f, 0.5f, 0.5f, 1.0f};
     glm::vec4 const kinematicColor{0.5f, 0.5f, 0.9f, 1.0f};
@@ -436,7 +498,8 @@ void ViewportPanel::drawPhysicsShapes() {
             }
 
             // Calculate world position with offset
-            glm::vec2 pos{transform.position.x + box.offset.x, transform.position.y + box.offset.y};
+            glm::vec3 pos{transform.position.x + box.offset.x, transform.position.y + box.offset.y,
+                          debugZ};
             glm::vec2 size{box.size.x * 2.0f * transform.scale.x,
                            box.size.y * 2.0f * transform.scale.y};
 
@@ -467,12 +530,358 @@ void ViewportPanel::drawPhysicsShapes() {
             }
 
             // Calculate world position with offset
-            glm::vec2 pos{transform.position.x + circle.offset.x,
-                          transform.position.y + circle.offset.y};
+            glm::vec3 pos{transform.position.x + circle.offset.x,
+                          transform.position.y + circle.offset.y, debugZ};
             f32 radius = circle.radius * glm::max(transform.scale.x, transform.scale.y);
 
             Renderer2D::drawCircle(pos, radius, color);
         });
+}
+
+void ViewportPanel::handleEntityPicking() {
+    // Only pick on left click when not manipulating gizmo
+    if (!Input::isMouseButtonPressed(MouseButton::Left) || m_gizmo.isManipulating()) {
+        return;
+    }
+
+    // Get mouse position in world space
+    ImVec2 mousePos = ImGui::GetMousePos();
+    glm::vec2 viewportMousePos(mousePos.x - m_viewportBounds[0].x,
+                               mousePos.y - m_viewportBounds[0].y);
+    glm::vec2 worldMousePos = screenToWorld(viewportMousePos);
+
+    // Check if clicking on gizmo first (skip picking if on gizmo)
+    Entity selectedEntity = m_editor.getSelectedEntity();
+    if (selectedEntity.isValid() && selectedEntity.hasComponent<TransformComponent>()) {
+        const auto& transform = selectedEntity.getComponent<TransformComponent>();
+        GizmoAxis axis = m_gizmo.hitTest(worldMousePos, transform.position, m_cameraZoom);
+        if (axis != GizmoAxis::None) {
+            return;  // Clicking on gizmo, don't pick
+        }
+    }
+
+    // Pick entity at mouse position
+    Entity picked = pickEntityAt(worldMousePos);
+    if (picked.isValid()) {
+        m_editor.selectEntity(picked);
+    } else {
+        m_editor.deselectAll();
+    }
+}
+
+bool ViewportPanel::hitTestQuad(const glm::vec2& worldPos, const TransformComponent& transform,
+                                const glm::vec2& size) const {
+    // Transform world position to local space of the quad
+    glm::vec2 localPos = worldPos - glm::vec2(transform.position);
+
+    // Apply inverse rotation (rotate point in opposite direction)
+    f32 angle = -transform.rotation.z;
+    f32 cosA = std::cos(angle);
+    f32 sinA = std::sin(angle);
+    glm::vec2 rotatedPos(localPos.x * cosA - localPos.y * sinA,
+                         localPos.x * sinA + localPos.y * cosA);
+
+    // Check bounds in local space (size is full width/height, centered at origin)
+    glm::vec2 halfSize = size * glm::vec2(transform.scale) * 0.5f;
+    return std::abs(rotatedPos.x) <= halfSize.x && std::abs(rotatedPos.y) <= halfSize.y;
+}
+
+bool ViewportPanel::hitTestCircle(const glm::vec2& worldPos, const TransformComponent& transform,
+                                  f32 radius) const {
+    // Simple distance check from center
+    glm::vec2 center(transform.position.x, transform.position.y);
+    f32 scaledRadius = radius * glm::max(transform.scale.x, transform.scale.y);
+    f32 distSq = glm::dot(worldPos - center, worldPos - center);
+    return distSq <= scaledRadius * scaledRadius;
+}
+
+Entity ViewportPanel::pickEntityAt(const glm::vec2& worldPos) const {
+    auto& world = m_editor.getWorld();
+    Entity bestPick;
+    i32 bestLayer = std::numeric_limits<i32>::min();
+    i32 bestOrder = std::numeric_limits<i32>::min();
+
+    // Check CircleRenderers (prioritize by sorting layer/order)
+    world.each<TransformComponent, CircleRendererComponent>(
+        [&](World::EntityId id, TransformComponent& transform, CircleRendererComponent& circle) {
+            if (hitTestCircle(worldPos, transform, circle.radius)) {
+                // Higher layer/order = rendered on top = should be picked first
+                if (circle.sortingLayer > bestLayer ||
+                    (circle.sortingLayer == bestLayer && circle.sortingOrder > bestOrder)) {
+                    bestLayer = circle.sortingLayer;
+                    bestOrder = circle.sortingOrder;
+                    bestPick = Entity(id, &world);
+                }
+            }
+        });
+
+    // Check QuadRenderers
+    world.each<TransformComponent, QuadRendererComponent>(
+        [&](World::EntityId id, TransformComponent& transform, QuadRendererComponent& quad) {
+            if (hitTestQuad(worldPos, transform, quad.size)) {
+                if (quad.sortingLayer > bestLayer ||
+                    (quad.sortingLayer == bestLayer && quad.sortingOrder > bestOrder)) {
+                    bestLayer = quad.sortingLayer;
+                    bestOrder = quad.sortingOrder;
+                    bestPick = Entity(id, &world);
+                }
+            }
+        });
+
+    // Check SpriteRenderers (assume 1x1 size scaled by transform)
+    world.each<TransformComponent, SpriteRendererComponent>(
+        [&](World::EntityId id, TransformComponent& transform, SpriteRendererComponent& sprite) {
+            // Sprites are 1x1 units centered, scaled by transform
+            if (hitTestQuad(worldPos, transform, glm::vec2(1.0f))) {
+                if (sprite.sortingLayer > bestLayer ||
+                    (sprite.sortingLayer == bestLayer && sprite.sortingOrder > bestOrder)) {
+                    bestLayer = sprite.sortingLayer;
+                    bestOrder = sprite.sortingOrder;
+                    bestPick = Entity(id, &world);
+                }
+            }
+        });
+
+    return bestPick;
+}
+
+void ViewportPanel::renderToolbar() {
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(4, 4));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
+
+    // Gizmo mode buttons
+    bool translateMode = m_gizmo.getMode() == GizmoMode::Translate;
+    bool rotateMode = m_gizmo.getMode() == GizmoMode::Rotate;
+    bool scaleMode = m_gizmo.getMode() == GizmoMode::Scale;
+
+    if (translateMode) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
+    }
+    if (ImGui::Button("W##Translate")) {
+        m_gizmo.setMode(GizmoMode::Translate);
+        m_raycastMode = false;
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Translate (W)");
+    }
+    if (translateMode) {
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::SameLine();
+    if (rotateMode) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
+    }
+    if (ImGui::Button("E##Rotate")) {
+        m_gizmo.setMode(GizmoMode::Rotate);
+        m_raycastMode = false;
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Rotate (E)");
+    }
+    if (rotateMode) {
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::SameLine();
+    if (scaleMode) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.5f, 0.8f, 1.0f));
+    }
+    if (ImGui::Button("R##Scale")) {
+        m_gizmo.setMode(GizmoMode::Scale);
+        m_raycastMode = false;
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Scale (R)");
+    }
+    if (scaleMode) {
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::SameLine();
+    ImGui::Text("|");
+    ImGui::SameLine();
+
+    // Raycast debug tool
+    if (m_raycastMode) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.5f, 0.2f, 1.0f));
+    }
+    if (ImGui::Button("T##Raycast")) {
+        m_raycastMode = !m_raycastMode;
+        if (!m_raycastMode) {
+            m_raycastDragging = false;
+            m_lastRaycastHit = RaycastHit2D{};
+        }
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Raycast Debug Tool (T)\nClick and drag to cast a ray");
+    }
+    if (m_raycastMode) {
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::SameLine();
+    ImGui::Text("|");
+    ImGui::SameLine();
+
+    // Physics debug toggle
+    bool physicsDebug = m_editor.isPhysicsDebugEnabled();
+    if (physicsDebug) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.3f, 1.0f));
+    }
+    if (ImGui::Button("Physics")) {
+        m_editor.setPhysicsDebugEnabled(!physicsDebug);
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Toggle Physics Debug Visualization");
+    }
+    if (physicsDebug) {
+        ImGui::PopStyleColor();
+    }
+
+    ImGui::SameLine();
+
+    // Grid toggle
+    if (m_showGrid) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.3f, 1.0f));
+    }
+    if (ImGui::Button("Grid")) {
+        m_showGrid = !m_showGrid;
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Toggle Grid");
+    }
+    if (m_showGrid) {
+        ImGui::PopStyleColor();
+    }
+
+    // Show raycast hit info if available
+    if (m_raycastMode && m_lastRaycastHit.hit) {
+        ImGui::SameLine();
+        ImGui::Text("|");
+        ImGui::SameLine();
+
+        // Find entity name from hit body
+        String entityName = "Unknown";
+        if (m_lastRaycastHit.body) {
+            auto* userData =
+                reinterpret_cast<World::EntityId*>(m_lastRaycastHit.body->GetUserData().pointer);
+            if (userData) {
+                auto& world = m_editor.getWorld();
+                Entity hitEntity(*userData, &world);
+                if (hitEntity.isValid() && hitEntity.hasComponent<NameComponent>()) {
+                    entityName = hitEntity.getComponent<NameComponent>().name;
+                }
+            }
+        }
+
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "Hit: %s (%.2f)", entityName.c_str(),
+                           m_lastRaycastHit.distance);
+    }
+
+    ImGui::PopStyleVar(2);
+    ImGui::Separator();
+}
+
+void ViewportPanel::handleRaycastTool() {
+    ImVec2 mousePos = ImGui::GetMousePos();
+    glm::vec2 viewportMousePos(mousePos.x - m_viewportBounds[0].x,
+                               mousePos.y - m_viewportBounds[0].y);
+    glm::vec2 worldMousePos = screenToWorld(viewportMousePos);
+
+    if (Input::isMouseButtonPressed(MouseButton::Left)) {
+        // Start new raycast
+        m_raycastDragging = true;
+        m_raycastStart = worldMousePos;
+        m_raycastEnd = worldMousePos;
+        m_lastRaycastHit = RaycastHit2D{};
+    }
+
+    if (m_raycastDragging) {
+        m_raycastEnd = worldMousePos;
+
+        if (Input::isMouseButtonDown(MouseButton::Left)) {
+            // Update raycast while dragging
+            glm::vec2 direction = m_raycastEnd - m_raycastStart;
+            f32 distance = glm::length(direction);
+
+            if (distance > 0.01f) {
+                direction = glm::normalize(direction);
+
+                // Only cast if physics is initialized (in play mode or with physics world)
+                auto& physics = m_editor.getPhysics();
+                if (physics.getWorld()) {
+                    m_lastRaycastHit = physics.raycast(m_raycastStart, direction, distance, false);
+                }
+            }
+        } else {
+            // Mouse released - keep the last hit displayed
+            m_raycastDragging = false;
+        }
+    }
+}
+
+void ViewportPanel::drawRaycastDebug() {
+    if (!m_raycastMode) {
+        return;
+    }
+
+    // Draw the ray line
+    glm::vec2 direction = m_raycastEnd - m_raycastStart;
+    f32 distance = glm::length(direction);
+
+    if (distance < 0.01f) {
+        return;
+    }
+
+    constexpr f32 debugZ = 0.5f;  // Draw on top
+
+    // Ray line color
+    glm::vec4 const rayColor{1.0f, 0.5f, 0.0f, 1.0f};     // Orange
+    glm::vec4 const hitColor{1.0f, 0.0f, 0.0f, 1.0f};     // Red for hit point
+    glm::vec4 const normalColor{0.0f, 1.0f, 1.0f, 1.0f};  // Cyan for normal
+
+    // Draw ray line
+    f32 const lineThickness = 0.01f * m_cameraZoom;
+    glm::vec2 const midpoint = (m_raycastStart + m_raycastEnd) * 0.5f;
+    f32 const angle = std::atan2(direction.y, direction.x);
+
+    // Draw as a rotated thin quad
+    glm::mat4 mat = glm::translate(glm::mat4(1.0f), glm::vec3(midpoint, debugZ));
+    mat = glm::rotate(mat, angle, glm::vec3(0.0f, 0.0f, 1.0f));
+    mat = glm::scale(mat, glm::vec3(distance, lineThickness, 1.0f));
+    Renderer2D::drawQuad(mat, rayColor);
+
+    // Draw start point
+    Renderer2D::drawFilledCircle(m_raycastStart, 0.03f * m_cameraZoom, rayColor, 16);
+
+    // Draw end point or hit point
+    if (m_lastRaycastHit.hit) {
+        // Draw hit point
+        Renderer2D::drawFilledCircle(m_lastRaycastHit.point, 0.04f * m_cameraZoom, hitColor, 16);
+
+        // Draw normal arrow
+        glm::vec2 normalEnd =
+            m_lastRaycastHit.point + m_lastRaycastHit.normal * 0.2f * m_cameraZoom;
+        glm::vec2 normalDir = normalEnd - m_lastRaycastHit.point;
+        f32 normalLen = glm::length(normalDir);
+        if (normalLen > 0.01f) {
+            glm::vec2 normalMid = (m_lastRaycastHit.point + normalEnd) * 0.5f;
+            f32 normalAngle = std::atan2(normalDir.y, normalDir.x);
+
+            glm::mat4 normalMat = glm::translate(glm::mat4(1.0f), glm::vec3(normalMid, debugZ));
+            normalMat = glm::rotate(normalMat, normalAngle, glm::vec3(0.0f, 0.0f, 1.0f));
+            normalMat = glm::scale(normalMat, glm::vec3(normalLen, lineThickness * 0.7f, 1.0f));
+            Renderer2D::drawQuad(normalMat, normalColor);
+
+            // Arrowhead
+            Renderer2D::drawFilledCircle(normalEnd, 0.02f * m_cameraZoom, normalColor, 8);
+        }
+    } else {
+        // Draw end point (no hit)
+        Renderer2D::drawFilledCircle(m_raycastEnd, 0.03f * m_cameraZoom,
+                                     glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 16);
+    }
 }
 
 }  // namespace limbo::editor

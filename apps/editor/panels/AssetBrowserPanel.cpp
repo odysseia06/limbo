@@ -30,7 +30,8 @@ void AssetBrowserPanel::render() {
         return;
     }
 
-    ImGui::Begin("Asset Browser", &m_open);
+    ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Asset Browser", &m_open, windowFlags);
 
     drawToolbar();
     ImGui::Separator();
@@ -149,9 +150,12 @@ void AssetBrowserPanel::drawAssetGrid() {
             } else {
                 // Handle different asset types
                 String const ext = entry.path.extension().string();
-                if (ext == ".json") {
-                    // Could be a scene or prefab
-                    LIMBO_LOG_EDITOR_INFO("Opening asset: {}", entry.path.string());
+                if (ext == ".scene" || ext == ".json") {
+                    // Scene file - load it
+                    m_editor.loadSceneFromPath(entry.path);
+                } else if (ext == ".prefab") {
+                    // Prefab - could instantiate or select
+                    LIMBO_LOG_EDITOR_INFO("Prefab selected: {}", entry.path.string());
                 } else {
                     LIMBO_LOG_EDITOR_INFO("Asset selected: {}", entry.path.string());
                 }
@@ -286,6 +290,9 @@ const char* AssetBrowserPanel::getAssetIcon(const std::filesystem::path& path,
     if (ext == ".json") {
         return "[J]";  // JSON (scene/prefab/config)
     }
+    if (ext == ".scene") {
+        return "[S]";  // Scene file
+    }
     if (ext == ".lua") {
         return "[L]";  // Lua script
     }
@@ -317,6 +324,9 @@ glm::vec4 AssetBrowserPanel::getAssetColor(const std::filesystem::path& path,
     }
     if (ext == ".json") {
         return glm::vec4(0.3f, 0.6f, 0.9f, 1.0f);  // Blue
+    }
+    if (ext == ".scene") {
+        return glm::vec4(0.2f, 0.8f, 0.6f, 1.0f);  // Teal/Green for scenes
     }
     if (ext == ".lua") {
         return glm::vec4(0.3f, 0.3f, 0.9f, 1.0f);  // Dark blue

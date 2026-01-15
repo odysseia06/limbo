@@ -55,7 +55,8 @@ void AssetPipelinePanel::render() {
         return;
     }
 
-    ImGui::Begin("Asset Pipeline", &m_open);
+    ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Asset Pipeline", &m_open, windowFlags);
 
     if (!m_initialized) {
         ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Not initialized!");

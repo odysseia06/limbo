@@ -59,6 +59,7 @@ set(LIMBO_ENGINE_SOURCES
     src/assets/ShaderAsset.cpp
     src/assets/AudioAsset.cpp
     src/assets/SpriteAtlasAsset.cpp
+    src/assets/FontAsset.cpp
     src/assets/FileWatcher.cpp
     src/assets/HotReloadManager.cpp
 
@@ -72,10 +73,13 @@ set(LIMBO_ENGINE_SOURCES
     src/ecs/World.cpp
     src/ecs/System.cpp
     src/ecs/Hierarchy.cpp
+    src/ecs/DeferredDestruction.cpp
     src/ecs/systems/2d/SpriteRenderSystem.cpp
+    src/ecs/systems/2d/TextRenderSystem.cpp
 
     # Debug module
     src/debug/Debug.cpp
+    src/debug/GPUTimer.cpp
     src/debug/Log.cpp
     src/debug/Profiler.cpp
 
@@ -177,6 +181,7 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/assets/ShaderAsset.hpp
     include/limbo/assets/AudioAsset.hpp
     include/limbo/assets/SpriteAtlasAsset.hpp
+    include/limbo/assets/FontAsset.hpp
     include/limbo/assets/FileWatcher.hpp
     include/limbo/assets/HotReloadManager.hpp
 
@@ -191,8 +196,10 @@ set(LIMBO_ENGINE_HEADERS
     include/limbo/ecs/World.hpp
     include/limbo/ecs/Entity.hpp
     include/limbo/ecs/Hierarchy.hpp
+    include/limbo/ecs/DeferredDestruction.hpp
     include/limbo/ecs/System.hpp
     include/limbo/ecs/systems/2d/SpriteRenderSystem.hpp
+    include/limbo/ecs/systems/2d/TextRenderSystem.hpp
     include/limbo/ecs/systems/3d/MeshRenderSystem.hpp
 
     # Debug headers

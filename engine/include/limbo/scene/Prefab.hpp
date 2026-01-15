@@ -7,9 +7,9 @@
 #include "limbo/ecs/Entity.hpp"
 
 #include <glm/glm.hpp>
+#include <nlohmann/json.hpp>
 
 #include <filesystem>
-#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -19,47 +19,111 @@ namespace limbo {
  * PrefabEntity - Serialized entity data within a prefab
  *
  * Stores all component data for a single entity in the prefab hierarchy.
+ * Uses stable string IDs instead of indices for robust references.
  */
 struct PrefabEntity {
-    String name;
-    i32 parentIndex = -1;  // Index in the entities array, -1 if root
+    String localId;        // Stable ID within this prefab (e.g., "root", "child_1")
+    String name;           // Display name
+    String parentLocalId;  // Parent's localId, empty string if root
 
-    // Serialized component data (JSON strings)
-    std::optional<String> transformData;
-    std::optional<String> spriteRendererData;
-    std::optional<String> cameraData;
-    bool hasStaticComponent = false;
-    bool hasActiveComponent = false;
+    // Generic component storage: component type name -> JSON data
+    std::unordered_map<String, nlohmann::json> components;
+
+    [[nodiscard]] bool isRoot() const { return parentLocalId.empty(); }
+
+    [[nodiscard]] bool hasComponent(const String& typeName) const {
+        return components.find(typeName) != components.end();
+    }
+};
+
+/**
+ * PrefabOverride - A single property override on a prefab instance
+ *
+ * Stores the actual overridden value, not just a flag.
+ */
+struct PrefabOverride {
+    enum class Kind { Property, AddComponent, RemoveComponent };
+
+    Kind kind = Kind::Property;
+    String targetLocalId;  // Which entity in the prefab
+    String component;      // Component type name
+    String property;       // Property path (e.g., "position", "color.r")
+    nlohmann::json value;  // The overridden value (for Property kind)
+
+    PrefabOverride() = default;
+    PrefabOverride(Kind k, const String& target, const String& comp, const String& prop,
+                   const nlohmann::json& val)
+        : kind(k), targetLocalId(target), component(comp), property(prop), value(val) {}
+
+    // Convenience factory for property overrides
+    static PrefabOverride makeProperty(const String& target, const String& comp, const String& prop,
+                                       const nlohmann::json& val) {
+        return PrefabOverride(Kind::Property, target, comp, prop, val);
+    }
 };
 
 /**
  * PrefabInstanceComponent - Marks an entity as an instance of a prefab
  *
- * Tracks which prefab this entity came from and any property overrides.
+ * Tracks which prefab this entity came from and stores actual override values.
  */
 struct PrefabInstanceComponent {
-    UUID prefabId;        // UUID of the source prefab asset
-    i32 entityIndex = 0;  // Index of this entity in the prefab's entity list
-    bool isRoot = true;   // Is this the root entity of the prefab instance?
+    UUID prefabId;       // UUID of the source prefab asset
+    UUID instanceId;     // Unique ID for this instance
+    String localId;      // This entity's localId within the prefab
+    bool isRoot = true;  // Is this the root entity of the prefab instance?
 
-    // Override tracking - stores which properties have been modified
-    // Key: component name + "." + property name, Value: true if overridden
-    std::unordered_map<String, bool> overrides;
+    // Override storage - actual values, not just flags
+    std::vector<PrefabOverride> overrides;
 
-    PrefabInstanceComponent() = default;
-    explicit PrefabInstanceComponent(const UUID& id, i32 index = 0, bool root = true)
-        : prefabId(id), entityIndex(index), isRoot(root) {}
+    PrefabInstanceComponent() : instanceId(UUID::generate()) {}
 
-    [[nodiscard]] bool hasOverride(const String& property) const {
-        auto it = overrides.find(property);
-        return it != overrides.end() && it->second;
+    explicit PrefabInstanceComponent(const UUID& prefab, const String& local, bool root = true)
+        : prefabId(prefab), instanceId(UUID::generate()), localId(local), isRoot(root) {}
+
+    [[nodiscard]] bool hasOverride(const String& component, const String& property) const {
+        for (const auto& ov : overrides) {
+            if (ov.kind == PrefabOverride::Kind::Property && ov.targetLocalId == localId &&
+                ov.component == component && ov.property == property) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    void setOverride(const String& property, bool value = true) { overrides[property] = value; }
+    void setOverride(const String& component, const String& property, const nlohmann::json& value) {
+        // Update existing or add new
+        for (auto& ov : overrides) {
+            if (ov.kind == PrefabOverride::Kind::Property && ov.targetLocalId == localId &&
+                ov.component == component && ov.property == property) {
+                ov.value = value;
+                return;
+            }
+        }
+        overrides.push_back(PrefabOverride::makeProperty(localId, component, property, value));
+    }
 
-    void clearOverride(const String& property) { overrides.erase(property); }
+    void clearOverride(const String& component, const String& property) {
+        overrides.erase(std::remove_if(overrides.begin(), overrides.end(),
+                                       [&](const PrefabOverride& ov) {
+                                           return ov.kind == PrefabOverride::Kind::Property &&
+                                                  ov.targetLocalId == localId &&
+                                                  ov.component == component &&
+                                                  ov.property == property;
+                                       }),
+                        overrides.end());
+    }
 
     void clearAllOverrides() { overrides.clear(); }
+
+    // Legacy compatibility - check by "Component.property" string
+    [[nodiscard]] bool hasOverride(const String& propertyPath) const {
+        auto dotPos = propertyPath.find('.');
+        if (dotPos == String::npos) {
+            return false;
+        }
+        return hasOverride(propertyPath.substr(0, dotPos), propertyPath.substr(dotPos + 1));
+    }
 };
 
 /**
@@ -68,6 +132,11 @@ struct PrefabInstanceComponent {
  * A prefab stores a hierarchy of entities with their components that can be
  * instantiated multiple times in a scene. Changes to the prefab can propagate
  * to all instances (unless overridden).
+ *
+ * Data model follows Unity-style prefabs:
+ * - Entities identified by stable local_id strings
+ * - Components stored generically as JSON
+ * - Overrides store actual values, enabling Apply/Revert
  *
  * Usage:
  * 1. Create a prefab from an existing entity: Prefab::createFromEntity()
@@ -110,10 +179,20 @@ public:
 
     /**
      * Apply changes from an instance back to the prefab
+     * This merges the instance's current state into the prefab baseline,
+     * preserving the structure while updating changed values.
      * @param world The world containing the instance
      * @param instanceRoot The root entity of the instance
+     * @return True if changes were applied successfully
      */
-    void applyInstanceChanges(World& world, World::EntityId instanceRoot);
+    bool applyInstanceChanges(World& world, World::EntityId instanceRoot);
+
+    /**
+     * Apply a single override from an instance to the prefab
+     * @param override The override to apply
+     * @return True if the override was applied
+     */
+    bool applyOverride(const PrefabOverride& override);
 
     /**
      * Revert an instance to match the prefab
@@ -121,6 +200,14 @@ public:
      * @param instanceRoot The root entity of the instance
      */
     void revertInstance(World& world, World::EntityId instanceRoot) const;
+
+    /**
+     * Unpack a prefab instance - removes the prefab link but keeps current values
+     * @param world The world containing the instance
+     * @param instanceRoot The root entity of the instance
+     * @param completely If true, also unpack any nested prefab instances
+     */
+    static void unpack(World& world, World::EntityId instanceRoot, bool completely = false);
 
     // Serialization
     bool saveToFile(const std::filesystem::path& path);
@@ -133,22 +220,35 @@ public:
     void setName(const String& name) { m_name = name; }
 
     [[nodiscard]] const UUID& getPrefabId() const { return m_prefabId; }
+    [[nodiscard]] const String& getRootLocalId() const { return m_rootLocalId; }
 
     [[nodiscard]] usize getEntityCount() const { return m_entities.size(); }
     [[nodiscard]] const std::vector<PrefabEntity>& getEntities() const { return m_entities; }
 
-private:
-    // Serialize a single entity to PrefabEntity
-    static PrefabEntity serializeEntity(World& world, World::EntityId entityId, i32 parentIndex);
+    // Find entity by local ID
+    [[nodiscard]] const PrefabEntity* findEntity(const String& localId) const;
+    [[nodiscard]] PrefabEntity* findEntity(const String& localId);
 
-    // Deserialize a PrefabEntity to create a real entity
-    World::EntityId deserializeEntity(World& world, const PrefabEntity& prefabEntity,
-                                      const std::vector<World::EntityId>& createdEntities) const;
+private:
+    // Generate a unique local ID for an entity
+    String generateLocalId(const String& baseName);
+
+    // Serialize a single entity's components to JSON
+    static void serializeEntityComponents(World& world, World::EntityId entityId,
+                                          PrefabEntity& prefabEntity);
+
+    // Deserialize components from a PrefabEntity and add to an entity
+    void deserializeEntityComponents(World& world, World::EntityId entityId,
+                                     const PrefabEntity& prefabEntity) const;
 
 private:
     String m_name = "Prefab";
     UUID m_prefabId = UUID::generate();
+    String m_rootLocalId = "root";
     std::vector<PrefabEntity> m_entities;
+
+    // Counter for generating unique local IDs during creation
+    mutable i32 m_localIdCounter = 0;
 };
 
 }  // namespace limbo

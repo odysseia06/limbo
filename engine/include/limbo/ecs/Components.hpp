@@ -66,6 +66,35 @@ struct SpriteRendererComponent {
     SpriteRendererComponent(const glm::vec4& col, AssetId texId) : color(col), textureId(texId) {}
 };
 
+// Quad renderer component - draws a colored rectangle primitive
+struct QuadRendererComponent {
+    glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+    glm::vec2 size{1.0f, 1.0f};  // Width and height in local units
+
+    // Sorting: layer takes priority, then order within layer
+    i32 sortingLayer = 0;
+    i32 sortingOrder = 0;
+
+    QuadRendererComponent() = default;
+    explicit QuadRendererComponent(const glm::vec4& col) : color(col) {}
+    QuadRendererComponent(const glm::vec4& col, const glm::vec2& sz) : color(col), size(sz) {}
+};
+
+// Circle renderer component - draws a colored filled circle primitive
+struct CircleRendererComponent {
+    glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+    f32 radius{0.5f};  // Radius in local units
+    i32 segments{32};  // Circle smoothness (number of segments)
+
+    // Sorting: layer takes priority, then order within layer
+    i32 sortingLayer = 0;
+    i32 sortingOrder = 0;
+
+    CircleRendererComponent() = default;
+    explicit CircleRendererComponent(const glm::vec4& col) : color(col) {}
+    CircleRendererComponent(const glm::vec4& col, f32 rad) : color(col), radius(rad) {}
+};
+
 // Mesh renderer component - for 3D rendering
 struct MeshRendererComponent {
     AssetId meshId = AssetId::invalid();
@@ -111,6 +140,19 @@ struct StaticComponent {};  // Entity doesn't move (optimization hint)
 // Forward declaration for PrefabInstanceComponent
 struct PrefabInstanceComponent;  // Defined in limbo/scene/Prefab.hpp
 
+// Forward declaration for SpriteMaterial
+class SpriteMaterial;
+
+// Sprite material component - for custom shader effects on sprites
+// Entities with this component use the material's shader instead of the default batch shader
+// Note: Using custom materials breaks batching, so use sparingly for special effects
+struct SpriteMaterialComponent {
+    Shared<SpriteMaterial> material;
+
+    SpriteMaterialComponent() = default;
+    explicit SpriteMaterialComponent(Shared<SpriteMaterial> mat) : material(std::move(mat)) {}
+};
+
 // Hierarchy component - defines parent/child relationships between entities
 // Uses a linked list structure for efficient sibling traversal
 struct HierarchyComponent {
@@ -126,6 +168,22 @@ struct HierarchyComponent {
     [[nodiscard]] bool hasParent() const { return parent != entt::null; }
     [[nodiscard]] bool hasChildren() const { return firstChild != entt::null; }
     [[nodiscard]] bool isRoot() const { return parent == entt::null; }
+};
+
+// Text renderer component - displays text using a bitmap font
+struct TextRendererComponent {
+    String text;
+    AssetId fontId = AssetId::invalid();
+    f32 scale = 1.0f;
+    glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+
+    // Sorting: layer takes priority, then order within layer
+    i32 sortingLayer = 0;
+    i32 sortingOrder = 0;
+
+    TextRendererComponent() = default;
+    explicit TextRendererComponent(const String& txt) : text(txt) {}
+    TextRendererComponent(const String& txt, AssetId font) : text(txt), fontId(font) {}
 };
 
 }  // namespace limbo

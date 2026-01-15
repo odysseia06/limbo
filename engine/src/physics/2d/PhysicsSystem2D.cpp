@@ -2,6 +2,7 @@
 #include "limbo/physics/2d/PhysicsComponents2D.hpp"
 #include "limbo/ecs/World.hpp"
 #include "limbo/ecs/Components.hpp"
+#include "limbo/ecs/DeferredDestruction.hpp"
 #include "limbo/debug/Log.hpp"
 
 namespace limbo {
@@ -18,9 +19,21 @@ void PhysicsSystem2D::onAttach(World& world) {
     auto view = world.view<TransformComponent, Rigidbody2DComponent>();
     for (auto entity : view) {
         createBody(world, entity);
+
+        // Initialize physics state for interpolation
+        auto& rb = view.get<Rigidbody2DComponent>(entity);
+        if (rb.runtimeBody != nullptr) {
+            const b2Vec2& pos = rb.runtimeBody->GetPosition();
+            PhysicsState state;
+            state.previousPosition = {pos.x, pos.y};
+            state.previousRotation = rb.runtimeBody->GetAngle();
+            state.currentPosition = state.previousPosition;
+            state.currentRotation = state.previousRotation;
+            m_physicsStates[entity] = state;
+        }
     }
 
-    LIMBO_LOG_PHYSICS_DEBUG("PhysicsSystem initialized");
+    LIMBO_LOG_PHYSICS_DEBUG("PhysicsSystem initialized with {} bodies", m_physicsStates.size());
 }
 
 void PhysicsSystem2D::update(World& world, f32 deltaTime) {
@@ -105,10 +118,17 @@ void PhysicsSystem2D::fixedUpdate(World& world) {
     // 2. Step Box2D
     m_physics.step(m_fixedTimestep);
 
-    // 3. Dispatch collision events AFTER step completes (safe to modify world now)
-    m_contactListener.dispatchEvents();
+    // 3. Dispatch collision events AFTER step completes
+    // Use physics context so entity destruction is deferred until after dispatch
+    {
+        DeferredDestruction::ScopedPhysicsContext physicsContext;
+        m_contactListener.dispatchEvents();
+    }
 
-    // 4. Read current from bodies (do NOT write to TransformComponent)
+    // 4. Flush any deferred entity destructions (safe now that dispatch is complete)
+    DeferredDestruction::flush(world);
+
+    // 5. Read current from bodies (do NOT write to TransformComponent)
     readCurrentStateFromBodies(world);
 }
 
@@ -228,13 +248,16 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
 
     // Track fixture index for multiple colliders per entity
     i32 fixtureIndex = 0;
+    bool hasCollider = false;
 
     // Create fixtures for colliders
     // Box collider
     if (world.hasComponent<BoxCollider2DComponent>(entity)) {
+        hasCollider = true;
         auto& box = world.getComponent<BoxCollider2DComponent>(entity);
 
         b2PolygonShape boxShape;
+        // box.size is already half-extents, SetAsBox expects half-extents
         boxShape.SetAsBox(box.size.x * transform.scale.x, box.size.y * transform.scale.y,
                           b2Vec2(box.offset.x, box.offset.y), 0.0f);
 
@@ -255,6 +278,7 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
 
     // Circle collider
     if (world.hasComponent<CircleCollider2DComponent>(entity)) {
+        hasCollider = true;
         auto& circle = world.getComponent<CircleCollider2DComponent>(entity);
 
         b2CircleShape circleShape;
@@ -274,6 +298,26 @@ void PhysicsSystem2D::createBody(World& world, World::EntityId entity) {
         // Store fixture index in fixture user data
         circle.runtimeFixture->GetUserData().pointer = static_cast<uintptr_t>(fixtureIndex);
         fixtureIndex++;
+    }
+
+    // If no collider components exist, create a default box fixture based on transform scale
+    // This ensures the rigidbody has mass and participates in physics simulation
+    if (!hasCollider && rb.type == BodyType::Dynamic) {
+        b2PolygonShape defaultShape;
+        // Use half the transform scale as the box half-extents (matching sprite size)
+        defaultShape.SetAsBox(transform.scale.x * 0.5f, transform.scale.y * 0.5f);
+
+        b2FixtureDef fixtureDef;
+        fixtureDef.shape = &defaultShape;
+        fixtureDef.density = 1.0f;
+        fixtureDef.friction = 0.3f;
+        fixtureDef.restitution = 0.0f;
+
+        rb.runtimeBody->CreateFixture(&fixtureDef);
+
+        LIMBO_LOG_PHYSICS_DEBUG(
+            "Created default fixture for Rigidbody2D without collider (entity {})",
+            static_cast<u32>(entity));
     }
 }
 

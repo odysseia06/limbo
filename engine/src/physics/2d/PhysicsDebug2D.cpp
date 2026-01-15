@@ -19,6 +19,9 @@ void PhysicsDebug2D::draw(const b2World* world) {
         return;
     }
 
+    // Draw physics debug behind sprites (negative z)
+    constexpr f32 debugZ = -0.5f;
+
     // Iterate through all bodies in the world
     for (const b2Body* body = world->GetBodyList(); body != nullptr; body = body->GetNext()) {
         b2BodyType const bodyType = body->GetType();
@@ -43,11 +46,11 @@ void PhysicsDebug2D::draw(const b2World* world) {
         if (m_drawCenterOfMass) {
             b2Vec2 const worldCenter = body->GetWorldCenter();
             f32 const crossSize = 0.1f;
-            Renderer2D::drawLine(glm::vec2{worldCenter.x - crossSize, worldCenter.y},
-                                 glm::vec2{worldCenter.x + crossSize, worldCenter.y},
+            Renderer2D::drawLine(glm::vec3{worldCenter.x - crossSize, worldCenter.y, debugZ},
+                                 glm::vec3{worldCenter.x + crossSize, worldCenter.y, debugZ},
                                  m_centerOfMassColor);
-            Renderer2D::drawLine(glm::vec2{worldCenter.x, worldCenter.y - crossSize},
-                                 glm::vec2{worldCenter.x, worldCenter.y + crossSize},
+            Renderer2D::drawLine(glm::vec3{worldCenter.x, worldCenter.y - crossSize, debugZ},
+                                 glm::vec3{worldCenter.x, worldCenter.y + crossSize, debugZ},
                                  m_centerOfMassColor);
         }
 
@@ -90,13 +93,14 @@ void PhysicsDebug2D::draw(const b2World* world) {
                 b2Vec2 const center = b2Mul(xf, circle->m_p);
                 f32 const radius = circle->m_radius;
 
-                Renderer2D::drawCircle(glm::vec2{center.x, center.y}, radius, color);
+                Renderer2D::drawCircle(glm::vec3{center.x, center.y, debugZ}, radius, color);
 
                 // Draw a line to show rotation
                 b2Vec2 const axis = b2Mul(xf.q, b2Vec2(1.0f, 0.0f));
                 Renderer2D::drawLine(
-                    glm::vec2{center.x, center.y},
-                    glm::vec2{center.x + radius * axis.x, center.y + radius * axis.y}, color);
+                    glm::vec3{center.x, center.y, debugZ},
+                    glm::vec3{center.x + radius * axis.x, center.y + radius * axis.y, debugZ},
+                    color);
                 break;
             }
             case b2Shape::e_polygon: {
@@ -107,7 +111,8 @@ void PhysicsDebug2D::draw(const b2World* world) {
                 for (i32 i = 0; i < vertexCount; ++i) {
                     b2Vec2 const v1 = b2Mul(xf, poly->m_vertices[i]);
                     b2Vec2 const v2 = b2Mul(xf, poly->m_vertices[(i + 1) % vertexCount]);
-                    Renderer2D::drawLine(glm::vec2{v1.x, v1.y}, glm::vec2{v2.x, v2.y}, color);
+                    Renderer2D::drawLine(glm::vec3{v1.x, v1.y, debugZ},
+                                         glm::vec3{v2.x, v2.y, debugZ}, color);
                 }
                 break;
             }
@@ -115,7 +120,8 @@ void PhysicsDebug2D::draw(const b2World* world) {
                 const auto* edge = static_cast<const b2EdgeShape*>(shape);
                 b2Vec2 const v1 = b2Mul(xf, edge->m_vertex1);
                 b2Vec2 const v2 = b2Mul(xf, edge->m_vertex2);
-                Renderer2D::drawLine(glm::vec2{v1.x, v1.y}, glm::vec2{v2.x, v2.y}, color);
+                Renderer2D::drawLine(glm::vec3{v1.x, v1.y, debugZ}, glm::vec3{v2.x, v2.y, debugZ},
+                                     color);
                 break;
             }
             case b2Shape::e_chain: {
@@ -124,7 +130,8 @@ void PhysicsDebug2D::draw(const b2World* world) {
                 for (i32 i = 0; i < count - 1; ++i) {
                     b2Vec2 const v1 = b2Mul(xf, chain->m_vertices[i]);
                     b2Vec2 const v2 = b2Mul(xf, chain->m_vertices[i + 1]);
-                    Renderer2D::drawLine(glm::vec2{v1.x, v1.y}, glm::vec2{v2.x, v2.y}, color);
+                    Renderer2D::drawLine(glm::vec3{v1.x, v1.y, debugZ},
+                                         glm::vec3{v2.x, v2.y, debugZ}, color);
                 }
                 break;
             }
@@ -140,7 +147,7 @@ void PhysicsDebug2D::draw(const b2World* world) {
                 glm::vec2 const max{aabb.upperBound.x, aabb.upperBound.y};
                 glm::vec2 const center = (min + max) * 0.5f;
                 glm::vec2 const size = max - min;
-                Renderer2D::drawRect(center, size, m_aabbColor);
+                Renderer2D::drawRect(glm::vec3{center, debugZ}, size, 0.0f, m_aabbColor);
             }
         }
     }

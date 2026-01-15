@@ -1,5 +1,10 @@
 #include "InspectorPanel.hpp"
 #include "EditorApp.hpp"
+#include "../commands/PropertyCommands.hpp"
+#include "../PrefabStage.hpp"
+
+#include <limbo/assets/FontAsset.hpp>
+#include <limbo/scene/Prefab.hpp>
 
 #include <imgui.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,9 +23,13 @@ void InspectorPanel::render() {
         return;
     }
 
-    ImGui::Begin("Inspector", &m_open);
+    ImGuiWindowFlags const windowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Inspector", &m_open, windowFlags);
 
     if (m_selectedEntity.isValid()) {
+        // Draw prefab section if this is a prefab instance
+        drawPrefabSection();
+
         drawComponents();
 
         ImGui::Separator();
@@ -67,7 +76,10 @@ void InspectorPanel::drawComponents() {
     // ========================================================================
     // RENDERING COMPONENTS
     // ========================================================================
-    bool hasRenderingComponents = m_selectedEntity.hasComponent<SpriteRendererComponent>();
+    bool hasRenderingComponents = m_selectedEntity.hasComponent<SpriteRendererComponent>() ||
+                                  m_selectedEntity.hasComponent<QuadRendererComponent>() ||
+                                  m_selectedEntity.hasComponent<CircleRendererComponent>() ||
+                                  m_selectedEntity.hasComponent<TextRendererComponent>();
 
     if (hasRenderingComponents) {
         ImGui::Separator();
@@ -86,6 +98,46 @@ void InspectorPanel::drawComponents() {
         } else if (open) {
             auto& sprite = m_selectedEntity.getComponent<SpriteRendererComponent>();
             drawSpriteRendererComponent(sprite);
+        }
+    }
+
+    // Quad Renderer
+    if (m_selectedEntity.hasComponent<QuadRendererComponent>()) {
+        bool const open = ImGui::CollapsingHeader("Quad Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+
+        ImGui::SameLine(ImGui::GetWindowWidth() - 30);
+        if (ImGui::SmallButton("X##QuadRenderer")) {
+            m_selectedEntity.removeComponent<QuadRendererComponent>();
+        } else if (open) {
+            auto& quad = m_selectedEntity.getComponent<QuadRendererComponent>();
+            drawQuadRendererComponent(quad);
+        }
+    }
+
+    // Circle Renderer
+    if (m_selectedEntity.hasComponent<CircleRendererComponent>()) {
+        bool const open =
+            ImGui::CollapsingHeader("Circle Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+
+        ImGui::SameLine(ImGui::GetWindowWidth() - 30);
+        if (ImGui::SmallButton("X##CircleRenderer")) {
+            m_selectedEntity.removeComponent<CircleRendererComponent>();
+        } else if (open) {
+            auto& circle = m_selectedEntity.getComponent<CircleRendererComponent>();
+            drawCircleRendererComponent(circle);
+        }
+    }
+
+    // Text Renderer
+    if (m_selectedEntity.hasComponent<TextRendererComponent>()) {
+        bool const open = ImGui::CollapsingHeader("Text Renderer", ImGuiTreeNodeFlags_DefaultOpen);
+
+        ImGui::SameLine(ImGui::GetWindowWidth() - 30);
+        if (ImGui::SmallButton("X##TextRenderer")) {
+            m_selectedEntity.removeComponent<TextRendererComponent>();
+        } else if (open) {
+            auto& textComp = m_selectedEntity.getComponent<TextRendererComponent>();
+            drawTextRendererComponent(textComp);
         }
     }
 
@@ -187,6 +239,25 @@ void InspectorPanel::drawAddComponentMenu() {
                 ImGui::CloseCurrentPopup();
             }
         }
+        if (!m_selectedEntity.hasComponent<QuadRendererComponent>()) {
+            if (ImGui::MenuItem("Quad Renderer")) {
+                m_selectedEntity.addComponent<QuadRendererComponent>(glm::vec4(1.0f),
+                                                                     glm::vec2(1.0f));
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        if (!m_selectedEntity.hasComponent<CircleRendererComponent>()) {
+            if (ImGui::MenuItem("Circle Renderer")) {
+                m_selectedEntity.addComponent<CircleRendererComponent>(glm::vec4(1.0f), 0.5f);
+                ImGui::CloseCurrentPopup();
+            }
+        }
+        if (!m_selectedEntity.hasComponent<TextRendererComponent>()) {
+            if (ImGui::MenuItem("Text Renderer")) {
+                m_selectedEntity.addComponent<TextRendererComponent>("Hello World");
+                ImGui::CloseCurrentPopup();
+            }
+        }
 
         ImGui::Separator();
         ImGui::TextDisabled("Physics 2D");
@@ -272,6 +343,149 @@ void InspectorPanel::drawSpriteRendererComponent(SpriteRendererComponent& compon
     ImGui::DragInt("##SortingOrder", &component.sortingOrder, 1.0f);
 }
 
+void InspectorPanel::drawQuadRendererComponent(QuadRendererComponent& component) {
+    ImGui::Text("Color");
+    ImGui::ColorEdit4("##QuadColor", glm::value_ptr(component.color));
+
+    ImGui::Text("Size");
+    ImGui::DragFloat2("##QuadSize", glm::value_ptr(component.size), 0.01f, 0.01f, 100.0f);
+
+    ImGui::Text("Sorting Layer");
+    ImGui::DragInt("##QuadSortingLayer", &component.sortingLayer, 1.0f);
+
+    ImGui::Text("Sorting Order");
+    ImGui::DragInt("##QuadSortingOrder", &component.sortingOrder, 1.0f);
+
+    // Add Matching Collider button
+    ImGui::Separator();
+    if (!m_selectedEntity.hasComponent<BoxCollider2DComponent>()) {
+        if (ImGui::Button("Add Matching Collider##Quad", ImVec2(-1, 0))) {
+            // BoxCollider2D uses half-extents
+            m_selectedEntity.addComponent<BoxCollider2DComponent>(component.size * 0.5f);
+        }
+    } else {
+        ImGui::TextDisabled("Box Collider already exists");
+    }
+}
+
+void InspectorPanel::drawCircleRendererComponent(CircleRendererComponent& component) {
+    ImGui::Text("Color");
+    ImGui::ColorEdit4("##CircleRendColor", glm::value_ptr(component.color));
+
+    ImGui::Text("Radius");
+    ImGui::DragFloat("##CircleRendRadius", &component.radius, 0.01f, 0.01f, 100.0f);
+
+    ImGui::Text("Segments");
+    ImGui::DragInt("##CircleSegments", &component.segments, 1.0f, 3, 128);
+
+    ImGui::Text("Sorting Layer");
+    ImGui::DragInt("##CircleRendSortingLayer", &component.sortingLayer, 1.0f);
+
+    ImGui::Text("Sorting Order");
+    ImGui::DragInt("##CircleRendSortingOrder", &component.sortingOrder, 1.0f);
+
+    // Add Matching Collider button
+    ImGui::Separator();
+    if (!m_selectedEntity.hasComponent<CircleCollider2DComponent>()) {
+        if (ImGui::Button("Add Matching Collider##Circle", ImVec2(-1, 0))) {
+            m_selectedEntity.addComponent<CircleCollider2DComponent>(component.radius);
+        }
+    } else {
+        ImGui::TextDisabled("Circle Collider already exists");
+    }
+}
+
+void InspectorPanel::drawTextRendererComponent(TextRendererComponent& component) {
+    // Text input (multiline)
+    ImGui::Text("Text");
+    char buffer[1024];
+    std::strncpy(buffer, component.text.c_str(), sizeof(buffer) - 1);
+    buffer[sizeof(buffer) - 1] = '\0';
+
+    ImGui::PushItemWidth(-1);
+    if (ImGui::InputTextMultiline("##TextContent", buffer, sizeof(buffer), ImVec2(0, 60))) {
+        component.text = buffer;
+    }
+    ImGui::PopItemWidth();
+
+    // Font selector (shows path or "None")
+    ImGui::Text("Font");
+    String fontDisplay = component.fontId.isValid()
+                             ? component.fontId.uuid().toString().substr(0, 12) + "..."
+                             : "(None)";
+
+    ImGui::PushItemWidth(-60);
+    ImGui::InputText("##FontPath", fontDisplay.data(), fontDisplay.size(),
+                     ImGuiInputTextFlags_ReadOnly);
+    ImGui::PopItemWidth();
+
+    ImGui::SameLine();
+    if (ImGui::Button("...##SelectFont")) {
+        ImGui::OpenPopup("FontFilePicker");
+    }
+
+    // Font file picker popup
+    if (ImGui::BeginPopup("FontFilePicker")) {
+        ImGui::Text("Select Font");
+        ImGui::Separator();
+
+        std::filesystem::path const fontsDir = std::filesystem::current_path() / "assets" / "fonts";
+
+        if (std::filesystem::exists(fontsDir)) {
+            bool foundAny = false;
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(fontsDir)) {
+                if (entry.is_regular_file()) {
+                    auto ext = entry.path().extension().string();
+                    if (ext == ".ttf" || ext == ".otf" || ext == ".TTF" || ext == ".OTF") {
+                        foundAny = true;
+                        auto relativePath = std::filesystem::relative(entry.path(), fontsDir);
+                        String const displayName = relativePath.string();
+
+                        if (ImGui::Selectable(displayName.c_str())) {
+                            // Load the font and get its asset ID
+                            auto& assetManager = m_editor.getAssetManager();
+                            auto fontAsset = assetManager.load<FontAsset>(entry.path());
+                            if (fontAsset) {
+                                component.fontId = fontAsset->getId();
+                            }
+                            ImGui::CloseCurrentPopup();
+                        }
+                    }
+                }
+            }
+
+            if (!foundAny) {
+                ImGui::TextDisabled("No .ttf/.otf files found in assets/fonts/");
+            }
+        } else {
+            ImGui::TextDisabled("Directory not found: assets/fonts/");
+        }
+
+        ImGui::Separator();
+        if (ImGui::Selectable("(Clear)")) {
+            component.fontId = AssetId::invalid();
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    // Scale
+    ImGui::Text("Scale");
+    ImGui::DragFloat("##TextScale", &component.scale, 0.01f, 0.1f, 10.0f);
+
+    // Color
+    ImGui::Text("Color");
+    ImGui::ColorEdit4("##TextColor", glm::value_ptr(component.color));
+
+    // Sorting
+    ImGui::Text("Sorting Layer");
+    ImGui::DragInt("##TextSortingLayer", &component.sortingLayer, 1.0f);
+
+    ImGui::Text("Sorting Order");
+    ImGui::DragInt("##TextSortingOrder", &component.sortingOrder, 1.0f);
+}
+
 void InspectorPanel::drawRigidbody2DComponent(Rigidbody2DComponent& component) {
     // Body type
     const char* bodyTypes[] = {"Static", "Kinematic", "Dynamic"};
@@ -320,11 +534,23 @@ void InspectorPanel::drawBoxCollider2DComponent(BoxCollider2DComponent& componen
 
         ImGui::TreePop();
     }
+
+    // Fit to Visual button
+    if (m_selectedEntity.hasComponent<QuadRendererComponent>() ||
+        m_selectedEntity.hasComponent<SpriteRendererComponent>()) {
+        ImGui::Separator();
+        if (ImGui::Button("Fit to Visual##BoxFit", ImVec2(-1, 0))) {
+            auto cmd = std::make_unique<FitColliderToVisualCommand>(
+                m_editor.getWorld(), m_selectedEntity.id(),
+                FitColliderToVisualCommand::ColliderType::Box);
+            m_editor.executeCommand(std::move(cmd));
+        }
+    }
 }
 
 void InspectorPanel::drawCircleCollider2DComponent(CircleCollider2DComponent& component) {
     ImGui::Text("Radius");
-    ImGui::DragFloat("##CircleRadius", &component.radius, 0.01f, 0.01f, 100.0f);
+    ImGui::DragFloat("##CircleCollRadius", &component.radius, 0.01f, 0.01f, 100.0f);
 
     ImGui::Text("Offset");
     ImGui::DragFloat2("##CircleOffset", glm::value_ptr(component.offset), 0.01f);
@@ -343,6 +569,18 @@ void InspectorPanel::drawCircleCollider2DComponent(CircleCollider2DComponent& co
         ImGui::DragFloat("##CircleRestitution", &component.restitution, 0.01f, 0.0f, 1.0f);
 
         ImGui::TreePop();
+    }
+
+    // Fit to Visual button
+    if (m_selectedEntity.hasComponent<CircleRendererComponent>() ||
+        m_selectedEntity.hasComponent<QuadRendererComponent>()) {
+        ImGui::Separator();
+        if (ImGui::Button("Fit to Visual##CircleFit", ImVec2(-1, 0))) {
+            auto cmd = std::make_unique<FitColliderToVisualCommand>(
+                m_editor.getWorld(), m_selectedEntity.id(),
+                FitColliderToVisualCommand::ColliderType::Circle);
+            m_editor.executeCommand(std::move(cmd));
+        }
     }
 }
 
@@ -470,6 +708,178 @@ void InspectorPanel::drawScriptFilePicker(ScriptComponent& component) {
 
         ImGui::EndPopup();
     }
+}
+
+void InspectorPanel::drawPrefabSection() {
+    if (!m_selectedEntity.hasComponent<PrefabInstanceComponent>()) {
+        return;
+    }
+
+    auto& prefabInst = m_selectedEntity.getComponent<PrefabInstanceComponent>();
+
+    // Only show for prefab root
+    if (!prefabInst.isRoot) {
+        return;
+    }
+
+    // Prefab header with cyan background
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.15f, 0.4f, 0.5f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.2f, 0.5f, 0.6f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_HeaderActive, ImVec4(0.25f, 0.55f, 0.65f, 1.0f));
+
+    bool const prefabSectionOpen =
+        ImGui::CollapsingHeader("Prefab Instance", ImGuiTreeNodeFlags_DefaultOpen);
+
+    ImGui::PopStyleColor(3);
+
+    if (prefabSectionOpen) {
+        ImGui::Indent();
+
+        // Show prefab ID (truncated)
+        String prefabIdStr = prefabInst.prefabId.toString();
+        if (prefabIdStr.length() > 12) {
+            prefabIdStr = prefabIdStr.substr(0, 12) + "...";
+        }
+        ImGui::Text("Prefab ID: %s", prefabIdStr.c_str());
+
+        // Show local ID
+        ImGui::Text("Local ID: %s", prefabInst.localId.c_str());
+
+        // Show override count
+        usize overrideCount = prefabInst.overrides.size();
+        if (overrideCount > 0) {
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "Overrides: %zu", overrideCount);
+        } else {
+            ImGui::TextDisabled("Overrides: None");
+        }
+
+        ImGui::Separator();
+
+        // Action buttons
+        float buttonWidth =
+            (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) / 2.0f;
+
+        // Open Prefab button
+        if (ImGui::Button("Open Prefab", ImVec2(buttonWidth, 0))) {
+            m_editor.getPrefabStage().openFromInstance(prefabInst.prefabId);
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Edit the prefab asset in isolation");
+        }
+
+        ImGui::SameLine();
+
+        // Select Prefab Asset button
+        if (ImGui::Button("Select Asset", ImVec2(buttonWidth, 0))) {
+            // TODO: Select prefab in asset browser
+            LIMBO_LOG_EDITOR_INFO("Select Asset clicked for prefab: {}",
+                                  prefabInst.prefabId.toString());
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Show the prefab asset in the Asset Browser");
+        }
+
+        // Override actions (only if there are overrides)
+        if (overrideCount > 0) {
+            ImGui::Separator();
+            ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Override Actions:");
+
+            if (ImGui::Button("Revert All", ImVec2(buttonWidth, 0))) {
+                prefabInst.clearAllOverrides();
+                m_editor.markSceneModified();
+                LIMBO_LOG_EDITOR_INFO("Reverted all overrides");
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Revert all changes to match the prefab");
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Apply All", ImVec2(buttonWidth, 0))) {
+                // Find and load the prefab file by UUID
+                std::filesystem::path prefabsDir =
+                    std::filesystem::current_path() / "assets" / "prefabs";
+                bool applied = false;
+
+                if (std::filesystem::exists(prefabsDir)) {
+                    for (const auto& entry :
+                         std::filesystem::recursive_directory_iterator(prefabsDir)) {
+                        if (!entry.is_regular_file() || entry.path().extension() != ".prefab") {
+                            continue;
+                        }
+
+                        Prefab prefab;
+                        if (prefab.loadFromFile(entry.path())) {
+                            if (prefab.getPrefabId() == prefabInst.prefabId) {
+                                // Found the matching prefab
+                                if (prefab.applyInstanceChanges(m_editor.getWorld(),
+                                                                m_selectedEntity.id())) {
+                                    if (prefab.saveToFile(entry.path())) {
+                                        LIMBO_LOG_EDITOR_INFO("Applied and saved prefab: {}",
+                                                              entry.path().string());
+                                        m_editor.markSceneModified();
+                                        applied = true;
+                                    } else {
+                                        LIMBO_LOG_EDITOR_ERROR("Failed to save prefab");
+                                    }
+                                } else {
+                                    LIMBO_LOG_EDITOR_ERROR("Failed to apply changes to prefab");
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!applied) {
+                    LIMBO_LOG_EDITOR_ERROR("Could not find prefab with ID: {}",
+                                           prefabInst.prefabId.toString());
+                }
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Apply all changes to the prefab asset");
+            }
+
+            // List individual overrides
+            if (ImGui::TreeNode("Override Details")) {
+                for (const auto& ov : prefabInst.overrides) {
+                    String label = ov.component + "." + ov.property;
+                    ImGui::BulletText("%s", label.c_str());
+                }
+                ImGui::TreePop();
+            }
+        }
+
+        // Unpack section
+        ImGui::Separator();
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Unpack:");
+
+        if (ImGui::Button("Unpack", ImVec2(buttonWidth, 0))) {
+            Prefab::unpack(m_editor.getWorld(), m_selectedEntity.id(), false);
+            m_editor.markSceneModified();
+            LIMBO_LOG_EDITOR_INFO("Unpacked prefab instance (kept nested prefabs)");
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Remove prefab link but keep current values.\n"
+                              "Nested prefab instances remain linked.");
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Unpack Completely", ImVec2(buttonWidth, 0))) {
+            Prefab::unpack(m_editor.getWorld(), m_selectedEntity.id(), true);
+            m_editor.markSceneModified();
+            LIMBO_LOG_EDITOR_INFO("Unpacked prefab instance completely");
+        }
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Remove all prefab links including nested prefabs.\n"
+                              "All entities become independent.");
+        }
+
+        ImGui::Unindent();
+    }
+
+    ImGui::Separator();
 }
 
 }  // namespace limbo::editor

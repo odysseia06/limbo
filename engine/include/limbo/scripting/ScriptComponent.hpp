@@ -47,6 +47,12 @@ struct LIMBO_API ScriptComponent {
     /// Line number of last error (0 if unknown)
     i32 lastErrorLine = 0;
 
+    /// Saved state from onBeforeReload for passing to onAfterReload
+    sol::object reloadData;
+
+    /// Flag indicating script needs onAfterReload called after re-initialization
+    bool pendingAfterReload = false;
+
     ScriptComponent() = default;
     explicit ScriptComponent(const std::filesystem::path& path) : scriptPath(path) {}
 

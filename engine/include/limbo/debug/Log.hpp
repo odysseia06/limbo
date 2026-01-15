@@ -32,6 +32,9 @@ LIMBO_API void addLogCallback(LogCallback callback);
 // Clear all log callbacks
 LIMBO_API void clearLogCallbacks();
 
+// Check if logging system is initialized (safe to call log functions)
+LIMBO_API bool isInitialized();
+
 // Get loggers for each subsystem
 LIMBO_API spdlog::logger& core();
 LIMBO_API spdlog::logger& render();

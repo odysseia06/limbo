@@ -1,5 +1,7 @@
 #include <limbo/Limbo.hpp>
 #include <limbo/debug/Log.hpp>
+#include <limbo/assets/FontAsset.hpp>
+#include <limbo/render/2d/TextRenderer.hpp>
 
 #include <imgui.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -284,6 +286,9 @@ protected:
 
         // Create UI demo
         createUIDemo();
+
+        // Create text demo
+        createTextDemo();
     }
 
     void createTilemapEntity() {
@@ -418,6 +423,68 @@ protected:
         uiComp.screenSpace = true;
 
         LIMBO_LOG_CORE_INFO("Created UI demo with panels, buttons, and progress bar");
+    }
+
+    void createTextDemo() {
+        auto& world = getWorld();
+
+        // Try to load a font from assets
+        std::filesystem::path const fontsDir = m_assetManager.getAssetRoot() / "fonts";
+
+        // Look for any .ttf file
+        std::filesystem::path fontPath;
+        if (std::filesystem::exists(fontsDir)) {
+            for (const auto& entry : std::filesystem::directory_iterator(fontsDir)) {
+                if (entry.is_regular_file()) {
+                    auto ext = entry.path().extension().string();
+                    if (ext == ".ttf" || ext == ".TTF" || ext == ".otf" || ext == ".OTF") {
+                        fontPath = entry.path();
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (fontPath.empty()) {
+            LIMBO_LOG_RENDER_WARN("No font files found in assets/fonts/ - text demo disabled");
+            LIMBO_LOG_RENDER_INFO("Add a .ttf font file to enable text rendering demo");
+            return;
+        }
+
+        // Load the font
+        m_demoFont = m_assetManager.load<limbo::FontAsset>(fontPath);
+        if (!m_demoFont || !m_demoFont->isLoaded()) {
+            LIMBO_LOG_RENDER_WARN("Failed to load font: {}", fontPath.string());
+            return;
+        }
+
+        LIMBO_LOG_RENDER_INFO("Loaded font for text demo: {}", fontPath.string());
+
+        // Create a text entity with "Hello Limbo!" label
+        limbo::Entity textEntity = world.createEntity("HelloText");
+        auto& transform = textEntity.addComponent<limbo::TransformComponent>();
+        transform.position = glm::vec3(0.0f, 1.2f, 0.0f);
+
+        auto& textComp = textEntity.addComponent<limbo::TextRendererComponent>();
+        textComp.text = "Hello Limbo!";
+        textComp.fontId = m_demoFont->getId();
+        textComp.scale = 0.01f;  // Scale down - font is in pixels, world is in units
+        textComp.color = glm::vec4(1.0f, 0.9f, 0.3f, 1.0f);  // Yellow
+        textComp.sortingLayer = 10;                          // Render on top
+
+        // Create a second text entity showing engine info
+        limbo::Entity infoText = world.createEntity("InfoText");
+        auto& infoTransform = infoText.addComponent<limbo::TransformComponent>();
+        infoTransform.position = glm::vec3(-1.5f, -1.1f, 0.0f);
+
+        auto& infoComp = infoText.addComponent<limbo::TextRendererComponent>();
+        infoComp.text = "Limbo Engine - Milestone 6: Text Rendering";
+        infoComp.fontId = m_demoFont->getId();
+        infoComp.scale = 0.005f;                             // Smaller text
+        infoComp.color = glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);  // Gray
+        infoComp.sortingLayer = 10;
+
+        LIMBO_LOG_CORE_INFO("Created text demo entities");
     }
 
     void createTilesetTexture() {
@@ -1111,6 +1178,25 @@ protected:
             m_particleSystem->render();
         }
 
+        // Render text entities
+        auto textView = world.view<limbo::TransformComponent, limbo::TextRendererComponent>();
+        for (auto entity : textView) {
+            const auto& transform = textView.get<limbo::TransformComponent>(entity);
+            const auto& textComp = textView.get<limbo::TextRendererComponent>(entity);
+
+            if (textComp.text.empty() || !textComp.fontId.isValid()) {
+                continue;
+            }
+
+            auto fontAsset = m_assetManager.get<limbo::FontAsset>(textComp.fontId);
+            if (!fontAsset || !fontAsset->isLoaded() || !fontAsset->getFont()) {
+                continue;
+            }
+
+            limbo::TextRenderer::drawText(textComp.text, transform.position, *fontAsset->getFont(),
+                                          textComp.scale, textComp.color);
+        }
+
         // End batch and flush
         limbo::Renderer2D::endScene();
 
@@ -1142,6 +1228,7 @@ private:
 
     // Loaded assets
     limbo::Shared<limbo::TextureAsset> m_checkerboardTexture;
+    limbo::Shared<limbo::FontAsset> m_demoFont;
 
     // Camera
     limbo::OrthographicCamera m_camera;

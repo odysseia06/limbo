@@ -2,11 +2,14 @@
 
 #include "limbo/ecs/Components.hpp"
 #include "limbo/ecs/Hierarchy.hpp"
+#include "limbo/physics/2d/PhysicsComponents2D.hpp"
+#include "limbo/scripting/ScriptComponent.hpp"
 #include "limbo/debug/Log.hpp"
 
 #include <nlohmann/json.hpp>
 
 #include <fstream>
+#include <sstream>
 
 using json = nlohmann::json;
 
@@ -14,7 +17,10 @@ namespace limbo {
 
 namespace {
 
-// JSON helpers for GLM types
+// ============================================================================
+// JSON Serialization Helpers
+// ============================================================================
+
 json serializeVec2(const glm::vec2& v) {
     return json::array({v.x, v.y});
 }
@@ -49,7 +55,308 @@ glm::vec4 deserializeVec4(const json& j) {
     return glm::vec4(1.0f);
 }
 
+// ============================================================================
+// Component Serializers
+// ============================================================================
+
+json serializeTransform(const TransformComponent& transform) {
+    json j;
+    j["position"] = serializeVec3(transform.position);
+    j["rotation"] = serializeVec3(transform.rotation);
+    j["scale"] = serializeVec3(transform.scale);
+    return j;
+}
+
+void deserializeTransform(TransformComponent& transform, const json& j) {
+    if (j.contains("position")) {
+        transform.position = deserializeVec3(j["position"]);
+    }
+    if (j.contains("rotation")) {
+        transform.rotation = deserializeVec3(j["rotation"]);
+    }
+    if (j.contains("scale")) {
+        transform.scale = deserializeVec3(j["scale"]);
+    }
+}
+
+json serializeSpriteRenderer(const SpriteRendererComponent& sprite) {
+    json j;
+    j["color"] = serializeVec4(sprite.color);
+    j["sortingLayer"] = sprite.sortingLayer;
+    j["sortingOrder"] = sprite.sortingOrder;
+    if (sprite.textureId.isValid()) {
+        j["textureId"] = sprite.textureId.uuid().toString();
+    }
+    j["uvMin"] = serializeVec2(sprite.uvMin);
+    j["uvMax"] = serializeVec2(sprite.uvMax);
+    return j;
+}
+
+void deserializeSpriteRenderer(SpriteRendererComponent& sprite, const json& j) {
+    if (j.contains("color")) {
+        sprite.color = deserializeVec4(j["color"]);
+    }
+    if (j.contains("sortingLayer")) {
+        sprite.sortingLayer = j["sortingLayer"].get<i32>();
+    }
+    if (j.contains("sortingOrder")) {
+        sprite.sortingOrder = j["sortingOrder"].get<i32>();
+    }
+    if (j.contains("textureId")) {
+        sprite.textureId = AssetId(UUID::fromString(j["textureId"].get<String>()));
+    }
+    if (j.contains("uvMin")) {
+        sprite.uvMin = deserializeVec2(j["uvMin"]);
+    }
+    if (j.contains("uvMax")) {
+        sprite.uvMax = deserializeVec2(j["uvMax"]);
+    }
+}
+
+json serializeQuadRenderer(const QuadRendererComponent& quad) {
+    json j;
+    j["color"] = serializeVec4(quad.color);
+    j["size"] = serializeVec2(quad.size);
+    j["sortingLayer"] = quad.sortingLayer;
+    j["sortingOrder"] = quad.sortingOrder;
+    return j;
+}
+
+void deserializeQuadRenderer(QuadRendererComponent& quad, const json& j) {
+    if (j.contains("color")) {
+        quad.color = deserializeVec4(j["color"]);
+    }
+    if (j.contains("size")) {
+        quad.size = deserializeVec2(j["size"]);
+    }
+    if (j.contains("sortingLayer")) {
+        quad.sortingLayer = j["sortingLayer"].get<i32>();
+    }
+    if (j.contains("sortingOrder")) {
+        quad.sortingOrder = j["sortingOrder"].get<i32>();
+    }
+}
+
+json serializeCircleRenderer(const CircleRendererComponent& circle) {
+    json j;
+    j["color"] = serializeVec4(circle.color);
+    j["radius"] = circle.radius;
+    j["segments"] = circle.segments;
+    j["sortingLayer"] = circle.sortingLayer;
+    j["sortingOrder"] = circle.sortingOrder;
+    return j;
+}
+
+void deserializeCircleRenderer(CircleRendererComponent& circle, const json& j) {
+    if (j.contains("color")) {
+        circle.color = deserializeVec4(j["color"]);
+    }
+    if (j.contains("radius")) {
+        circle.radius = j["radius"].get<f32>();
+    }
+    if (j.contains("segments")) {
+        circle.segments = j["segments"].get<i32>();
+    }
+    if (j.contains("sortingLayer")) {
+        circle.sortingLayer = j["sortingLayer"].get<i32>();
+    }
+    if (j.contains("sortingOrder")) {
+        circle.sortingOrder = j["sortingOrder"].get<i32>();
+    }
+}
+
+json serializeCamera(const CameraComponent& camera) {
+    json j;
+    j["projectionType"] = camera.projectionType == CameraComponent::ProjectionType::Perspective
+                              ? "perspective"
+                              : "orthographic";
+    j["fov"] = camera.fov;
+    j["orthoSize"] = camera.orthoSize;
+    j["nearClip"] = camera.nearClip;
+    j["farClip"] = camera.farClip;
+    j["primary"] = camera.primary;
+    return j;
+}
+
+void deserializeCamera(CameraComponent& camera, const json& j) {
+    if (j.contains("projectionType")) {
+        String projType = j["projectionType"].get<String>();
+        camera.projectionType = (projType == "orthographic")
+                                    ? CameraComponent::ProjectionType::Orthographic
+                                    : CameraComponent::ProjectionType::Perspective;
+    }
+    if (j.contains("fov")) {
+        camera.fov = j["fov"].get<f32>();
+    }
+    if (j.contains("orthoSize")) {
+        camera.orthoSize = j["orthoSize"].get<f32>();
+    }
+    if (j.contains("nearClip")) {
+        camera.nearClip = j["nearClip"].get<f32>();
+    }
+    if (j.contains("farClip")) {
+        camera.farClip = j["farClip"].get<f32>();
+    }
+    if (j.contains("primary")) {
+        camera.primary = j["primary"].get<bool>();
+    }
+}
+
+json serializeRigidbody2D(const Rigidbody2DComponent& rb) {
+    json j;
+    j["type"] = static_cast<int>(rb.type);
+    j["gravityScale"] = rb.gravityScale;
+    j["fixedRotation"] = rb.fixedRotation;
+    j["linearVelocity"] = serializeVec2(rb.linearVelocity);
+    j["angularVelocity"] = rb.angularVelocity;
+    j["linearDamping"] = rb.linearDamping;
+    j["angularDamping"] = rb.angularDamping;
+    return j;
+}
+
+void deserializeRigidbody2D(Rigidbody2DComponent& rb, const json& j) {
+    if (j.contains("type")) {
+        rb.type = static_cast<BodyType>(j["type"].get<int>());
+    }
+    if (j.contains("gravityScale")) {
+        rb.gravityScale = j["gravityScale"].get<f32>();
+    }
+    if (j.contains("fixedRotation")) {
+        rb.fixedRotation = j["fixedRotation"].get<bool>();
+    }
+    if (j.contains("linearVelocity")) {
+        rb.linearVelocity = deserializeVec2(j["linearVelocity"]);
+    }
+    if (j.contains("angularVelocity")) {
+        rb.angularVelocity = j["angularVelocity"].get<f32>();
+    }
+    if (j.contains("linearDamping")) {
+        rb.linearDamping = j["linearDamping"].get<f32>();
+    }
+    if (j.contains("angularDamping")) {
+        rb.angularDamping = j["angularDamping"].get<f32>();
+    }
+}
+
+json serializeBoxCollider2D(const BoxCollider2DComponent& box) {
+    json j;
+    j["size"] = serializeVec2(box.size);
+    j["offset"] = serializeVec2(box.offset);
+    j["density"] = box.density;
+    j["friction"] = box.friction;
+    j["restitution"] = box.restitution;
+    j["restitutionThreshold"] = box.restitutionThreshold;
+    j["isTrigger"] = box.isTrigger;
+    return j;
+}
+
+void deserializeBoxCollider2D(BoxCollider2DComponent& box, const json& j) {
+    if (j.contains("size")) {
+        box.size = deserializeVec2(j["size"]);
+    }
+    if (j.contains("offset")) {
+        box.offset = deserializeVec2(j["offset"]);
+    }
+    if (j.contains("density")) {
+        box.density = j["density"].get<f32>();
+    }
+    if (j.contains("friction")) {
+        box.friction = j["friction"].get<f32>();
+    }
+    if (j.contains("restitution")) {
+        box.restitution = j["restitution"].get<f32>();
+    }
+    if (j.contains("restitutionThreshold")) {
+        box.restitutionThreshold = j["restitutionThreshold"].get<f32>();
+    }
+    if (j.contains("isTrigger")) {
+        box.isTrigger = j["isTrigger"].get<bool>();
+    }
+}
+
+json serializeCircleCollider2D(const CircleCollider2DComponent& circle) {
+    json j;
+    j["radius"] = circle.radius;
+    j["offset"] = serializeVec2(circle.offset);
+    j["density"] = circle.density;
+    j["friction"] = circle.friction;
+    j["restitution"] = circle.restitution;
+    j["restitutionThreshold"] = circle.restitutionThreshold;
+    j["isTrigger"] = circle.isTrigger;
+    return j;
+}
+
+void deserializeCircleCollider2D(CircleCollider2DComponent& circle, const json& j) {
+    if (j.contains("radius")) {
+        circle.radius = j["radius"].get<f32>();
+    }
+    if (j.contains("offset")) {
+        circle.offset = deserializeVec2(j["offset"]);
+    }
+    if (j.contains("density")) {
+        circle.density = j["density"].get<f32>();
+    }
+    if (j.contains("friction")) {
+        circle.friction = j["friction"].get<f32>();
+    }
+    if (j.contains("restitution")) {
+        circle.restitution = j["restitution"].get<f32>();
+    }
+    if (j.contains("restitutionThreshold")) {
+        circle.restitutionThreshold = j["restitutionThreshold"].get<f32>();
+    }
+    if (j.contains("isTrigger")) {
+        circle.isTrigger = j["isTrigger"].get<bool>();
+    }
+}
+
+json serializeScript(const ScriptComponent& script) {
+    json j;
+    j["scriptPath"] = script.scriptPath;
+    j["enabled"] = script.enabled;
+    return j;
+}
+
+void deserializeScript(ScriptComponent& script, const json& j) {
+    if (j.contains("scriptPath")) {
+        script.scriptPath = j["scriptPath"].get<String>();
+    }
+    if (j.contains("enabled")) {
+        script.enabled = j["enabled"].get<bool>();
+    }
+}
+
 }  // namespace
+
+// ============================================================================
+// Prefab Implementation
+// ============================================================================
+
+String Prefab::generateLocalId(const String& baseName) {
+    if (m_localIdCounter == 0) {
+        m_localIdCounter++;
+        return "root";
+    }
+    return baseName + "_" + std::to_string(m_localIdCounter++);
+}
+
+const PrefabEntity* Prefab::findEntity(const String& localId) const {
+    for (const auto& entity : m_entities) {
+        if (entity.localId == localId) {
+            return &entity;
+        }
+    }
+    return nullptr;
+}
+
+PrefabEntity* Prefab::findEntity(const String& localId) {
+    for (auto& entity : m_entities) {
+        if (entity.localId == localId) {
+            return &entity;
+        }
+    }
+    return nullptr;
+}
 
 Prefab Prefab::createFromEntity(World& world, World::EntityId rootEntity) {
     Prefab prefab;
@@ -64,87 +371,109 @@ Prefab Prefab::createFromEntity(World& world, World::EntityId rootEntity) {
         prefab.m_name = world.getComponent<NameComponent>(rootEntity).name;
     }
 
-    // Build entity list in hierarchy order
-    std::vector<World::EntityId> entityList;
-    std::unordered_map<World::EntityId, i32> entityIndexMap;
+    // Reset counter for generating local IDs
+    prefab.m_localIdCounter = 0;
+
+    // Map from entity ID to local ID
+    std::unordered_map<World::EntityId, String> entityToLocalId;
 
     // Recursive function to collect entities
-    std::function<void(World::EntityId, i32)> collectEntities = [&](World::EntityId entityId,
-                                                                    i32 parentIndex) {
-        i32 currentIndex = static_cast<i32>(entityList.size());
-        entityList.push_back(entityId);
-        entityIndexMap[entityId] = currentIndex;
+    std::function<void(World::EntityId, const String&)> collectEntities =
+        [&](World::EntityId entityId, const String& parentLocalId) {
+            // Generate local ID
+            String baseName = "entity";
+            if (world.hasComponent<NameComponent>(entityId)) {
+                baseName = world.getComponent<NameComponent>(entityId).name;
+                // Sanitize name for use as ID
+                std::replace(baseName.begin(), baseName.end(), ' ', '_');
+            }
+            String localId = prefab.generateLocalId(baseName);
+            entityToLocalId[entityId] = localId;
 
-        // Serialize this entity
-        prefab.m_entities.push_back(serializeEntity(world, entityId, parentIndex));
+            // Create prefab entity
+            PrefabEntity prefabEntity;
+            prefabEntity.localId = localId;
+            prefabEntity.parentLocalId = parentLocalId;
 
-        // Process children
-        Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
-            collectEntities(childId, currentIndex);
-            return true;
-        });
-    };
+            if (world.hasComponent<NameComponent>(entityId)) {
+                prefabEntity.name = world.getComponent<NameComponent>(entityId).name;
+            } else {
+                prefabEntity.name = "Entity";
+            }
 
-    collectEntities(rootEntity, -1);
+            // Serialize all components
+            serializeEntityComponents(world, entityId, prefabEntity);
+
+            prefab.m_entities.push_back(std::move(prefabEntity));
+
+            // Process children
+            Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
+                collectEntities(childId, localId);
+                return true;
+            });
+        };
+
+    collectEntities(rootEntity, "");
+    prefab.m_rootLocalId = "root";
 
     return prefab;
 }
 
-PrefabEntity Prefab::serializeEntity(World& world, World::EntityId entityId, i32 parentIndex) {
-    PrefabEntity prefabEntity;
-    prefabEntity.parentIndex = parentIndex;
-
-    // Name
-    if (world.hasComponent<NameComponent>(entityId)) {
-        prefabEntity.name = world.getComponent<NameComponent>(entityId).name;
-    } else {
-        prefabEntity.name = "Entity";
-    }
-
+void Prefab::serializeEntityComponents(World& world, World::EntityId entityId,
+                                       PrefabEntity& prefabEntity) {
     // Transform
     if (world.hasComponent<TransformComponent>(entityId)) {
-        const auto& transform = world.getComponent<TransformComponent>(entityId);
-        json transformJson;
-        transformJson["position"] = serializeVec3(transform.position);
-        transformJson["rotation"] = serializeVec3(transform.rotation);
-        transformJson["scale"] = serializeVec3(transform.scale);
-        prefabEntity.transformData = transformJson.dump();
+        prefabEntity.components["Transform"] =
+            serializeTransform(world.getComponent<TransformComponent>(entityId));
     }
 
-    // SpriteRenderer
+    // Renderers
     if (world.hasComponent<SpriteRendererComponent>(entityId)) {
-        const auto& sprite = world.getComponent<SpriteRendererComponent>(entityId);
-        json spriteJson;
-        spriteJson["color"] = serializeVec4(sprite.color);
-        spriteJson["sortingOrder"] = sprite.sortingOrder;
-        if (sprite.textureId.isValid()) {
-            spriteJson["textureId"] = sprite.textureId.uuid().toString();
-        }
-        spriteJson["uvMin"] = serializeVec2(sprite.uvMin);
-        spriteJson["uvMax"] = serializeVec2(sprite.uvMax);
-        prefabEntity.spriteRendererData = spriteJson.dump();
+        prefabEntity.components["SpriteRenderer"] =
+            serializeSpriteRenderer(world.getComponent<SpriteRendererComponent>(entityId));
+    }
+    if (world.hasComponent<QuadRendererComponent>(entityId)) {
+        prefabEntity.components["QuadRenderer"] =
+            serializeQuadRenderer(world.getComponent<QuadRendererComponent>(entityId));
+    }
+    if (world.hasComponent<CircleRendererComponent>(entityId)) {
+        prefabEntity.components["CircleRenderer"] =
+            serializeCircleRenderer(world.getComponent<CircleRendererComponent>(entityId));
     }
 
     // Camera
     if (world.hasComponent<CameraComponent>(entityId)) {
-        const auto& camera = world.getComponent<CameraComponent>(entityId);
-        json cameraJson;
-        cameraJson["projectionType"] =
-            camera.projectionType == CameraComponent::ProjectionType::Perspective ? "perspective"
-                                                                                  : "orthographic";
-        cameraJson["fov"] = camera.fov;
-        cameraJson["orthoSize"] = camera.orthoSize;
-        cameraJson["nearClip"] = camera.nearClip;
-        cameraJson["farClip"] = camera.farClip;
-        cameraJson["primary"] = camera.primary;
-        prefabEntity.cameraData = cameraJson.dump();
+        prefabEntity.components["Camera"] =
+            serializeCamera(world.getComponent<CameraComponent>(entityId));
     }
 
-    // Tags
-    prefabEntity.hasStaticComponent = world.hasComponent<StaticComponent>(entityId);
-    prefabEntity.hasActiveComponent = world.hasComponent<ActiveComponent>(entityId);
+    // Physics
+    if (world.hasComponent<Rigidbody2DComponent>(entityId)) {
+        prefabEntity.components["Rigidbody2D"] =
+            serializeRigidbody2D(world.getComponent<Rigidbody2DComponent>(entityId));
+    }
+    if (world.hasComponent<BoxCollider2DComponent>(entityId)) {
+        prefabEntity.components["BoxCollider2D"] =
+            serializeBoxCollider2D(world.getComponent<BoxCollider2DComponent>(entityId));
+    }
+    if (world.hasComponent<CircleCollider2DComponent>(entityId)) {
+        prefabEntity.components["CircleCollider2D"] =
+            serializeCircleCollider2D(world.getComponent<CircleCollider2DComponent>(entityId));
+    }
 
-    return prefabEntity;
+    // Scripting
+    if (world.hasComponent<ScriptComponent>(entityId)) {
+        prefabEntity.components["Script"] =
+            serializeScript(world.getComponent<ScriptComponent>(entityId));
+    }
+
+    // Tag components (stored as empty objects to indicate presence)
+    if (world.hasComponent<StaticComponent>(entityId)) {
+        prefabEntity.components["Static"] = json::object();
+    }
+    if (world.hasComponent<ActiveComponent>(entityId)) {
+        prefabEntity.components["Active"] = json::object();
+    }
 }
 
 Entity Prefab::instantiate(World& world, const glm::vec3& position) const {
@@ -153,113 +482,81 @@ Entity Prefab::instantiate(World& world, const glm::vec3& position) const {
         return Entity();
     }
 
-    std::vector<World::EntityId> createdEntities;
-    createdEntities.reserve(m_entities.size());
+    // Map from local ID to created entity ID
+    std::unordered_map<String, World::EntityId> localIdToEntity;
 
-    // Create all entities
-    for (usize i = 0; i < m_entities.size(); ++i) {
-        World::EntityId entityId = deserializeEntity(world, m_entities[i], createdEntities);
-        createdEntities.push_back(entityId);
+    // First pass: create all entities
+    for (const auto& prefabEntity : m_entities) {
+        Entity entity = world.createEntity(prefabEntity.name);
+        localIdToEntity[prefabEntity.localId] = entity.id();
 
         // Add PrefabInstanceComponent
-        world.addComponent<PrefabInstanceComponent>(entityId, m_prefabId, static_cast<i32>(i),
-                                                    i == 0);
+        world.addComponent<PrefabInstanceComponent>(entity.id(), m_prefabId, prefabEntity.localId,
+                                                    prefabEntity.isRoot());
+
+        // Deserialize components
+        deserializeEntityComponents(world, entity.id(), prefabEntity);
     }
 
-    // Set up hierarchy
-    for (usize i = 0; i < m_entities.size(); ++i) {
-        if (m_entities[i].parentIndex >= 0) {
-            Hierarchy::setParent(world, createdEntities[i],
-                                 createdEntities[static_cast<usize>(m_entities[i].parentIndex)]);
+    // Second pass: set up hierarchy
+    for (const auto& prefabEntity : m_entities) {
+        if (!prefabEntity.parentLocalId.empty()) {
+            auto parentIt = localIdToEntity.find(prefabEntity.parentLocalId);
+            auto childIt = localIdToEntity.find(prefabEntity.localId);
+            if (parentIt != localIdToEntity.end() && childIt != localIdToEntity.end()) {
+                Hierarchy::setParent(world, childIt->second, parentIt->second);
+            }
         }
     }
 
     // Apply position offset to root
-    if (!createdEntities.empty() && world.hasComponent<TransformComponent>(createdEntities[0])) {
-        auto& transform = world.getComponent<TransformComponent>(createdEntities[0]);
+    auto rootIt = localIdToEntity.find(m_rootLocalId);
+    if (rootIt != localIdToEntity.end() && world.hasComponent<TransformComponent>(rootIt->second)) {
+        auto& transform = world.getComponent<TransformComponent>(rootIt->second);
         transform.position += position;
     }
 
-    return Entity(createdEntities[0], &world);
+    return Entity(rootIt != localIdToEntity.end() ? rootIt->second : World::kNullEntity, &world);
 }
 
-World::EntityId Prefab::deserializeEntity(
-    World& world, const PrefabEntity& prefabEntity,
-    [[maybe_unused]] const std::vector<World::EntityId>& createdEntities) const {
-    Entity entity = world.createEntity(prefabEntity.name);
-
-    // Transform
-    if (prefabEntity.transformData.has_value()) {
-        json transformJson = json::parse(prefabEntity.transformData.value());
-        auto& transform = entity.addComponent<TransformComponent>();
-        if (transformJson.contains("position")) {
-            transform.position = deserializeVec3(transformJson["position"]);
-        }
-        if (transformJson.contains("rotation")) {
-            transform.rotation = deserializeVec3(transformJson["rotation"]);
-        }
-        if (transformJson.contains("scale")) {
-            transform.scale = deserializeVec3(transformJson["scale"]);
-        }
-    }
-
-    // SpriteRenderer
-    if (prefabEntity.spriteRendererData.has_value()) {
-        json spriteJson = json::parse(prefabEntity.spriteRendererData.value());
-        auto& sprite = entity.addComponent<SpriteRendererComponent>();
-        if (spriteJson.contains("color")) {
-            sprite.color = deserializeVec4(spriteJson["color"]);
-        }
-        if (spriteJson.contains("sortingOrder")) {
-            sprite.sortingOrder = spriteJson["sortingOrder"].get<i32>();
-        }
-        if (spriteJson.contains("textureId")) {
-            sprite.textureId = AssetId(UUID::fromString(spriteJson["textureId"].get<String>()));
-        }
-        if (spriteJson.contains("uvMin")) {
-            sprite.uvMin = deserializeVec2(spriteJson["uvMin"]);
-        }
-        if (spriteJson.contains("uvMax")) {
-            sprite.uvMax = deserializeVec2(spriteJson["uvMax"]);
+void Prefab::deserializeEntityComponents(World& world, World::EntityId entityId,
+                                         const PrefabEntity& prefabEntity) const {
+    for (const auto& [typeName, data] : prefabEntity.components) {
+        if (typeName == "Transform") {
+            auto& transform = world.hasComponent<TransformComponent>(entityId)
+                                  ? world.getComponent<TransformComponent>(entityId)
+                                  : world.addComponent<TransformComponent>(entityId);
+            deserializeTransform(transform, data);
+        } else if (typeName == "SpriteRenderer") {
+            auto& sprite = world.addComponent<SpriteRendererComponent>(entityId);
+            deserializeSpriteRenderer(sprite, data);
+        } else if (typeName == "QuadRenderer") {
+            auto& quad = world.addComponent<QuadRendererComponent>(entityId);
+            deserializeQuadRenderer(quad, data);
+        } else if (typeName == "CircleRenderer") {
+            auto& circle = world.addComponent<CircleRendererComponent>(entityId);
+            deserializeCircleRenderer(circle, data);
+        } else if (typeName == "Camera") {
+            auto& camera = world.addComponent<CameraComponent>(entityId);
+            deserializeCamera(camera, data);
+        } else if (typeName == "Rigidbody2D") {
+            auto& rb = world.addComponent<Rigidbody2DComponent>(entityId);
+            deserializeRigidbody2D(rb, data);
+        } else if (typeName == "BoxCollider2D") {
+            auto& box = world.addComponent<BoxCollider2DComponent>(entityId);
+            deserializeBoxCollider2D(box, data);
+        } else if (typeName == "CircleCollider2D") {
+            auto& circle = world.addComponent<CircleCollider2DComponent>(entityId);
+            deserializeCircleCollider2D(circle, data);
+        } else if (typeName == "Script") {
+            auto& script = world.addComponent<ScriptComponent>(entityId);
+            deserializeScript(script, data);
+        } else if (typeName == "Static") {
+            world.addComponent<StaticComponent>(entityId);
+        } else if (typeName == "Active") {
+            world.addComponent<ActiveComponent>(entityId);
         }
     }
-
-    // Camera
-    if (prefabEntity.cameraData.has_value()) {
-        json cameraJson = json::parse(prefabEntity.cameraData.value());
-        auto& camera = entity.addComponent<CameraComponent>();
-        if (cameraJson.contains("projectionType")) {
-            String projType = cameraJson["projectionType"].get<String>();
-            camera.projectionType = (projType == "orthographic")
-                                        ? CameraComponent::ProjectionType::Orthographic
-                                        : CameraComponent::ProjectionType::Perspective;
-        }
-        if (cameraJson.contains("fov")) {
-            camera.fov = cameraJson["fov"].get<f32>();
-        }
-        if (cameraJson.contains("orthoSize")) {
-            camera.orthoSize = cameraJson["orthoSize"].get<f32>();
-        }
-        if (cameraJson.contains("nearClip")) {
-            camera.nearClip = cameraJson["nearClip"].get<f32>();
-        }
-        if (cameraJson.contains("farClip")) {
-            camera.farClip = cameraJson["farClip"].get<f32>();
-        }
-        if (cameraJson.contains("primary")) {
-            camera.primary = cameraJson["primary"].get<bool>();
-        }
-    }
-
-    // Tags
-    if (prefabEntity.hasStaticComponent) {
-        entity.addComponent<StaticComponent>();
-    }
-    if (prefabEntity.hasActiveComponent) {
-        entity.addComponent<ActiveComponent>();
-    }
-
-    return entity.id();
 }
 
 void Prefab::updateInstances(World& world, bool respectOverrides) const {
@@ -269,62 +566,132 @@ void Prefab::updateInstances(World& world, bool respectOverrides) const {
     for (auto entityId : view) {
         auto& instance = view.get<PrefabInstanceComponent>(entityId);
 
-        // Only update if this is from our prefab and it's in range
+        // Only update if this is from our prefab
         if (instance.prefabId != m_prefabId) {
             continue;
         }
-        if (instance.entityIndex < 0 ||
-            static_cast<usize>(instance.entityIndex) >= m_entities.size()) {
+
+        // Find the corresponding prefab entity
+        const PrefabEntity* prefabEntity = findEntity(instance.localId);
+        if (prefabEntity == nullptr) {
             continue;
         }
 
-        const PrefabEntity& prefabEntity = m_entities[static_cast<usize>(instance.entityIndex)];
+        // Update each component
+        for (const auto& [typeName, data] : prefabEntity->components) {
+            // For now, simplified update - just update Transform as example
+            // Full implementation would check each property against overrides
+            if (typeName == "Transform" && world.hasComponent<TransformComponent>(entityId)) {
+                auto& transform = world.getComponent<TransformComponent>(entityId);
 
-        // Update transform (if not overridden)
-        if (prefabEntity.transformData.has_value() &&
-            world.hasComponent<TransformComponent>(entityId)) {
-            auto& transform = world.getComponent<TransformComponent>(entityId);
-            json transformJson = json::parse(prefabEntity.transformData.value());
-
-            if (!respectOverrides || !instance.hasOverride("Transform.position")) {
-                if (transformJson.contains("position")) {
-                    transform.position = deserializeVec3(transformJson["position"]);
+                if (!respectOverrides || !instance.hasOverride("Transform", "position")) {
+                    if (data.contains("position")) {
+                        transform.position = deserializeVec3(data["position"]);
+                    }
+                }
+                if (!respectOverrides || !instance.hasOverride("Transform", "rotation")) {
+                    if (data.contains("rotation")) {
+                        transform.rotation = deserializeVec3(data["rotation"]);
+                    }
+                }
+                if (!respectOverrides || !instance.hasOverride("Transform", "scale")) {
+                    if (data.contains("scale")) {
+                        transform.scale = deserializeVec3(data["scale"]);
+                    }
                 }
             }
-            if (!respectOverrides || !instance.hasOverride("Transform.rotation")) {
-                if (transformJson.contains("rotation")) {
-                    transform.rotation = deserializeVec3(transformJson["rotation"]);
-                }
-            }
-            if (!respectOverrides || !instance.hasOverride("Transform.scale")) {
-                if (transformJson.contains("scale")) {
-                    transform.scale = deserializeVec3(transformJson["scale"]);
-                }
-            }
-        }
-
-        // Update sprite (if not overridden)
-        if (prefabEntity.spriteRendererData.has_value() &&
-            world.hasComponent<SpriteRendererComponent>(entityId)) {
-            auto& sprite = world.getComponent<SpriteRendererComponent>(entityId);
-            json spriteJson = json::parse(prefabEntity.spriteRendererData.value());
-
-            if (!respectOverrides || !instance.hasOverride("SpriteRenderer.color")) {
-                if (spriteJson.contains("color")) {
-                    sprite.color = deserializeVec4(spriteJson["color"]);
-                }
-            }
+            // Add more component types as needed...
         }
     }
 }
 
-void Prefab::applyInstanceChanges(World& world, World::EntityId instanceRoot) {
+bool Prefab::applyInstanceChanges(World& world, World::EntityId instanceRoot) {
     if (!world.isValid(instanceRoot)) {
-        return;
+        LIMBO_LOG_CORE_ERROR("Prefab::applyInstanceChanges: Invalid instance root");
+        return false;
     }
 
-    // Rebuild the prefab from the instance
-    *this = createFromEntity(world, instanceRoot);
+    // Collect all overrides from the instance hierarchy
+    std::vector<PrefabOverride> allOverrides;
+
+    std::function<void(World::EntityId)> collectOverrides = [&](World::EntityId entityId) {
+        auto* instance = world.tryGetComponent<PrefabInstanceComponent>(entityId);
+        if (instance != nullptr && instance->prefabId == m_prefabId) {
+            for (const auto& override : instance->overrides) {
+                allOverrides.push_back(override);
+            }
+        }
+
+        Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
+            collectOverrides(childId);
+            return true;
+        });
+    };
+
+    collectOverrides(instanceRoot);
+
+    if (allOverrides.empty()) {
+        LIMBO_LOG_CORE_INFO("Prefab::applyInstanceChanges: No overrides to apply");
+        return true;
+    }
+
+    // Apply each override to the prefab
+    usize appliedCount = 0;
+    for (const auto& override : allOverrides) {
+        if (applyOverride(override)) {
+            appliedCount++;
+        }
+    }
+
+    // Clear the applied overrides from the instance
+    std::function<void(World::EntityId)> clearAppliedOverrides = [&](World::EntityId entityId) {
+        auto* instance = world.tryGetComponent<PrefabInstanceComponent>(entityId);
+        if (instance != nullptr && instance->prefabId == m_prefabId) {
+            instance->clearAllOverrides();
+        }
+
+        Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
+            clearAppliedOverrides(childId);
+            return true;
+        });
+    };
+
+    clearAppliedOverrides(instanceRoot);
+
+    LIMBO_LOG_CORE_INFO("Prefab::applyInstanceChanges: Applied {} overrides", appliedCount);
+    return appliedCount > 0;
+}
+
+bool Prefab::applyOverride(const PrefabOverride& override) {
+    if (override.kind != PrefabOverride::Kind::Property) {
+        // TODO: Handle AddComponent/RemoveComponent in v1.5
+        LIMBO_LOG_CORE_WARN("Prefab::applyOverride: Only Property overrides supported currently");
+        return false;
+    }
+
+    // Find the target entity in the prefab
+    PrefabEntity* targetEntity = findEntity(override.targetLocalId);
+    if (targetEntity == nullptr) {
+        LIMBO_LOG_CORE_WARN("Prefab::applyOverride: Entity '{}' not found in prefab",
+                            override.targetLocalId);
+        return false;
+    }
+
+    // Find or create the component data
+    auto compIt = targetEntity->components.find(override.component);
+    if (compIt == targetEntity->components.end()) {
+        // Component doesn't exist - create it with just this property
+        targetEntity->components[override.component] = json::object();
+        compIt = targetEntity->components.find(override.component);
+    }
+
+    // Apply the property value
+    // Handle nested properties (e.g., "position" for vec3, or "color" for vec4)
+    compIt->second[override.property] = override.value;
+
+    LIMBO_LOG_CORE_DEBUG("Prefab::applyOverride: Applied {}.{} = {}", override.component,
+                         override.property, override.value.dump());
+    return true;
 }
 
 void Prefab::revertInstance(World& world, World::EntityId instanceRoot) const {
@@ -332,27 +699,85 @@ void Prefab::revertInstance(World& world, World::EntityId instanceRoot) const {
         return;
     }
 
-    // Clear overrides and update from prefab
-    auto* instance = world.tryGetComponent<PrefabInstanceComponent>(instanceRoot);
-    if (instance != nullptr) {
-        instance->clearAllOverrides();
-    }
-
-    // Recursively revert all entities in the instance
-    std::function<void(World::EntityId)> revertEntity = [&](World::EntityId entityId) {
-        auto* inst = world.tryGetComponent<PrefabInstanceComponent>(entityId);
-        if (inst != nullptr && inst->prefabId == m_prefabId) {
-            inst->clearAllOverrides();
+    // Clear overrides on all entities in the instance
+    std::function<void(World::EntityId)> clearOverrides = [&](World::EntityId entityId) {
+        auto* instance = world.tryGetComponent<PrefabInstanceComponent>(entityId);
+        if (instance != nullptr && instance->prefabId == m_prefabId) {
+            instance->clearAllOverrides();
         }
 
         Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
-            revertEntity(childId);
+            clearOverrides(childId);
             return true;
         });
     };
 
-    revertEntity(instanceRoot);
+    clearOverrides(instanceRoot);
     updateInstances(world, false);
+}
+
+void Prefab::unpack(World& world, World::EntityId instanceRoot, bool completely) {
+    if (!world.isValid(instanceRoot)) {
+        LIMBO_LOG_CORE_ERROR("Prefab::unpack: Invalid instance root");
+        return;
+    }
+
+    // Collect all entities that are part of this prefab instance
+    std::vector<World::EntityId> entitiesToUnpack;
+
+    // Get the prefab ID from the root to identify which entities belong to this instance
+    UUID instancePrefabId;
+    UUID instanceInstanceId;
+    if (world.hasComponent<PrefabInstanceComponent>(instanceRoot)) {
+        auto& rootInst = world.getComponent<PrefabInstanceComponent>(instanceRoot);
+        instancePrefabId = rootInst.prefabId;
+        instanceInstanceId = rootInst.instanceId;
+    } else {
+        LIMBO_LOG_CORE_WARN("Prefab::unpack: Root entity is not a prefab instance");
+        return;
+    }
+
+    std::function<void(World::EntityId)> collectEntities = [&](World::EntityId entityId) {
+        auto* instance = world.tryGetComponent<PrefabInstanceComponent>(entityId);
+        if (instance != nullptr && instance->prefabId == instancePrefabId &&
+            instance->instanceId == instanceInstanceId) {
+            entitiesToUnpack.push_back(entityId);
+        }
+
+        // Recurse to children
+        Hierarchy::forEachChild(world, entityId, [&](World::EntityId childId) {
+            // Check if child is part of the same instance or a nested prefab
+            auto* childInstance = world.tryGetComponent<PrefabInstanceComponent>(childId);
+            if (childInstance != nullptr) {
+                if (childInstance->prefabId == instancePrefabId &&
+                    childInstance->instanceId == instanceInstanceId) {
+                    // Same instance - include it
+                    collectEntities(childId);
+                } else if (completely) {
+                    // Different prefab instance - unpack recursively if completely=true
+                    unpack(world, childId, true);
+                }
+                // If not completely, leave nested prefab instances alone
+            } else {
+                // Regular entity child (shouldn't happen for proper prefab instances)
+                collectEntities(childId);
+            }
+            return true;
+        });
+    };
+
+    collectEntities(instanceRoot);
+
+    // Remove PrefabInstanceComponent from all collected entities
+    // This keeps all current component values but removes the prefab link
+    for (World::EntityId entityId : entitiesToUnpack) {
+        if (world.hasComponent<PrefabInstanceComponent>(entityId)) {
+            world.removeComponent<PrefabInstanceComponent>(entityId);
+        }
+    }
+
+    LIMBO_LOG_CORE_INFO("Prefab::unpack: Unpacked {} entities from prefab instance",
+                        entitiesToUnpack.size());
 }
 
 bool Prefab::saveToFile(const std::filesystem::path& path) {
@@ -401,33 +826,20 @@ bool Prefab::loadFromFile(const std::filesystem::path& path) {
 
 String Prefab::serialize() const {
     json root;
+    root["type"] = "PrefabAsset";
     root["version"] = 1;
-    root["type"] = "Prefab";
+    root["prefab_id"] = m_prefabId.toString();
     root["name"] = m_name;
-    root["id"] = m_prefabId.toString();
+    root["root_local_id"] = m_rootLocalId;
 
     json entitiesArray = json::array();
     for (const auto& entity : m_entities) {
         json entityJson;
+        entityJson["local_id"] = entity.localId;
         entityJson["name"] = entity.name;
-        entityJson["parentIndex"] = entity.parentIndex;
-
-        if (entity.transformData.has_value()) {
-            entityJson["transform"] = json::parse(entity.transformData.value());
-        }
-        if (entity.spriteRendererData.has_value()) {
-            entityJson["spriteRenderer"] = json::parse(entity.spriteRendererData.value());
-        }
-        if (entity.cameraData.has_value()) {
-            entityJson["camera"] = json::parse(entity.cameraData.value());
-        }
-        if (entity.hasStaticComponent) {
-            entityJson["static"] = true;
-        }
-        if (entity.hasActiveComponent) {
-            entityJson["active"] = true;
-        }
-
+        entityJson["parent_local_id"] =
+            entity.parentLocalId.empty() ? nullptr : json(entity.parentLocalId);
+        entityJson["components"] = entity.components;
         entitiesArray.push_back(entityJson);
     }
 
@@ -440,16 +852,28 @@ bool Prefab::deserialize(const String& jsonStr) {
     try {
         json root = json::parse(jsonStr);
 
-        if (!root.contains("type") || root["type"] != "Prefab") {
-            LIMBO_LOG_CORE_ERROR("Prefab::deserialize: Invalid prefab file");
+        // Support both old and new format
+        String type = root.value("type", "Prefab");
+        if (type != "PrefabAsset" && type != "Prefab") {
+            LIMBO_LOG_CORE_ERROR("Prefab::deserialize: Invalid prefab file type: {}", type);
             return false;
+        }
+
+        if (root.contains("prefab_id")) {
+            m_prefabId = UUID::fromString(root["prefab_id"].get<String>());
+        } else if (root.contains("id")) {
+            // Legacy format
+            m_prefabId = UUID::fromString(root["id"].get<String>());
         }
 
         if (root.contains("name")) {
             m_name = root["name"].get<String>();
         }
-        if (root.contains("id")) {
-            m_prefabId = UUID::fromString(root["id"].get<String>());
+
+        if (root.contains("root_local_id")) {
+            m_rootLocalId = root["root_local_id"].get<String>();
+        } else {
+            m_rootLocalId = "root";
         }
 
         m_entities.clear();
@@ -458,29 +882,41 @@ bool Prefab::deserialize(const String& jsonStr) {
             for (const auto& entityJson : root["entities"]) {
                 PrefabEntity entity;
 
+                if (entityJson.contains("local_id")) {
+                    entity.localId = entityJson["local_id"].get<String>();
+                }
                 if (entityJson.contains("name")) {
                     entity.name = entityJson["name"].get<String>();
                 }
-                if (entityJson.contains("parentIndex")) {
-                    entity.parentIndex = entityJson["parentIndex"].get<i32>();
-                }
-                if (entityJson.contains("transform")) {
-                    entity.transformData = entityJson["transform"].dump();
-                }
-                if (entityJson.contains("spriteRenderer")) {
-                    entity.spriteRendererData = entityJson["spriteRenderer"].dump();
-                }
-                if (entityJson.contains("camera")) {
-                    entity.cameraData = entityJson["camera"].dump();
-                }
-                if (entityJson.contains("static")) {
-                    entity.hasStaticComponent = entityJson["static"].get<bool>();
-                }
-                if (entityJson.contains("active")) {
-                    entity.hasActiveComponent = entityJson["active"].get<bool>();
+                if (entityJson.contains("parent_local_id") &&
+                    !entityJson["parent_local_id"].is_null()) {
+                    entity.parentLocalId = entityJson["parent_local_id"].get<String>();
                 }
 
-                m_entities.push_back(entity);
+                // New format: generic components map
+                if (entityJson.contains("components") && entityJson["components"].is_object()) {
+                    entity.components =
+                        entityJson["components"].get<std::unordered_map<String, json>>();
+                } else {
+                    // Legacy format: individual component fields
+                    if (entityJson.contains("transform")) {
+                        entity.components["Transform"] = entityJson["transform"];
+                    }
+                    if (entityJson.contains("spriteRenderer")) {
+                        entity.components["SpriteRenderer"] = entityJson["spriteRenderer"];
+                    }
+                    if (entityJson.contains("camera")) {
+                        entity.components["Camera"] = entityJson["camera"];
+                    }
+                    if (entityJson.contains("static") && entityJson["static"].get<bool>()) {
+                        entity.components["Static"] = json::object();
+                    }
+                    if (entityJson.contains("active") && entityJson["active"].get<bool>()) {
+                        entity.components["Active"] = json::object();
+                    }
+                }
+
+                m_entities.push_back(std::move(entity));
             }
         }
 

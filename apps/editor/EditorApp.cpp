@@ -3,14 +3,17 @@
 #include "commands/EntityCommands.hpp"
 #include "commands/PropertyCommands.hpp"
 #include "limbo/debug/Log.hpp"
+#include "limbo/imgui/DebugPanels.hpp"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace limbo::editor {
 
 EditorApp::EditorApp()
     : m_hierarchyPanel(*this), m_inspectorPanel(*this), m_viewportPanel(*this),
-      m_assetBrowserPanel(*this), m_assetPipelinePanel(*this), m_consolePanel(*this) {}
+      m_assetBrowserPanel(*this), m_assetPipelinePanel(*this), m_consolePanel(*this),
+      m_prefabOverridesPanel(*this), m_scriptDebugPanel(*this), m_prefabStage(*this) {}
 
 void EditorApp::onInit() {
     LIMBO_LOG_EDITOR_INFO("Limbo Editor initialized");
@@ -26,12 +29,8 @@ void EditorApp::onInit() {
     // Initialize Renderer2D
     Renderer2D::init();
 
-    // Setup layout persistence path
-    std::filesystem::path const layoutPath = std::filesystem::current_path() / "limbo_editor.ini";
-    m_layoutIniPath = layoutPath.string();
-
-    // Initialize ImGui with layout persistence
-    if (!m_imguiLayer.init(getWindow().getNativeHandle(), m_layoutIniPath.c_str())) {
+    // Initialize ImGui without layout persistence (we use programmatic layout)
+    if (!m_imguiLayer.init(getWindow().getNativeHandle(), nullptr)) {
         LIMBO_LOG_EDITOR_ERROR("Failed to initialize ImGui");
     }
 
@@ -62,6 +61,7 @@ void EditorApp::onInit() {
     m_assetBrowserPanel.init();
     m_assetPipelinePanel.init();
     m_consolePanel.init();
+    m_prefabOverridesPanel.init();
 
     // Start with a new scene
     newScene();
@@ -132,6 +132,11 @@ void EditorApp::onRender([[maybe_unused]] f32 interpolationAlpha) {
     }
     if (m_showDemoWindow) {
         ImGui::ShowDemoWindow(&m_showDemoWindow);
+    }
+
+    // Profiler panel
+    if (m_showProfiler) {
+        DebugPanels::showProfilerPanel();
     }
 
     // Scene select popup
@@ -222,21 +227,91 @@ void EditorApp::renderMenuBar() {
             ImGui::EndMenu();
         }
 
-        if (ImGui::BeginMenu("Entity")) {
-            if (ImGui::MenuItem("Create Empty")) {
+        if (ImGui::BeginMenu("Create")) {
+            // 2D Object submenu (visual only)
+            if (ImGui::BeginMenu("2D Object")) {
+                if (ImGui::MenuItem("Sprite")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Sprite", [this](Entity e) {
+                            e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                if (ImGui::MenuItem("Rectangle")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Rectangle", [this](Entity e) {
+                            e.addComponent<QuadRendererComponent>(glm::vec4(1.0f), glm::vec2(1.0f));
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                if (ImGui::MenuItem("Circle")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Circle", [this](Entity e) {
+                            e.addComponent<CircleRendererComponent>(glm::vec4(1.0f), 0.5f);
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                ImGui::EndMenu();
+            }
+
+            // 2D Physics submenu (visual + collider + rigidbody)
+            if (ImGui::BeginMenu("2D Physics")) {
+                if (ImGui::MenuItem("Static Rectangle")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Static Rectangle", [this](Entity e) {
+                            e.addComponent<QuadRendererComponent>(glm::vec4(0.5f, 0.5f, 0.5f, 1.0f),
+                                                                  glm::vec2(1.0f));
+                            e.addComponent<BoxCollider2DComponent>(glm::vec2(0.5f));
+                            e.addComponent<Rigidbody2DComponent>(BodyType::Static);
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                if (ImGui::MenuItem("Dynamic Rectangle")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Dynamic Rectangle", [this](Entity e) {
+                            e.addComponent<QuadRendererComponent>(glm::vec4(1.0f), glm::vec2(1.0f));
+                            e.addComponent<BoxCollider2DComponent>(glm::vec2(0.5f));
+                            e.addComponent<Rigidbody2DComponent>(BodyType::Dynamic);
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                if (ImGui::MenuItem("Static Circle")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Static Circle", [this](Entity e) {
+                            e.addComponent<CircleRendererComponent>(
+                                glm::vec4(0.5f, 0.5f, 0.5f, 1.0f), 0.5f);
+                            e.addComponent<CircleCollider2DComponent>(0.5f);
+                            e.addComponent<Rigidbody2DComponent>(BodyType::Static);
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                if (ImGui::MenuItem("Dynamic Circle")) {
+                    auto cmd = std::make_unique<CreateEntityCommand>(
+                        getWorld(), "Dynamic Circle", [this](Entity e) {
+                            e.addComponent<CircleRendererComponent>(glm::vec4(1.0f), 0.5f);
+                            e.addComponent<CircleCollider2DComponent>(0.5f);
+                            e.addComponent<Rigidbody2DComponent>(BodyType::Dynamic);
+                            selectEntity(e);
+                        });
+                    executeCommand(std::move(cmd));
+                }
+                ImGui::EndMenu();
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("Empty Entity")) {
                 auto cmd = std::make_unique<CreateEntityCommand>(
                     getWorld(), "New Entity", [this](Entity e) { selectEntity(e); });
                 executeCommand(std::move(cmd));
             }
-            if (ImGui::MenuItem("Create Sprite")) {
-                auto cmd =
-                    std::make_unique<CreateEntityCommand>(getWorld(), "Sprite", [this](Entity e) {
-                        e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
-                        selectEntity(e);
-                    });
-                executeCommand(std::move(cmd));
-            }
-            if (ImGui::MenuItem("Create Camera")) {
+            if (ImGui::MenuItem("Camera")) {
                 auto cmd =
                     std::make_unique<CreateEntityCommand>(getWorld(), "Camera", [this](Entity e) {
                         e.addComponent<CameraComponent>();
@@ -254,8 +329,11 @@ void EditorApp::renderMenuBar() {
             ImGui::MenuItem("Asset Browser", nullptr, &m_assetBrowserPanel.isOpen());
             ImGui::MenuItem("Asset Pipeline", nullptr, &m_assetPipelinePanel.isOpen());
             ImGui::MenuItem("Console", nullptr, &m_consolePanel.isOpen());
+            ImGui::MenuItem("Prefab Overrides", nullptr, &m_prefabOverridesPanel.isOpen());
+            ImGui::MenuItem("Script Debug", nullptr, &m_scriptDebugPanel.isOpen());
             ImGui::Separator();
             ImGui::MenuItem("Physics Debug", nullptr, &m_showPhysicsDebug);
+            ImGui::MenuItem("Profiler", nullptr, &m_showProfiler);
             ImGui::Separator();
             ImGui::MenuItem("ImGui Demo", "F1", &m_showDemoWindow);
             ImGui::EndMenu();
@@ -268,19 +346,10 @@ void EditorApp::renderMenuBar() {
             ImGui::EndMenu();
         }
 
-        ImGui::EndMenuBar();
-    }
-}
+        // Separator between menus and toolbar
+        ImGui::Separator();
 
-void EditorApp::renderToolbar() {
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 4));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 4));
-
-    ImGuiWindowFlags const flags =
-        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-
-    if (ImGui::Begin("##Toolbar", nullptr, flags)) {
-        // Play/Pause/Stop buttons
+        // Integrated toolbar - Play/Pause/Stop buttons
         bool const isPlaying = (m_editorState == EditorState::Play);
         bool const isPaused = (m_editorState == EditorState::Pause);
 
@@ -297,8 +366,6 @@ void EditorApp::renderToolbar() {
             ImGui::PopStyleColor();
         }
 
-        ImGui::SameLine();
-
         // Pause button
         if (isPaused) {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.6f, 0.6f, 0.2f, 1.0f));
@@ -312,8 +379,6 @@ void EditorApp::renderToolbar() {
             ImGui::PopStyleColor();
         }
 
-        ImGui::SameLine();
-
         // Stop button
         ImGui::BeginDisabled(m_editorState == EditorState::Edit);
         if (ImGui::Button("Stop")) {
@@ -321,18 +386,127 @@ void EditorApp::renderToolbar() {
         }
         ImGui::EndDisabled();
 
-        // Scene name on the right
-        ImGui::SameLine(ImGui::GetWindowWidth() - 200);
+        ImGui::Separator();
+
+        // Breadcrumb navigation (Unity-style)
+        // Shows: Scene > Prefab (when editing prefab)
         String sceneName =
             m_currentScenePath.empty() ? "Untitled" : m_currentScenePath.filename().string();
-        if (m_sceneModified) {
-            sceneName += "*";
-        }
-        ImGui::Text("Scene: %s", sceneName.c_str());
-    }
-    ImGui::End();
 
-    ImGui::PopStyleVar(2);
+        if (m_prefabStage.isOpen()) {
+            // Scene name (clickable to return to scene)
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
+            if (ImGui::SmallButton(sceneName.c_str())) {
+                // Close prefab and return to scene
+                if (m_prefabStage.hasUnsavedChanges()) {
+                    // TODO: Show confirmation dialog
+                    m_prefabStage.close(true);  // Save by default for now
+                } else {
+                    m_prefabStage.close(false);
+                }
+            }
+            ImGui::PopStyleColor();
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Return to scene");
+            }
+
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), ">");
+            ImGui::SameLine();
+
+            // Prefab name (current location, highlighted)
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.9f, 1.0f, 1.0f));
+            ImGui::Text("%s", m_prefabStage.getPrefabName().c_str());
+            ImGui::PopStyleColor();
+
+            // Unsaved indicator
+            if (m_prefabStage.hasUnsavedChanges()) {
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.3f, 1.0f), "*");
+            }
+
+            ImGui::SameLine();
+            ImGui::Spacing();
+            ImGui::SameLine();
+
+            // Action buttons
+            if (ImGui::Button("Save")) {
+                m_prefabStage.save();
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Save changes to prefab asset");
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Close")) {
+                if (m_prefabStage.hasUnsavedChanges()) {
+                    // TODO: Show confirmation dialog
+                    m_prefabStage.close(true);  // Save by default for now
+                } else {
+                    m_prefabStage.close(false);
+                }
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("Close prefab and return to scene");
+            }
+        } else {
+            // Normal scene mode - just show scene name
+            if (m_sceneModified) {
+                sceneName += "*";
+            }
+            ImGui::Text("Scene: %s", sceneName.c_str());
+        }
+
+        // Right-aligned status info
+        float statusWidth = 300.0f;
+        ImGui::SameLine(ImGui::GetWindowWidth() - statusWidth);
+        ImGui::Text("FPS: %.0f | Entities: %zu | Quads: %u",
+                    static_cast<double>(1.0f / m_deltaTime), getWorld().entityCount(),
+                    Renderer2D::getStats().quadCount);
+
+        ImGui::EndMenuBar();
+    }
+}
+
+void EditorApp::setupDockingLayout(ImGuiID dockspaceId) {
+    // Clear any existing layout
+    ImGui::DockBuilderRemoveNode(dockspaceId);
+    ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
+    ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->WorkSize);
+
+    // Split the dockspace into main areas
+    // First split: top (75%) and bottom (25%)
+    ImGuiID dockTop = 0;
+    ImGuiID dockBottom = 0;
+    ImGui::DockBuilderSplitNode(dockspaceId, ImGuiDir_Down, 0.25f, &dockBottom, &dockTop);
+
+    // Split top section: left (15%), center+right
+    ImGuiID dockLeft = 0;
+    ImGuiID dockCenterRight = 0;
+    ImGui::DockBuilderSplitNode(dockTop, ImGuiDir_Left, 0.15f, &dockLeft, &dockCenterRight);
+
+    // Split center+right: center (70% of remaining), right (30% of remaining = ~25% total)
+    ImGuiID dockCenter = 0;
+    ImGuiID dockRight = 0;
+    ImGui::DockBuilderSplitNode(dockCenterRight, ImGuiDir_Right, 0.30f, &dockRight, &dockCenter);
+
+    // Dock panels to their designated areas
+    ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
+    ImGui::DockBuilderDockWindow("Viewport", dockCenter);
+    ImGui::DockBuilderDockWindow("Inspector", dockRight);
+
+    // Bottom section: tabbed panels (Asset Browser, Asset Pipeline, Console)
+    ImGui::DockBuilderDockWindow("Asset Browser", dockBottom);
+    ImGui::DockBuilderDockWindow("Asset Pipeline", dockBottom);
+    ImGui::DockBuilderDockWindow("Console", dockBottom);
+
+    // Toolbar and Status Bar are special - they don't go in the dockspace
+    // They'll be rendered separately
+
+    // Finalize the layout
+    ImGui::DockBuilderFinish(dockspaceId);
+
+    LIMBO_LOG_EDITOR_INFO("Editor layout initialized");
 }
 
 void EditorApp::renderDockspace() {
@@ -358,14 +532,24 @@ void EditorApp::renderDockspace() {
     // Menu bar
     renderMenuBar();
 
-    // Dockspace
-    ImGuiID const dockspaceId = ImGui::GetID("EditorDockspace");
-    ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+    // Dockspace with locked layout
+    m_dockspaceId = ImGui::GetID("EditorDockspace");
+
+    // Initialize the layout on first frame
+    if (!m_layoutInitialized) {
+        setupDockingLayout(m_dockspaceId);
+        m_layoutInitialized = true;
+    }
+
+    // Create dockspace with flags to lock the layout
+    ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_None;
+    dockspaceFlags |= ImGuiDockNodeFlags_NoUndocking;         // Prevent undocking windows
+    dockspaceFlags |= ImGuiDockNodeFlags_NoDockingSplit;      // Prevent splitting dock nodes
+    dockspaceFlags |= ImGuiDockNodeFlags_NoWindowMenuButton;  // Hide the window list menu
+
+    ImGui::DockSpace(m_dockspaceId, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
     ImGui::End();
-
-    // Toolbar
-    renderToolbar();
 
     // Render panels
     m_hierarchyPanel.render();
@@ -374,19 +558,8 @@ void EditorApp::renderDockspace() {
     m_assetBrowserPanel.render();
     m_assetPipelinePanel.render();
     m_consolePanel.render();
-
-    // Status bar
-    renderStatusBar();
-}
-
-void EditorApp::renderStatusBar() {
-    ImGuiWindowFlags const flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings;
-
-    ImGui::Begin("Status Bar", nullptr, flags);
-    ImGui::Text("FPS: %.0f | Entities: %zu | Draw Calls: %u | Quads: %u",
-                static_cast<double>(1.0f / m_deltaTime), getWorld().entityCount(),
-                Renderer2D::getStats().drawCalls, Renderer2D::getStats().quadCount);
-    ImGui::End();
+    m_prefabOverridesPanel.render();
+    m_scriptDebugPanel.render(getWorld(), m_scriptSystem.get());
 }
 
 void EditorApp::newScene() {
@@ -489,8 +662,13 @@ void EditorApp::onPlay() {
         // Attach physics system to create bodies from components
         m_physicsSystem->onAttach(getWorld());
 
-        // Attach script system
+        // Attach script system (this binds world to script engine)
         m_scriptSystem->onAttach(getWorld());
+
+        // Bind physics to script engine AFTER onAttach (for Physics.raycast, Entity:getRigidbody,
+        // etc.) Must be after onAttach because onAttach calls bindWorld which recreates Entity
+        // usertype
+        m_scriptEngine.bindPhysics(&m_physics);
 
         // Wire collision events to script callbacks
         m_physicsSystem->setCollisionCallback(
@@ -556,6 +734,7 @@ void EditorApp::deselectAll() {
 }
 
 void EditorApp::onShutdown() {
+    m_prefabOverridesPanel.shutdown();
     m_consolePanel.shutdown();
     m_assetPipelinePanel.shutdown();
     m_assetBrowserPanel.shutdown();

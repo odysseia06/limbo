@@ -324,6 +324,11 @@ void Renderer2D::flush() {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_data.quadIndexCount), GL_UNSIGNED_INT,
                        nullptr);
         s_data.stats.drawCalls++;
+
+        // Reset quad buffer
+        s_data.quadIndexCount = 0;
+        s_data.quadVertexBufferPtr = s_data.quadVertexBufferBase;
+        s_data.textureSlotIndex = 1;
     }
 
     // Flush lines
@@ -342,6 +347,10 @@ void Renderer2D::flush() {
         s_data.lineShader->bind();
         glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(s_data.lineVertexCount));
         s_data.stats.drawCalls++;
+
+        // Reset line buffer
+        s_data.lineVertexCount = 0;
+        s_data.lineVertexBufferPtr = s_data.lineVertexBufferBase;
     }
 }
 
@@ -532,6 +541,45 @@ void Renderer2D::drawRotatedQuad(const glm::vec3& position, const glm::vec2& siz
 }
 
 // ============================================================================
+// Immediate Mode Drawing
+// ============================================================================
+
+void Renderer2D::drawQuadImmediate(const glm::mat4& transform, const Texture2D* texture,
+                                   const glm::vec4& color) {
+    constexpr usize quadVertexCount = 4;
+    constexpr glm::vec2 textureCoords[] = {{0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}};
+    constexpr f32 textureIndex = 0.0f;
+    constexpr f32 tilingFactor = 1.0f;
+
+    // Build vertex data for a single quad
+    QuadVertex vertices[4];
+    for (usize i = 0; i < quadVertexCount; ++i) {
+        vertices[i].position = transform * s_data.quadVertexPositions[i];
+        vertices[i].color = color;
+        vertices[i].texCoord = textureCoords[i];
+        vertices[i].texIndex = textureIndex;
+        vertices[i].tilingFactor = tilingFactor;
+    }
+
+    // Upload vertex data
+    s_data.quadVAO->bind();
+    glBindBuffer(GL_ARRAY_BUFFER, s_data.quadVAO->getVertexBuffers()[0].getNativeHandle());
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+
+    // Bind texture if provided, otherwise use white texture
+    if (texture != nullptr) {
+        texture->bind(0);
+    } else {
+        s_data.whiteTexture->bind(0);
+    }
+
+    // Draw the quad (shader is already bound by caller)
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    s_data.stats.drawCalls++;
+    s_data.stats.quadCount++;
+}
+
+// ============================================================================
 // Statistics
 // ============================================================================
 
@@ -583,6 +631,11 @@ void Renderer2D::drawRect(const glm::vec2& position, const glm::vec2& size,
 
 void Renderer2D::drawRect(const glm::vec2& position, const glm::vec2& size, f32 rotation,
                           const glm::vec4& color) {
+    drawRect(glm::vec3(position, 0.0f), size, rotation, color);
+}
+
+void Renderer2D::drawRect(const glm::vec3& position, const glm::vec2& size, f32 rotation,
+                          const glm::vec4& color) {
     glm::vec2 const halfSize = size * 0.5f;
 
     // Calculate corners
@@ -602,33 +655,41 @@ void Renderer2D::drawRect(const glm::vec2& position, const glm::vec2& size, f32 
         }
     }
 
-    // Offset by position
+    // Offset by position (x, y only)
     for (auto& corner : corners) {
-        corner += position;
+        corner.x += position.x;
+        corner.y += position.y;
     }
 
-    // Draw four lines
-    drawLine(corners[0], corners[1], color);
-    drawLine(corners[1], corners[2], color);
-    drawLine(corners[2], corners[3], color);
-    drawLine(corners[3], corners[0], color);
+    // Draw four lines with z-depth
+    f32 const z = position.z;
+    drawLine(glm::vec3(corners[0], z), glm::vec3(corners[1], z), color);
+    drawLine(glm::vec3(corners[1], z), glm::vec3(corners[2], z), color);
+    drawLine(glm::vec3(corners[2], z), glm::vec3(corners[3], z), color);
+    drawLine(glm::vec3(corners[3], z), glm::vec3(corners[0], z), color);
 }
 
 void Renderer2D::drawCircle(const glm::vec2& center, f32 radius, const glm::vec4& color,
+                            i32 segments) {
+    drawCircle(glm::vec3(center, 0.0f), radius, color, segments);
+}
+
+void Renderer2D::drawCircle(const glm::vec3& center, f32 radius, const glm::vec4& color,
                             i32 segments) {
     if (segments < 3) {
         segments = 3;
     }
 
     f32 const angleStep = glm::two_pi<f32>() / static_cast<f32>(segments);
+    f32 const z = center.z;
 
-    glm::vec2 prevPoint = center + glm::vec2(radius, 0.0f);
+    glm::vec2 prevPoint = glm::vec2(center) + glm::vec2(radius, 0.0f);
 
     for (i32 i = 1; i <= segments; ++i) {
         f32 const angle = angleStep * static_cast<f32>(i);
         glm::vec2 const currentPoint =
-            center + glm::vec2(std::cos(angle), std::sin(angle)) * radius;
-        drawLine(prevPoint, currentPoint, color);
+            glm::vec2(center) + glm::vec2(std::cos(angle), std::sin(angle)) * radius;
+        drawLine(glm::vec3(prevPoint, z), glm::vec3(currentPoint, z), color);
         prevPoint = currentPoint;
     }
 }

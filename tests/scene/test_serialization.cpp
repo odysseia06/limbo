@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <limbo/ecs/World.hpp>
 #include <limbo/ecs/Entity.hpp>
 #include <limbo/ecs/Components.hpp>
@@ -359,10 +361,12 @@ TEST_CASE("SceneSerializer preserves PrefabInstanceComponent with overrides",
     limbo::Prefab prefab = limbo::Prefab::createFromEntity(world, source.id());
     limbo::Entity instance = prefab.instantiate(world, glm::vec3(10.0f, 0.0f, 0.0f));
 
-    // Set some overrides
+    // Set some overrides with actual values
     auto& prefabInstance = instance.getComponent<limbo::PrefabInstanceComponent>();
-    prefabInstance.setOverride("Transform.position");
-    prefabInstance.setOverride("SpriteRenderer.color");
+    nlohmann::json posValue = {{"x", 10.0f}, {"y", 0.0f}, {"z", 0.0f}};
+    nlohmann::json colorValue = {{"r", 1.0f}, {"g", 0.0f}, {"b", 0.0f}, {"a", 1.0f}};
+    prefabInstance.setOverride("Transform", "position", posValue);
+    prefabInstance.setOverride("SpriteRenderer", "color", colorValue);
 
     limbo::SceneSerializer serializer(world);
     limbo::String json = serializer.serialize();
@@ -381,13 +385,12 @@ TEST_CASE("SceneSerializer preserves PrefabInstanceComponent with overrides",
                 found = true;
                 // Verify prefab ID matches
                 REQUIRE(inst.prefabId == prefab.getPrefabId());
-                REQUIRE(inst.entityIndex == 0);
                 REQUIRE(inst.isRoot == true);
 
-                // Verify overrides survived
-                REQUIRE(inst.hasOverride("Transform.position"));
-                REQUIRE(inst.hasOverride("SpriteRenderer.color"));
-                REQUIRE_FALSE(inst.hasOverride("Transform.rotation"));
+                // Verify overrides survived (using new API)
+                REQUIRE(inst.hasOverride("Transform", "position"));
+                REQUIRE(inst.hasOverride("SpriteRenderer", "color"));
+                REQUIRE_FALSE(inst.hasOverride("Transform", "rotation"));
             }
         });
 

@@ -30,10 +30,10 @@ enum class AssetType : u8 {
     SpriteAtlas,
     Shader,
     Audio,
+    Font,
     // Future types:
     // Mesh,
     // Material,
-    // Font,
     // Scene,
 };
 
