@@ -44,7 +44,9 @@ struct AssetMetadata {
     String sourcePath;    // Relative path to source file
     String importedPath;  // Relative path to imported/cooked file
     AssetType type = AssetType::Unknown;
-    u64 sourceHash = 0;                 // Hash of source file for change detection
+    u64 sourceHash = 0;                 // Hash of source file for import verification
+    u64 sourceModTime = 0;              // File modification time (fast change detection)
+    u64 sourceSize = 0;                 // File size in bytes (fast change detection)
     u64 importedTimestamp = 0;          // When the asset was last imported
     std::vector<AssetId> dependencies;  // Assets this asset depends on
     std::vector<AssetId> dependents;    // Assets that depend on this asset
@@ -53,10 +55,18 @@ struct AssetMetadata {
     String importSettingsJson;
 
     /**
-     * Check if the asset needs re-import
+     * Check if the asset needs re-import based on content hash
      */
     [[nodiscard]] bool needsReimport(u64 currentSourceHash) const {
         return sourceHash != currentSourceHash || importedPath.empty();
+    }
+
+    /**
+     * Quick check if file metadata changed (modification time or size)
+     * Use this for fast scanning before doing expensive hash computation
+     */
+    [[nodiscard]] bool metadataChanged(u64 modTime, u64 size) const {
+        return sourceModTime != modTime || sourceSize != size;
     }
 };
 
@@ -231,6 +241,11 @@ public:
     void updateSourceHash(AssetId id, u64 hash);
 
     /**
+     * Update the source file metadata (modification time and size)
+     */
+    void updateSourceMetadata(AssetId id, u64 modTime, u64 size);
+
+    /**
      * Update the imported path and timestamp
      */
     void markAsImported(AssetId id, const String& importedPath);
@@ -244,6 +259,16 @@ public:
      * Compute hash of a file for change detection
      */
     [[nodiscard]] static u64 computeFileHash(const std::filesystem::path& path);
+
+    /**
+     * Get file metadata (modification time and size) without reading content
+     * @param path Path to the file
+     * @param outModTime Output: modification time as u64
+     * @param outSize Output: file size in bytes
+     * @return true if metadata was retrieved successfully
+     */
+    [[nodiscard]] static bool getFileMetadata(const std::filesystem::path& path, u64& outModTime,
+                                              u64& outSize);
 
     // ========================================================================
     // Scanning

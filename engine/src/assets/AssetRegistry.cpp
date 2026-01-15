@@ -105,6 +105,8 @@ bool AssetRegistry::load() {
                 metadata.importedPath = assetJson.value("importedPath", "");
                 metadata.type = stringToAssetType(assetJson.value("type", "unknown"));
                 metadata.sourceHash = assetJson.value("sourceHash", 0ULL);
+                metadata.sourceModTime = assetJson.value("sourceModTime", 0ULL);
+                metadata.sourceSize = assetJson.value("sourceSize", 0ULL);
                 metadata.importedTimestamp = assetJson.value("importedTimestamp", 0ULL);
                 metadata.importSettingsJson = assetJson.value("importSettings", "{}");
 
@@ -155,6 +157,8 @@ bool AssetRegistry::save() const {
             assetJson["importedPath"] = metadata.importedPath;
             assetJson["type"] = assetTypeToString(metadata.type);
             assetJson["sourceHash"] = metadata.sourceHash;
+            assetJson["sourceModTime"] = metadata.sourceModTime;
+            assetJson["sourceSize"] = metadata.sourceSize;
             assetJson["importedTimestamp"] = metadata.importedTimestamp;
             assetJson["importSettings"] = metadata.importSettingsJson;
 
@@ -201,10 +205,15 @@ AssetId AssetRegistry::registerAsset(const String& sourcePath, AssetType type) {
     metadata.sourcePath = sourcePath;
     metadata.type = type;
 
-    // Compute initial source hash
+    // Store initial file metadata for fast change detection
     std::filesystem::path fullPath = m_projectRoot / m_sourceDir / sourcePath;
-    if (std::filesystem::exists(fullPath)) {
-        metadata.sourceHash = computeFileHash(fullPath);
+    u64 modTime = 0;
+    u64 fileSize = 0;
+    if (getFileMetadata(fullPath, modTime, fileSize)) {
+        metadata.sourceModTime = modTime;
+        metadata.sourceSize = fileSize;
+        // Note: We don't compute the full hash here - it's done during import
+        // This keeps registration fast for large files
     }
 
     m_assets[id] = metadata;
@@ -391,6 +400,14 @@ void AssetRegistry::updateSourceHash(AssetId id, u64 hash) {
     }
 }
 
+void AssetRegistry::updateSourceMetadata(AssetId id, u64 modTime, u64 size) {
+    auto it = m_assets.find(id);
+    if (it != m_assets.end()) {
+        it->second.sourceModTime = modTime;
+        it->second.sourceSize = size;
+    }
+}
+
 void AssetRegistry::markAsImported(AssetId id, const String& importedPath) {
     auto it = m_assets.find(id);
     if (it != m_assets.end()) {
@@ -405,12 +422,23 @@ std::vector<AssetId> AssetRegistry::getAssetsNeedingReimport() const {
     for (const auto& [id, metadata] : m_assets) {
         std::filesystem::path sourcePath = m_projectRoot / m_sourceDir / metadata.sourcePath;
 
-        if (!std::filesystem::exists(sourcePath)) {
+        // Quick check: if not imported yet, definitely needs import
+        if (metadata.importedPath.empty()) {
+            if (std::filesystem::exists(sourcePath)) {
+                result.push_back(id);
+            }
+            continue;
+        }
+
+        // Use fast metadata check first (mod time + size)
+        u64 modTime = 0;
+        u64 fileSize = 0;
+        if (!getFileMetadata(sourcePath, modTime, fileSize)) {
             continue;  // Source missing, can't reimport
         }
 
-        u64 currentHash = computeFileHash(sourcePath);
-        if (metadata.needsReimport(currentHash)) {
+        // If metadata changed, asset needs reimport
+        if (metadata.metadataChanged(modTime, fileSize)) {
             result.push_back(id);
         }
     }
@@ -435,6 +463,31 @@ u64 AssetRegistry::computeFileHash(const std::filesystem::path& path) {
     file.read(reinterpret_cast<char*>(buffer.data()), size);
 
     return fnv1aHash(buffer.data(), buffer.size());
+}
+
+bool AssetRegistry::getFileMetadata(const std::filesystem::path& path, u64& outModTime,
+                                    u64& outSize) {
+    std::error_code ec;
+
+    if (!std::filesystem::exists(path, ec) || ec) {
+        return false;
+    }
+
+    auto fileSize = std::filesystem::file_size(path, ec);
+    if (ec) {
+        return false;
+    }
+
+    auto modTime = std::filesystem::last_write_time(path, ec);
+    if (ec) {
+        return false;
+    }
+
+    outSize = static_cast<u64>(fileSize);
+    outModTime =
+        static_cast<u64>(modTime.time_since_epoch().count());
+
+    return true;
 }
 
 usize AssetRegistry::scanSourceDirectory() {
@@ -475,15 +528,20 @@ usize AssetRegistry::scanSourceDirectory() {
                 m_newAssets.push_back(relativePath);
             }
         } else {
-            // Existing asset - check for modifications
+            // Existing asset - check for modifications using fast metadata check
             AssetId id = it->second;
             seenAssets.insert(id);
 
             auto metaIt = m_assets.find(id);
             if (metaIt != m_assets.end()) {
-                u64 currentHash = computeFileHash(entry.path());
-                if (currentHash != metaIt->second.sourceHash) {
-                    m_modifiedAssets.push_back(id);
+                // Use file metadata (mod time + size) for fast change detection
+                // This avoids reading the entire file just to check for changes
+                u64 modTime = 0;
+                u64 fileSize = 0;
+                if (getFileMetadata(entry.path(), modTime, fileSize)) {
+                    if (metaIt->second.metadataChanged(modTime, fileSize)) {
+                        m_modifiedAssets.push_back(id);
+                    }
                 }
             }
         }
