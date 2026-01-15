@@ -31,10 +31,17 @@ void HotReloadManager::watchAsset(AssetId id, const std::vector<std::filesystem:
         }
 
         String const pathKey = path.generic_string();
-        m_pathToAsset[pathKey] = id;
 
-        m_fileWatcher.watch(
-            path, [this](const std::filesystem::path& changedPath) { onFileChanged(changedPath); });
+        // Add this asset to the set of assets watching this path
+        // Only set up file watcher if this is the first asset watching this path
+        bool const isFirstWatcher = !m_pathToAssets.contains(pathKey);
+        m_pathToAssets[pathKey].insert(id);
+
+        if (isFirstWatcher) {
+            m_fileWatcher.watch(path, [this](const std::filesystem::path& changedPath) {
+                onFileChanged(changedPath);
+            });
+        }
     }
 
     m_watchedAssets[id] = std::move(watched);
@@ -50,8 +57,18 @@ void HotReloadManager::unwatchAsset(AssetId id) {
 
     for (const auto& path : it->second.paths) {
         String const pathKey = path.generic_string();
-        m_pathToAsset.erase(pathKey);
-        m_fileWatcher.unwatch(path);
+
+        // Remove this asset from the set of assets watching this path
+        auto pathIt = m_pathToAssets.find(pathKey);
+        if (pathIt != m_pathToAssets.end()) {
+            pathIt->second.erase(id);
+
+            // Only unwatch the file if no more assets are watching this path
+            if (pathIt->second.empty()) {
+                m_pathToAssets.erase(pathIt);
+                m_fileWatcher.unwatch(path);
+            }
+        }
     }
 
     m_watchedAssets.erase(it);
@@ -71,7 +88,7 @@ void HotReloadManager::unwatchAsset(AssetId id) {
 void HotReloadManager::unwatchAll() {
     m_fileWatcher.unwatchAll();
     m_watchedAssets.clear();
-    m_pathToAsset.clear();
+    m_pathToAssets.clear();
     m_dependencies.clear();
     m_dependents.clear();
     m_pendingReloads.clear();
@@ -254,18 +271,20 @@ void HotReloadManager::processPendingReloads() {
 void HotReloadManager::onFileChanged(const std::filesystem::path& path) {
     String const pathKey = path.generic_string();
 
-    auto it = m_pathToAsset.find(pathKey);
-    if (it == m_pathToAsset.end()) {
+    auto it = m_pathToAssets.find(pathKey);
+    if (it == m_pathToAssets.end() || it->second.empty()) {
         LIMBO_LOG_ASSET_DEBUG("HotReloadManager: Changed file not mapped to any asset: {}",
                               path.string());
         return;
     }
 
-    AssetId id = it->second;
-    LIMBO_LOG_ASSET_INFO("HotReloadManager: File changed for asset {}: {}", id.toString(),
-                         path.string());
+    // Trigger reload for all assets watching this path
+    LIMBO_LOG_ASSET_INFO("HotReloadManager: File changed, {} asset(s) affected: {}",
+                         it->second.size(), path.string());
 
-    triggerReload(id);
+    for (AssetId id : it->second) {
+        triggerReload(id);
+    }
 }
 
 void HotReloadManager::collectAffectedAssets(AssetId id,

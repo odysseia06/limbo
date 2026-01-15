@@ -55,12 +55,22 @@ void AssetManager::unload(AssetId id) {
         }
     }
 
+    // Stop watching for hot-reload before unloading
+    if (m_hotReloadEnabled) {
+        m_hotReloadManager.unwatchAsset(id);
+    }
+
     // Unload and remove
     it->second->unload();
     m_assets.erase(it);
 }
 
 void AssetManager::unloadAll() {
+    // Stop watching all assets for hot-reload
+    if (m_hotReloadEnabled) {
+        m_hotReloadManager.unwatchAll();
+    }
+
     for (auto& [id, asset] : m_assets) {
         asset->unload();
     }

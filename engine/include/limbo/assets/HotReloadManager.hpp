@@ -238,8 +238,9 @@ private:
     // Asset -> paths mapping
     std::unordered_map<AssetId, WatchedAsset> m_watchedAssets;
 
-    // Path -> asset ID mapping (for reverse lookup when file changes)
-    std::unordered_map<String, AssetId> m_pathToAsset;
+    // Path -> asset IDs mapping (for reverse lookup when file changes)
+    // Multiple assets can share the same dependency path
+    std::unordered_map<String, std::unordered_set<AssetId>> m_pathToAssets;
 
     // Dependency graph: asset -> set of assets it depends on
     std::unordered_map<AssetId, std::unordered_set<AssetId>> m_dependencies;
