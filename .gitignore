@@ -64,3 +64,6 @@ Testing/
 # Package manager
 node_modules/
 limbo_editor.ini
+
+# Agent temp files
+docs/plans/
