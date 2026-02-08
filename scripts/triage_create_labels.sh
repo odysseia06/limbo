@@ -54,6 +54,7 @@ labels=(
 
 created_count=0
 skipped_count=0
+failed_count=0
 
 for spec in "${labels[@]}"; do
     IFS='|' read -r name color description <<< "$spec"
@@ -64,13 +65,21 @@ for spec in "${labels[@]}"; do
         continue
     fi
 
-    gh label create "$name" --color "$color" --description "$description" >/dev/null
-    echo "$name" >> "$existing_labels_file"
-    echo "[triage] created label: $name"
-    created_count=$((created_count + 1))
+    if gh label create "$name" --color "$color" --description "$description" >/dev/null 2>&1; then
+        echo "$name" >> "$existing_labels_file"
+        echo "[triage] created label: $name"
+        created_count=$((created_count + 1))
+    else
+        echo "[triage] FAILED to create label: $name" >&2
+        failed_count=$((failed_count + 1))
+    fi
 done
 
 echo "[triage] label creation complete"
 echo "[triage] total labels configured: ${#labels[@]}"
 echo "[triage] labels created: $created_count"
 echo "[triage] labels skipped: $skipped_count"
+if [[ "$failed_count" -gt 0 ]]; then
+    echo "[triage] labels FAILED: $failed_count" >&2
+    exit 1
+fi

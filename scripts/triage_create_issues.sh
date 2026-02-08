@@ -26,11 +26,12 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 existing_titles_file="$tmp_dir/existing_titles.txt"
-gh issue list --state all --limit 1000 --json title --jq '.[].title' > "$existing_titles_file"
+gh issue list --state all --limit 5000 --json title --jq '.[].title' > "$existing_titles_file"
 
 issue_count=0
 created_count=0
 skipped_count=0
+failed_count=0
 
 current_id=""
 current_title=""
@@ -87,10 +88,14 @@ flush_issue() {
         fi
     done
 
-    "${cmd[@]}" >/dev/null
-    echo "$current_title" >> "$existing_titles_file"
-    echo "[triage] created issue: $current_title"
-    created_count=$((created_count + 1))
+    if "${cmd[@]}" >/dev/null 2>&1; then
+        echo "$current_title" >> "$existing_titles_file"
+        echo "[triage] created issue: $current_title"
+        created_count=$((created_count + 1))
+    else
+        echo "[triage] FAILED to create issue: $current_title" >&2
+        failed_count=$((failed_count + 1))
+    fi
 
     current_id=""
     current_title=""
@@ -130,3 +135,7 @@ echo "[triage] issue creation complete"
 echo "[triage] issue seeds parsed: $issue_count"
 echo "[triage] issues created: $created_count"
 echo "[triage] issues skipped: $skipped_count"
+if [[ "$failed_count" -gt 0 ]]; then
+    echo "[triage] issues FAILED: $failed_count" >&2
+    exit 1
+fi
