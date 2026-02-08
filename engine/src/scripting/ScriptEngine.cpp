@@ -615,7 +615,7 @@ void ScriptEngine::bindUtilityFunctions() {
         "info", [](const String& msg) { LIMBO_LOG_SCRIPT_INFO("[Lua] {}", msg); }, "warn",
         [](const String& msg) { LIMBO_LOG_SCRIPT_WARN("[Lua] {}", msg); }, "error",
         [](const String& msg) { LIMBO_LOG_SCRIPT_ERROR("[Lua] {}", msg); }, "debug",
-        [](const String& msg) { LIMBO_LOG_SCRIPT_DEBUG("[Lua] {}", msg); });
+        []([[maybe_unused]] const String& msg) { LIMBO_LOG_SCRIPT_DEBUG("[Lua] {}", msg); });
 
     // Time (will be set each frame by ScriptSystem)
     m_lua["Time"] = m_lua.create_table_with("deltaTime", 0.0f, "totalTime", 0.0f);

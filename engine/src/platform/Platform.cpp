@@ -65,10 +65,13 @@ Result<Window> Window::create(const WindowConfig& config) {
     glfwSwapInterval(config.vsync ? 1 : 0);
 
     // Set up resize callback
-    glfwSetFramebufferSizeCallback(
-        window, [](GLFWwindow* /*win*/, int newWidth, int newHeight) {
+    // clang-format off
+    glfwSetFramebufferSizeCallback(window,
+        [](GLFWwindow* /*win*/, [[maybe_unused]] int newWidth,
+           [[maybe_unused]] int newHeight) {
             LIMBO_LOG_CORE_DEBUG("Window resized to {}x{}", newWidth, newHeight);
         });
+    // clang-format on
 
     LIMBO_LOG_CORE_INFO("Window created: {} ({}x{})", config.title, config.width, config.height);
 
