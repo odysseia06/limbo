@@ -26,13 +26,43 @@ A modern C++20 2D game engine with ECS architecture, physics, scripting, and a v
 
 ## Building
 
-```bash
-cmake -B build -S .
-cmake --build build --config Debug
+Limbo now uses a preset-first CMake workflow. Dependencies are managed through CMake
+`FetchContent` (no external package manager required).
 
-./build/bin/sandbox        # Demo
-./build/bin/limbo_editor   # Editor
+### Recommended (one command)
+
+```bash
+# Configure + build + run tests (Debug)
+cmake --workflow --preset dev-debug
+
+# Configure + build + run tests (Release)
+cmake --workflow --preset dev-release
 ```
+
+### Manual preset commands
+
+```bash
+cmake --preset debug
+cmake --build --preset debug --parallel
+ctest --preset debug
+```
+
+### Sanitizers
+
+```bash
+cmake --workflow --preset sanitizer-asan
+cmake --workflow --preset sanitizer-ubsan
+```
+
+### Run binaries
+
+```bash
+./build/debug/bin/sandbox        # Demo
+./build/debug/bin/limbo_editor   # Editor
+```
+
+Legacy `build.ps1` / `build.sh` / `build.bat` scripts are kept for compatibility, but presets are
+the primary build interface.
 
 ## Quick Start
 

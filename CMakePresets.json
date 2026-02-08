@@ -11,7 +11,8 @@
             "hidden": true,
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "LIMBO_BUILD_TESTS": "ON"
             }
         },
         {
@@ -25,12 +26,17 @@
             "hidden": true,
             "inherits": "base",
             "generator": "Visual Studio 17 2022",
-            "architecture": "x64"
+            "architecture": "x64",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
         },
         {
             "name": "debug",
             "displayName": "Debug",
-            "description": "Debug build with full symbols",
+            "description": "Debug build with tests",
             "inherits": "base-ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
@@ -39,7 +45,7 @@
         {
             "name": "release",
             "displayName": "Release",
-            "description": "Optimized release build",
+            "description": "Optimized release build with tests",
             "inherits": "base-ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
@@ -57,19 +63,19 @@
         {
             "name": "debug-vs",
             "displayName": "Debug (Visual Studio)",
-            "description": "Debug build using Visual Studio",
+            "description": "Debug build using Visual Studio generator",
             "inherits": "base-vs"
         },
         {
             "name": "release-vs",
             "displayName": "Release (Visual Studio)",
-            "description": "Release build using Visual Studio",
+            "description": "Release build using Visual Studio generator",
             "inherits": "base-vs"
         },
         {
             "name": "asan",
             "displayName": "Debug + ASan",
-            "description": "Debug build with Address Sanitizer (Clang/GCC only)",
+            "description": "Debug build with Address Sanitizer (Clang/GCC)",
             "inherits": "debug",
             "cacheVariables": {
                 "LIMBO_ENABLE_ASAN": "ON"
@@ -78,7 +84,7 @@
         {
             "name": "ubsan",
             "displayName": "Debug + UBSan",
-            "description": "Debug build with Undefined Behavior Sanitizer (Clang/GCC only)",
+            "description": "Debug build with Undefined Behavior Sanitizer (Clang/GCC)",
             "inherits": "debug",
             "cacheVariables": {
                 "LIMBO_ENABLE_UBSAN": "ON"
@@ -87,77 +93,91 @@
         {
             "name": "ci-linux",
             "displayName": "CI Linux",
-            "description": "CI build configuration for Linux",
+            "description": "CI release configuration for Linux",
             "inherits": "base-ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
                 "LIMBO_WARNINGS_AS_ERRORS": "ON"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
             }
         },
         {
             "name": "ci-windows",
             "displayName": "CI Windows",
-            "description": "CI build configuration for Windows",
+            "description": "CI release configuration for Windows",
             "inherits": "base-ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++",
                 "LIMBO_WARNINGS_AS_ERRORS": "ON"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
             }
         }
     ],
     "buildPresets": [
         {
             "name": "debug",
-            "displayName": "Debug",
+            "displayName": "Build Debug",
             "configurePreset": "debug"
         },
         {
             "name": "release",
-            "displayName": "Release",
+            "displayName": "Build Release",
             "configurePreset": "release"
         },
         {
             "name": "relwithdebinfo",
-            "displayName": "RelWithDebInfo",
+            "displayName": "Build RelWithDebInfo",
             "configurePreset": "relwithdebinfo"
         },
         {
             "name": "debug-vs",
-            "displayName": "Debug (VS)",
+            "displayName": "Build Debug (VS)",
             "configurePreset": "debug-vs",
             "configuration": "Debug"
         },
         {
             "name": "release-vs",
-            "displayName": "Release (VS)",
+            "displayName": "Build Release (VS)",
             "configurePreset": "release-vs",
             "configuration": "Release"
         },
         {
             "name": "asan",
-            "displayName": "Debug + ASan",
+            "displayName": "Build ASan",
             "configurePreset": "asan"
         },
         {
             "name": "ubsan",
-            "displayName": "Debug + UBSan",
+            "displayName": "Build UBSan",
             "configurePreset": "ubsan"
         },
         {
             "name": "ci-linux",
-            "displayName": "CI Linux",
+            "displayName": "Build CI Linux",
             "configurePreset": "ci-linux"
         },
         {
             "name": "ci-windows",
-            "displayName": "CI Windows",
+            "displayName": "Build CI Windows",
             "configurePreset": "ci-windows"
         }
     ],
     "testPresets": [
         {
             "name": "debug",
-            "displayName": "Debug Tests",
+            "displayName": "Test Debug",
             "configurePreset": "debug",
             "output": {
                 "outputOnFailure": true
@@ -165,7 +185,7 @@
         },
         {
             "name": "release",
-            "displayName": "Release Tests",
+            "displayName": "Test Release",
             "configurePreset": "release",
             "output": {
                 "outputOnFailure": true
@@ -173,7 +193,7 @@
         },
         {
             "name": "asan",
-            "displayName": "ASan Tests",
+            "displayName": "Test ASan",
             "configurePreset": "asan",
             "output": {
                 "outputOnFailure": true
@@ -181,7 +201,7 @@
         },
         {
             "name": "ubsan",
-            "displayName": "UBSan Tests",
+            "displayName": "Test UBSan",
             "configurePreset": "ubsan",
             "output": {
                 "outputOnFailure": true
@@ -189,7 +209,7 @@
         },
         {
             "name": "ci-linux",
-            "displayName": "CI Linux Tests",
+            "displayName": "Test CI Linux",
             "configurePreset": "ci-linux",
             "output": {
                 "outputOnFailure": true
@@ -197,11 +217,121 @@
         },
         {
             "name": "ci-windows",
-            "displayName": "CI Windows Tests",
+            "displayName": "Test CI Windows",
             "configurePreset": "ci-windows",
             "output": {
                 "outputOnFailure": true
             }
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "dev-debug",
+            "displayName": "Dev Debug Workflow",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "debug"
+                },
+                {
+                    "type": "build",
+                    "name": "debug"
+                },
+                {
+                    "type": "test",
+                    "name": "debug"
+                }
+            ]
+        },
+        {
+            "name": "dev-release",
+            "displayName": "Dev Release Workflow",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "release"
+                },
+                {
+                    "type": "build",
+                    "name": "release"
+                },
+                {
+                    "type": "test",
+                    "name": "release"
+                }
+            ]
+        },
+        {
+            "name": "sanitizer-asan",
+            "displayName": "ASan Workflow",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "asan"
+                },
+                {
+                    "type": "build",
+                    "name": "asan"
+                },
+                {
+                    "type": "test",
+                    "name": "asan"
+                }
+            ]
+        },
+        {
+            "name": "sanitizer-ubsan",
+            "displayName": "UBSan Workflow",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "ubsan"
+                },
+                {
+                    "type": "build",
+                    "name": "ubsan"
+                },
+                {
+                    "type": "test",
+                    "name": "ubsan"
+                }
+            ]
+        },
+        {
+            "name": "ci-linux",
+            "displayName": "CI Linux Workflow",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "ci-linux"
+                },
+                {
+                    "type": "build",
+                    "name": "ci-linux"
+                },
+                {
+                    "type": "test",
+                    "name": "ci-linux"
+                }
+            ]
+        },
+        {
+            "name": "ci-windows",
+            "displayName": "CI Windows Workflow",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "ci-windows"
+                },
+                {
+                    "type": "build",
+                    "name": "ci-windows"
+                },
+                {
+                    "type": "test",
+                    "name": "ci-windows"
+                }
+            ]
         }
     ]
 }

@@ -1,23 +1,32 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 
-:: Limbo Engine - Windows build script
+rem Limbo Engine - compatibility wrapper around CMake presets
 
-set BUILD_DIR=build
-set BUILD_TYPE=Release
+set PRESET=release
 set CLEAN=false
 set RUN_TESTS=false
 
-:: Parse arguments
 :parse_args
 if "%~1"=="" goto :done_parsing
+
 if /i "%~1"=="--debug" (
-    set BUILD_TYPE=Debug
+    set PRESET=debug
     shift
     goto :parse_args
 )
 if /i "%~1"=="--release" (
-    set BUILD_TYPE=Release
+    set PRESET=release
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--asan" (
+    set PRESET=asan
+    shift
+    goto :parse_args
+)
+if /i "%~1"=="--ubsan" (
+    set PRESET=ubsan
     shift
     goto :parse_args
 )
@@ -32,64 +41,40 @@ if /i "%~1"=="--test" (
     goto :parse_args
 )
 if /i "%~1"=="--help" (
-    echo Limbo Engine Build Script
+    echo Limbo Engine Build Script ^(Preset Wrapper^)
     echo.
     echo Usage: build.bat [options]
     echo.
     echo Options:
-    echo   --debug     Build in Debug mode
-    echo   --release   Build in Release mode ^(default^)
-    echo   --clean     Clean build directory before building
-    echo   --test      Run tests after building
+    echo   --debug     Use debug preset
+    echo   --release   Use release preset ^(default^)
+    echo   --asan      Use address sanitizer preset
+    echo   --ubsan     Use undefined behavior sanitizer preset
+    echo   --clean     Remove build\%%PRESET%% before configuring
+    echo   --test      Run tests after build
     echo   --help      Show this help message
     exit /b 0
 )
+
 echo Unknown option: %~1
 echo Use --help for usage information
 exit /b 1
 
 :done_parsing
 
-echo ========================================
-echo   Limbo Engine Build
-echo   Config: %BUILD_TYPE%
-echo ========================================
-
-:: Clean if requested
 if "%CLEAN%"=="true" (
-    echo [1/3] Cleaning build directory...
-    if exist "%BUILD_DIR%" rmdir /s /q "%BUILD_DIR%"
+    if exist "build\%PRESET%" rmdir /s /q "build\%PRESET%"
 )
 
-:: Configure
-if not exist "%BUILD_DIR%\CMakeCache.txt" (
-    echo [1/3] Configuring CMake...
-    cmake -B "%BUILD_DIR%" -S .
-) else (
-    echo [1/3] Build already configured ^(use --clean to reconfigure^)
-)
+cmake --preset %PRESET%
+if errorlevel 1 exit /b 1
 
-:: Build
-echo [2/3] Building...
-cmake --build "%BUILD_DIR%" --config %BUILD_TYPE% --parallel
+cmake --build --preset %PRESET% --parallel
+if errorlevel 1 exit /b 1
 
-if errorlevel 1 (
-    echo Build failed!
-    exit /b 1
-)
-
-:: Test
 if "%RUN_TESTS%"=="true" (
-    echo [3/3] Running tests...
-    ctest --test-dir "%BUILD_DIR%" --build-config %BUILD_TYPE% --output-on-failure
-) else (
-    echo [3/3] Skipping tests ^(use --test to run^)
+    ctest --preset %PRESET%
+    if errorlevel 1 exit /b 1
 )
-
-echo.
-echo ========================================
-echo   Build complete!
-echo   Binary: %BUILD_DIR%\bin\%BUILD_TYPE%\sandbox.exe
-echo ========================================
 
 endlocal

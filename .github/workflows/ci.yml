@@ -12,10 +12,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
-            name: Windows
           - os: ubuntu-latest
             name: Linux
+            workflow_preset: ci-linux
+          - os: windows-latest
+            name: Windows
+            workflow_preset: ci-windows
 
     runs-on: ${{ matrix.os }}
     name: Build (${{ matrix.name }})
@@ -46,37 +48,8 @@ jobs:
             wayland-protocols \
             extra-cmake-modules
 
-      - name: Configure CMake (Debug)
-        run: cmake -B build-debug -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
-
-      - name: Build (Debug)
-        run: cmake --build build-debug --parallel
-
-      - name: Show errors if build failed (Debug)
-        if: failure()
-        shell: bash
-        run: |
-          echo "=== SEARCHING FOR BUILD ERRORS ==="
-          find build-debug -name "*.log" -exec grep -l -i "error" {} \; -exec cat {} \; 2>/dev/null || true
-
-      - name: Run Tests (Debug)
-        run: ctest --test-dir build-debug --output-on-failure
-
-      - name: Configure CMake (Release)
-        run: cmake -B build-release -S . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_BUILD_TESTS=ON
-
-      - name: Build (Release)
-        run: cmake --build build-release --parallel
-
-      - name: Show errors if build failed (Release)
-        if: failure()
-        shell: bash
-        run: |
-          echo "=== SEARCHING FOR BUILD ERRORS ==="
-          find build-release -name "*.log" -exec grep -l -i "error" {} \; -exec cat {} \; 2>/dev/null || true
-
-      - name: Run Tests (Release)
-        run: ctest --test-dir build-release --output-on-failure
+      - name: Configure + Build + Test
+        run: cmake --workflow --preset ${{ matrix.workflow_preset }}
 
   format-check:
     runs-on: ubuntu-latest
@@ -118,12 +91,15 @@ jobs:
             extra-cmake-modules
 
       - name: Configure CMake
-        run: cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        run: cmake --preset debug
+
+      - name: Build
+        run: cmake --build --preset debug --parallel
 
       - name: Run clang-tidy
         run: |
           find engine/src apps -name "*.cpp" | head -50 | \
-            xargs clang-tidy -p build --config-file=.clang-tidy
+            xargs clang-tidy -p build/debug --config-file=.clang-tidy
 
   sanitizers:
     runs-on: ubuntu-latest
@@ -150,23 +126,23 @@ jobs:
             extra-cmake-modules
 
       - name: Configure CMake (ASan)
-        run: cmake -B build-asan -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_ENABLE_ASAN=ON -DLIMBO_BUILD_TESTS=ON
+        run: cmake --preset asan
 
       - name: Build (ASan)
-        run: cmake --build build-asan --parallel
+        run: cmake --build --preset asan --parallel
 
       - name: Run Tests (ASan)
-        run: ctest --test-dir build-asan --output-on-failure
+        run: ctest --preset asan
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
 
       - name: Configure CMake (UBSan)
-        run: cmake -B build-ubsan -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIMBO_ENABLE_UBSAN=ON -DLIMBO_BUILD_TESTS=ON
+        run: cmake --preset ubsan
 
       - name: Build (UBSan)
-        run: cmake --build build-ubsan --parallel
+        run: cmake --build --preset ubsan --parallel
 
       - name: Run Tests (UBSan)
-        run: ctest --test-dir build-ubsan --output-on-failure
+        run: ctest --preset ubsan
         env:
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1

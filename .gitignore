@@ -30,6 +30,7 @@ CMakeScripts/
 cmake_install.cmake
 CTestTestfile.cmake
 compile_commands.json
+CMakeUserPresets.json
 
 # vcpkg
 vcpkg_installed/
