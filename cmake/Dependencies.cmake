@@ -222,7 +222,7 @@ endif()
 add_library(glad STATIC
     ${CMAKE_SOURCE_DIR}/extern/glad/src/gl.c
 )
-target_include_directories(glad PUBLIC
+target_include_directories(glad SYSTEM PUBLIC
     ${CMAKE_SOURCE_DIR}/extern/glad/include
 )
 
@@ -262,7 +262,7 @@ endif()
 # stb include directory
 FetchContent_GetProperties(stb)
 add_library(stb INTERFACE)
-target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+target_include_directories(stb SYSTEM INTERFACE ${stb_SOURCE_DIR})
 
 # miniaudio include directory
 FetchContent_MakeAvailable(miniaudio)
