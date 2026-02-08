@@ -298,6 +298,16 @@ target_link_libraries(limbo_engine
         miniaudio
 )
 
+# Mark third-party headers as SYSTEM includes to suppress warnings from them.
+# This prevents -Werror from failing the build on warnings in dependency code
+# (e.g., sign-conversion warnings in EnTT's dense_map.hpp).
+# We use the FetchContent _SOURCE_DIR variables which are always available.
+target_include_directories(limbo_engine SYSTEM PUBLIC
+    ${entt_SOURCE_DIR}/src
+    ${sol2_SOURCE_DIR}/include
+    ${box2d_SOURCE_DIR}/include
+)
+
 # Compile definitions
 target_compile_definitions(limbo_engine
     PUBLIC

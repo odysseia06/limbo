@@ -185,24 +185,37 @@ add_library(lua::lua ALIAS lua_static)
 FetchContent_MakeAvailable(sol2)
 FetchContent_GetProperties(sol2)
 
-# Patch sol2 for Clang compatibility
-# The issue is that sol2's call functions have noexcept specifiers, but lua_CFunction
-# is int(*)(lua_State*) without noexcept. In C++17+, noexcept is part of the type.
-# Remove noexcept from the call() template functions that are used as lua_CFunction.
+# Patch sol2 for Clang compatibility (two issues in function_types_stateless.hpp):
+#
+# 1. noexcept type mismatch: In C++17+, noexcept is part of the function type.
+#    real_call() has conditional noexcept, and typed_static_trampoline uses
+#    decltype(&real_call) which captures it, causing mismatches with lua_CFunction.
+#
+# 2. Template deduction failure: operator() calls call(L) without explicit template
+#    arguments, but call() is template<bool is_yielding, bool no_trampoline> so
+#    Clang correctly rejects the call as non-deducible.
 set(SOL2_STATELESS_HPP "${sol2_SOURCE_DIR}/include/sol/function_types_stateless.hpp")
 if(EXISTS "${SOL2_STATELESS_HPP}")
     file(READ "${SOL2_STATELESS_HPP}" SOL2_CONTENT)
-    # Remove specific noexcept patterns from call functions using simple string replace
+
+    # Fix 1: Remove conditional noexcept from all functions in the file
     string(REPLACE
-        "static int call(lua_State* L) noexcept(std::is_nothrow_copy_assignable_v<T>)"
-        "static int call(lua_State* L)"
+        "noexcept(std::is_nothrow_copy_assignable_v<T>)"
+        ""
         SOL2_CONTENT "${SOL2_CONTENT}")
     string(REPLACE
-        "static int call(lua_State* L) noexcept(traits_type::is_noexcept)"
-        "static int call(lua_State* L)"
+        "noexcept(traits_type::is_noexcept)"
+        ""
         SOL2_CONTENT "${SOL2_CONTENT}")
+
+    # Fix 2: operator() calls call(L) without template args — provide them explicitly
+    string(REPLACE
+        "return call(L);"
+        "return call<false, false>(L);"
+        SOL2_CONTENT "${SOL2_CONTENT}")
+
     file(WRITE "${SOL2_STATELESS_HPP}" "${SOL2_CONTENT}")
-    message(STATUS "Patched sol2 for Clang noexcept compatibility")
+    message(STATUS "Patched sol2 for Clang compatibility (noexcept + template deduction)")
 endif()
 
 # GLAD - use pre-generated sources from extern/glad
