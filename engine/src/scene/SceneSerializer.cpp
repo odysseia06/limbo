@@ -69,7 +69,7 @@ glm::vec4 deserializeVec4(const json& j) {
 
 // Build a map from entity ID to index for hierarchy serialization
 std::unordered_map<World::EntityId, i32>
-buildEntityIndexMap(World& world, const std::vector<World::EntityId>& orderedEntities) {
+buildEntityIndexMap(const std::vector<World::EntityId>& orderedEntities) {
     std::unordered_map<World::EntityId, i32> map;
     for (i32 i = 0; i < static_cast<i32>(orderedEntities.size()); ++i) {
         map[orderedEntities[static_cast<usize>(i)]] = i;
@@ -182,7 +182,7 @@ String SceneSerializer::serialize() {
 
     // Get entities in hierarchy order (parents before children)
     auto orderedEntities = getEntitiesInHierarchyOrder(m_world);
-    auto entityIndexMap = buildEntityIndexMap(m_world, orderedEntities);
+    auto entityIndexMap = buildEntityIndexMap(orderedEntities);
 
     for (auto entityId : orderedEntities) {
         json entityJson;
