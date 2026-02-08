@@ -1,0 +1,67 @@
+name: Feature Request
+description: Propose a user-facing capability or workflow improvement.
+title: "[Feature]: "
+labels: ["type:feature", "status:needs-investigation"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What workflow gap does this solve?
+      placeholder: Save As currently hardcodes default.json instead of prompting for destination.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Outline behavior, UX, and technical approach.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Other approaches and tradeoffs.
+    validations:
+      required: false
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / Context
+      description: Cite TODO markers, docs, or observed workflow symptoms.
+      placeholder: |
+        - apps/editor/EditorApp.cpp:632-637 (TODO)
+        - user workflow pain description...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - priority:P1-important
+        - priority:P2-later
+        - priority:P0-crash-blocker
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Area Label
+      placeholder: area:editor-tools
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: Acceptance criteria that close this issue.
+    validations:
+      required: true

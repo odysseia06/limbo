@@ -1,0 +1,62 @@
+name: Tech Debt
+description: Track structural debt, stubs, or risky temporary implementations.
+title: "[Tech Debt]: "
+labels: ["type:tech-debt", "status:needs-investigation"]
+body:
+  - type: textarea
+    id: debt
+    attributes:
+      label: Debt Description
+      description: What temporary/partial implementation exists?
+      placeholder: Renderer3D public API exists, but engine/src/render/3d is empty.
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk / Cost of Delay
+      description: Why this should be addressed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Include exact file paths/line ranges, TODOs, and/or CI symptoms.
+      placeholder: |
+        - engine/include/limbo/render/3d/Renderer3D.hpp:5-9
+        - engine/src/render/3d (empty directory)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - priority:P1-important
+        - priority:P2-later
+        - priority:P0-crash-blocker
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Area Label
+      placeholder: area:render-3d
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: What state closes this debt item?
+      placeholder: |
+        - API is implemented or hidden behind compile-time flag
+        - tests and docs updated
+    validations:
+      required: true

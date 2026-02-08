@@ -1,0 +1,72 @@
+name: Performance
+description: Report or propose a measurable performance improvement.
+title: "[Perf]: "
+labels: ["type:perf", "status:needs-investigation"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Performance Problem
+      description: What is slow or inefficient?
+      placeholder: Thick circle rendering creates many line draw calls and low visual quality.
+    validations:
+      required: true
+
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Baseline Metrics
+      description: Current numbers with environment details.
+      placeholder: |
+        Platform:
+        Scene:
+        FPS/frame time:
+        Draw calls:
+    validations:
+      required: true
+
+  - type: textarea
+    id: target
+    attributes:
+      label: Target Metrics
+      description: Expected measurable result.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: File paths/lines, profiler captures, logs, benchmark outputs.
+      placeholder: |
+        - engine/src/render/2d/Renderer2D.cpp:696-724
+        - profiler screenshot/log
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - priority:P1-important
+        - priority:P2-later
+        - priority:P0-crash-blocker
+    validations:
+      required: true
+
+  - type: input
+    id: area
+    attributes:
+      label: Area Label
+      placeholder: area:renderer
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: Include benchmark method and pass threshold.
+    validations:
+      required: true
