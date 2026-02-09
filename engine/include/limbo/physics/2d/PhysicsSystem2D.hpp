@@ -83,8 +83,8 @@ private:
     void destroyBody(World& world, World::EntityId entity);
     void syncTransformToBody(World& world, World::EntityId entity);
 
-    void fixedUpdate(World& world);
-    void snapshotPreviousState(World& world);
+    void runFixedUpdate(World& world);
+    void snapshotPreviousState();
     void readCurrentStateFromBodies(World& world);
     void interpolateRenderState(World& world, f32 alpha);
 

@@ -76,7 +76,6 @@ void PhysicsSystem2D::update(World& world, f32 deltaTime) {
     m_accumulator += deltaTime;
 
     // Spiral-of-death protection: clamp to max updates
-    i32 updateCount = 0;
     if (m_accumulator > m_fixedTimestep * static_cast<f32>(m_maxFixedUpdatesPerFrame)) {
         LIMBO_LOG_PHYSICS_WARN("Physics: clamping {} accumulated updates to max {}",
                                static_cast<i32>(m_accumulator / m_fixedTimestep),
@@ -86,9 +85,8 @@ void PhysicsSystem2D::update(World& world, f32 deltaTime) {
 
     // Run fixed updates
     while (m_accumulator >= m_fixedTimestep) {
-        fixedUpdate(world);
+        runFixedUpdate(world);
         m_accumulator -= m_fixedTimestep;
-        updateCount++;
     }
 
     // Calculate interpolation alpha (how far we are between physics states)
@@ -133,9 +131,9 @@ void PhysicsSystem2D::onDetach(World& world) {
     LIMBO_LOG_PHYSICS_DEBUG("PhysicsSystem shutdown");
 }
 
-void PhysicsSystem2D::fixedUpdate(World& world) {
+void PhysicsSystem2D::runFixedUpdate(World& world) {
     // 1. Snapshot previous = current
-    snapshotPreviousState(world);
+    snapshotPreviousState();
 
     // 2. Step Box2D
     m_physics.step(m_fixedTimestep);
@@ -154,7 +152,7 @@ void PhysicsSystem2D::fixedUpdate(World& world) {
     readCurrentStateFromBodies(world);
 }
 
-void PhysicsSystem2D::snapshotPreviousState(World& world) {
+void PhysicsSystem2D::snapshotPreviousState() {
     for (auto& [entity, state] : m_physicsStates) {
         state.previousPosition = state.currentPosition;
         state.previousRotation = state.currentRotation;

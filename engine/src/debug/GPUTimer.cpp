@@ -110,8 +110,17 @@ void GPUTimer::begin(const char* name) {
 
     // Set up timer data
     TimerData& timer = m_timers[m_timerCount];
-    std::strncpy(timer.name, name, sizeof(timer.name) - 1);
-    timer.name[sizeof(timer.name) - 1] = '\0';
+    if (name == nullptr) {
+        timer.name[0] = '\0';
+    } else {
+        std::size_t copyLength = std::strlen(name);
+        std::size_t const maxCopyLength = sizeof(timer.name) - 1;
+        if (copyLength > maxCopyLength) {
+            copyLength = maxCopyLength;
+        }
+        std::memcpy(timer.name, name, copyLength);
+        timer.name[copyLength] = '\0';
+    }
     timer.active = true;
 
     // Begin query

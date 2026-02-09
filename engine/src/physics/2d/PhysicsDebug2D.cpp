@@ -39,8 +39,6 @@ void PhysicsDebug2D::draw(const b2World* world) {
 
         // Get body transform
         const b2Transform& xf = body->GetTransform();
-        glm::vec2 const bodyPos{xf.p.x, xf.p.y};
-        f32 const bodyAngle = xf.q.GetAngle();
 
         // Draw center of mass if enabled
         if (m_drawCenterOfMass) {
