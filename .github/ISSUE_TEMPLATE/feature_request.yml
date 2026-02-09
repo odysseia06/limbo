@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose a net-new capability or improvement.
+title: "[Feature]: "
+labels:
+  - type:feature
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - area:renderer
+        - area:ecs-scene
+        - area:physics
+        - area:editor-tools
+        - area:asset-pipeline
+        - area:platform
+        - area:build-ci
+        - area:core-runtime
+        - area:ui
+        - area:input
+        - area:audio
+        - area:scripting
+        - area:math
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user/developer problem does this solve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe behavior, API, and UX expectations.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional but helpful for tradeoff discussion.
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / references
+      description: Include code references, prior issues, or external examples.
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      description: List acceptance criteria.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true

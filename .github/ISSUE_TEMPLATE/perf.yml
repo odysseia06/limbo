@@ -1,0 +1,70 @@
+name: Performance issue
+description: Report a measurable slowdown, hitch, memory spike, or throughput issue.
+title: "[Perf]: "
+labels:
+  - type:perf
+  - status:needs-investigation
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - area:renderer
+        - area:ecs-scene
+        - area:physics
+        - area:editor-tools
+        - area:asset-pipeline
+        - area:platform
+        - area:build-ci
+        - area:core-runtime
+        - area:ui
+        - area:input
+        - area:audio
+        - area:scripting
+        - area:math
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Scenario
+      description: What workload reproduces the issue?
+      placeholder: Scene/project size, steps, and frequency.
+    validations:
+      required: true
+
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Baseline metrics
+      description: Provide numbers (fps, frame time, memory, load time).
+      placeholder: "Before: 16ms, After: 40ms"
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Profiling evidence
+      description: Include profiler captures, logs, traces, file/line references.
+      placeholder: "Example: engine/src/assets/AssetLoader.cpp:71-74"
+
+  - type: textarea
+    id: target
+    attributes:
+      label: Target
+      description: Define acceptable performance goal.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: I included measurable metrics.
+          required: true
+        - label: I included concrete evidence (profile/log/test or code location).
+          required: true

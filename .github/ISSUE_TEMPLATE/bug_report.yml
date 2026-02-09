@@ -1,0 +1,106 @@
+name: Bug report
+description: Report a crash, incorrect behavior, or regression.
+title: "[Bug]: "
+labels:
+  - type:bug
+  - status:needs-investigation
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which subsystem is affected?
+      options:
+        - area:renderer
+        - area:ecs-scene
+        - area:physics
+        - area:editor-tools
+        - area:asset-pipeline
+        - area:platform
+        - area:build-ci
+        - area:core-runtime
+        - area:ui
+        - area:input
+        - area:audio
+        - area:scripting
+        - area:math
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - priority:P0-crash-blocker
+        - priority:P1-important
+        - priority:P2-later
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Short description of the bug.
+      placeholder: What is broken?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro_steps
+    attributes:
+      label: Reproduction steps
+      description: Provide exact steps.
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Add log excerpts, stack traces, failing test names, and file/line references.
+      placeholder: "Example: engine/src/render/common/Buffer.cpp:248-250"
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit / branch
+      placeholder: "main @ abc1234"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - Windows
+        - Other
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmation
+      options:
+        - label: I searched for existing issues with similar symptoms.
+          required: true
+        - label: I included concrete evidence (logs, test failures, or file/line references).
+          required: true

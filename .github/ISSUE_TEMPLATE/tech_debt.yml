@@ -1,0 +1,61 @@
+name: Tech debt
+description: Track maintainability or architecture debt with a concrete payoff.
+title: "[Debt]: "
+labels:
+  - type:tech-debt
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - area:renderer
+        - area:ecs-scene
+        - area:physics
+        - area:editor-tools
+        - area:asset-pipeline
+        - area:platform
+        - area:build-ci
+        - area:core-runtime
+        - area:ui
+        - area:input
+        - area:audio
+        - area:scripting
+        - area:math
+    validations:
+      required: true
+
+  - type: textarea
+    id: debt
+    attributes:
+      label: Debt description
+      description: What is the debt and where is it located?
+      placeholder: "Path + line range, and why this is debt"
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Reliability/perf/velocity cost if left unresolved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed remediation
+      description: Refactor/cleanup strategy and scope limits.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dod
+    attributes:
+      label: Definition of Done
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
