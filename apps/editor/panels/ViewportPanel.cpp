@@ -703,7 +703,8 @@ void ViewportPanel::renderToolbar() {
     ImGui::SameLine();
 
     // Raycast debug tool
-    if (m_raycastMode) {
+    bool const wasRaycastMode = m_raycastMode;
+    if (wasRaycastMode) {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.5f, 0.2f, 1.0f));
     }
     if (ImGui::Button("T##Raycast")) {
@@ -716,7 +717,7 @@ void ViewportPanel::renderToolbar() {
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Raycast Debug Tool (T)\nClick and drag to cast a ray");
     }
-    if (m_raycastMode) {
+    if (wasRaycastMode) {
         ImGui::PopStyleColor();
     }
 
@@ -725,24 +726,25 @@ void ViewportPanel::renderToolbar() {
     ImGui::SameLine();
 
     // Physics debug toggle
-    bool physicsDebug = m_editor.isPhysicsDebugEnabled();
-    if (physicsDebug) {
+    bool const wasPhysicsDebug = m_editor.isPhysicsDebugEnabled();
+    if (wasPhysicsDebug) {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.3f, 1.0f));
     }
     if (ImGui::Button("Physics")) {
-        m_editor.setPhysicsDebugEnabled(!physicsDebug);
+        m_editor.setPhysicsDebugEnabled(!wasPhysicsDebug);
     }
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Toggle Physics Debug Visualization");
     }
-    if (physicsDebug) {
+    if (wasPhysicsDebug) {
         ImGui::PopStyleColor();
     }
 
     ImGui::SameLine();
 
     // Grid toggle
-    if (m_showGrid) {
+    bool const wasShowGrid = m_showGrid;
+    if (wasShowGrid) {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.3f, 1.0f));
     }
     if (ImGui::Button("Grid")) {
@@ -751,7 +753,7 @@ void ViewportPanel::renderToolbar() {
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Toggle Grid");
     }
-    if (m_showGrid) {
+    if (wasShowGrid) {
         ImGui::PopStyleColor();
     }
 
