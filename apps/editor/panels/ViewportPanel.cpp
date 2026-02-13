@@ -703,7 +703,8 @@ void ViewportPanel::renderToolbar() {
     ImGui::SameLine();
 
     // Raycast debug tool
-    if (m_raycastMode) {
+    bool const wasRaycastMode = m_raycastMode;
+    if (wasRaycastMode) {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.5f, 0.2f, 1.0f));
     }
     if (ImGui::Button("T##Raycast")) {
@@ -716,7 +717,7 @@ void ViewportPanel::renderToolbar() {
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Raycast Debug Tool (T)\nClick and drag to cast a ray");
     }
-    if (m_raycastMode) {
+    if (wasRaycastMode) {
         ImGui::PopStyleColor();
     }
 
