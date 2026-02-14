@@ -195,19 +195,32 @@ void ViewportPanel::handleAssetDrop() {
 
             if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" ||
                 ext == ".tga") {
+                // Compute path relative to asset root for AssetManager
+                auto const& assetRoot = m_editor.getAssetManager().getAssetRoot();
+                std::filesystem::path relativePath =
+                    std::filesystem::relative(path, assetRoot);
+
+                // Load the texture via AssetManager
+                auto texture =
+                    m_editor.getAssetManager().load<TextureAsset>(relativePath);
+
+                AssetId textureAssetId;
+                if (texture && texture->getState() == AssetState::Loaded) {
+                    textureAssetId = texture->getId();
+                }
+
                 // Create sprite entity at drop position
                 auto cmd = std::make_unique<CreateEntityCommand>(
-                    m_editor.getWorld(), filename, [this, worldPos, assetPath](Entity e) {
-                        // Set position
+                    m_editor.getWorld(), filename,
+                    [this, worldPos, assetPath, textureAssetId](Entity e) {
                         auto& transform = e.getComponent<TransformComponent>();
                         transform.position = glm::vec3(worldPos, 0.0f);
 
-                        // Add sprite component
-                        e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                        auto& sprite =
+                            e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                        sprite.textureId = textureAssetId;
 
-                        // TODO: Load texture and assign to sprite
                         LIMBO_LOG_EDITOR_INFO("Created sprite from: {}", assetPath);
-
                         m_editor.selectEntity(e);
                     });
                 m_editor.executeCommand(std::move(cmd));
