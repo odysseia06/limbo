@@ -5,6 +5,8 @@
 
 #include <imgui.h>
 
+#include <filesystem>
+
 namespace limbo::editor {
 
 PrefabOverridesPanel::PrefabOverridesPanel(EditorApp& editor) : m_editor(editor) {}
@@ -162,8 +164,47 @@ void PrefabOverridesPanel::drawToolbar() {
 
     // Apply All button
     if (ImGui::Button("Apply All", ImVec2(buttonWidth, 0))) {
-        // TODO: Apply all overrides to the prefab asset
-        LIMBO_LOG_EDITOR_INFO("Apply All - not yet fully implemented");
+        std::filesystem::path prefabsDir =
+            std::filesystem::current_path() / "assets" / "prefabs";
+        bool applied = false;
+
+        if (std::filesystem::exists(prefabsDir)) {
+            for (const auto& entry :
+                 std::filesystem::recursive_directory_iterator(prefabsDir)) {
+                if (!entry.is_regular_file() || entry.path().extension() != ".prefab") {
+                    continue;
+                }
+
+                Prefab prefab;
+                if (prefab.loadFromFile(entry.path())) {
+                    if (prefab.getPrefabId() == rootPrefabInst.prefabId) {
+                        if (prefab.applyInstanceChanges(m_editor.getWorld(),
+                                                        prefabRoot.id())) {
+                            if (prefab.saveToFile(entry.path())) {
+                                // Refresh all other instances of this prefab
+                                prefab.updateInstances(m_editor.getWorld(), true);
+                                m_editor.markSceneModified();
+                                applied = true;
+                                LIMBO_LOG_EDITOR_INFO(
+                                    "Applied overrides and saved prefab: {}",
+                                    entry.path().string());
+                            } else {
+                                LIMBO_LOG_EDITOR_ERROR("Failed to save prefab: {}",
+                                                       entry.path().string());
+                            }
+                        } else {
+                            LIMBO_LOG_EDITOR_INFO("No overrides to apply");
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!applied) {
+            LIMBO_LOG_EDITOR_WARN("Could not find prefab asset with ID: {}",
+                                  rootPrefabInst.prefabId.toString());
+        }
     }
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Apply all overrides to the prefab asset");
