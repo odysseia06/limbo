@@ -296,45 +296,70 @@ void ViewportPanel::renderScene() {
 }
 
 void ViewportPanel::drawGrid() {
-    // Draw a simple grid
     glm::vec4 const gridColor(0.3f, 0.3f, 0.3f, 0.5f);
     glm::vec4 const axisColorX(0.8f, 0.2f, 0.2f, 0.8f);
     glm::vec4 const axisColorY(0.2f, 0.8f, 0.2f, 0.8f);
 
-    float const gridExtent = 20.0f;
-    float step = m_gridSize;
+    // Smooth step: snap to nearest power-of-2 friendly sequence (1, 2, 5, 10, ...)
+    // Use log10 so the step doubles/quintuples smoothly with zoom
+    float const rawStep = m_gridSize * m_cameraZoom * 0.15f;
+    float const logStep = std::log10(rawStep);
+    float const floorLog = std::floor(logStep);
+    float const base = std::pow(10.0f, floorLog);
+    float const frac = rawStep / base;
+    float step;
+    if (frac < 1.5f) {
+        step = base;
+    } else if (frac < 3.5f) {
+        step = base * 2.0f;
+    } else if (frac < 7.5f) {
+        step = base * 5.0f;
+    } else {
+        step = base * 10.0f;
+    }
+    step = glm::max(step, 0.01f);
 
-    // Adjust step based on zoom
-    if (m_cameraZoom > 5.0f) {
-        step = 2.0f;
-    }
-    if (m_cameraZoom > 10.0f) {
-        step = 5.0f;
-    }
-    if (m_cameraZoom < 0.5f) {
-        step = 0.5f;
-    }
-    if (m_cameraZoom < 0.2f) {
-        step = 0.1f;
+    // Grid extent covers visible area plus margin
+    float const aspect = m_viewportSize.x / m_viewportSize.y;
+    float const visibleW = aspect * m_cameraZoom + step * 2.0f;
+    float const visibleH = m_cameraZoom + step * 2.0f;
+
+    // Snap grid range to step boundaries around camera position
+    i32 const minX = static_cast<i32>(std::floor((m_cameraPosition.x - visibleW) / step));
+    i32 const maxX = static_cast<i32>(std::ceil((m_cameraPosition.x + visibleW) / step));
+    i32 const minY = static_cast<i32>(std::floor((m_cameraPosition.y - visibleH) / step));
+    i32 const maxY = static_cast<i32>(std::ceil((m_cameraPosition.y + visibleH) / step));
+
+    float const gridThickness = 0.005f * m_cameraZoom;
+    float const axisThickness = 0.02f * m_cameraZoom;
+    float const gridLen = visibleH * 2.0f;
+    float const gridLenH = visibleW * 2.0f;
+
+    // Draw vertical grid lines (integer multiples of step, skip origin)
+    for (i32 ix = minX; ix <= maxX; ++ix) {
+        float const x = static_cast<float>(ix) * step;
+        if (ix == 0) {
+            continue;  // axis drawn separately
+        }
+        Renderer2D::drawQuad(glm::vec3(x, m_cameraPosition.y, -0.1f),
+                             glm::vec2(gridThickness, gridLen), gridColor);
     }
 
-    // Draw vertical lines
-    for (float x = -gridExtent; x <= gridExtent; x += step) {
-        glm::vec4 const color = (std::abs(x) < 0.001f) ? axisColorY : gridColor;
-        float const thickness = (std::abs(x) < 0.001f) ? 0.02f : 0.005f;
-
-        Renderer2D::drawQuad(glm::vec3(x, 0.0f, -0.1f), glm::vec2(thickness, gridExtent * 2.0f),
-                             color);
+    // Draw horizontal grid lines (integer multiples of step, skip origin)
+    for (i32 iy = minY; iy <= maxY; ++iy) {
+        float const y = static_cast<float>(iy) * step;
+        if (iy == 0) {
+            continue;
+        }
+        Renderer2D::drawQuad(glm::vec3(m_cameraPosition.x, y, -0.1f),
+                             glm::vec2(gridLenH, gridThickness), gridColor);
     }
 
-    // Draw horizontal lines
-    for (float y = -gridExtent; y <= gridExtent; y += step) {
-        glm::vec4 const color = (std::abs(y) < 0.001f) ? axisColorX : gridColor;
-        float const thickness = (std::abs(y) < 0.001f) ? 0.02f : 0.005f;
-
-        Renderer2D::drawQuad(glm::vec3(0.0f, y, -0.1f), glm::vec2(gridExtent * 2.0f, thickness),
-                             color);
-    }
+    // Always draw axis lines at exact origin (no float accumulation)
+    Renderer2D::drawQuad(glm::vec3(0.0f, m_cameraPosition.y, -0.05f),
+                         glm::vec2(axisThickness, gridLen), axisColorY);
+    Renderer2D::drawQuad(glm::vec3(m_cameraPosition.x, 0.0f, -0.05f),
+                         glm::vec2(gridLenH, axisThickness), axisColorX);
 }
 
 void ViewportPanel::drawGizmos() {
