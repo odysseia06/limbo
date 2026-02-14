@@ -494,6 +494,7 @@ void EditorApp::setupDockingLayout(ImGuiID dockspaceId) {
     ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
     ImGui::DockBuilderDockWindow("Viewport", dockCenter);
     ImGui::DockBuilderDockWindow("Inspector", dockRight);
+    ImGui::DockBuilderDockWindow("Prefab Overrides", dockRight);
 
     // Bottom section: tabbed panels (Asset Browser, Asset Pipeline, Console)
     ImGui::DockBuilderDockWindow("Asset Browser", dockBottom);
