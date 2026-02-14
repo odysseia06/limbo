@@ -24,8 +24,9 @@ if ($Help) {
     exit 0
 }
 
-$script:BuildDir = "build"
 $script:Config = if ($Debug) { "Debug" } else { "Release" }
+$script:PresetName = if ($Debug) { "debug" } else { "release" }
+$script:BuildDir = "build/$script:PresetName"
 
 Write-Host "========================================"
 Write-Host "  Limbo Engine Build"
