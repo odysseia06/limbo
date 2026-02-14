@@ -8,12 +8,17 @@
 #include <imgui.h>
 
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 
 namespace limbo::editor {
 
 namespace {
 
 /// Command to apply all prefab overrides (undoable)
+///
+/// Captures the original prefab file content and instance overrides before
+/// applying, so undo can fully restore both the asset file and world state.
 class ApplyAllOverridesCommand : public Command {
 public:
     ApplyAllOverridesCommand(World& world, World::EntityId rootId, UUID prefabId,
@@ -22,11 +27,24 @@ public:
           m_prefabPath(std::move(prefabPath)) {}
 
     bool execute() override {
-        // Capture current overrides for undo
+        // Snapshot the original prefab file for undo
+        {
+            std::ifstream file(m_prefabPath, std::ios::binary);
+            if (!file.is_open()) {
+                return false;
+            }
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            m_originalPrefabContent = ss.str();
+        }
+
+        // Snapshot instance overrides for undo
         m_savedOverrides.clear();
         captureOverrides(m_rootId);
 
-        // Load, apply, save
+        // Load prefab, apply overrides to its data, and save to disk.
+        // applyInstanceChanges modifies both the Prefab object and clears
+        // overrides on the world entities, so if save fails we must restore.
         Prefab prefab;
         if (!prefab.loadFromFile(m_prefabPath)) {
             return false;
@@ -35,6 +53,8 @@ public:
             return false;
         }
         if (!prefab.saveToFile(m_prefabPath)) {
+            // Save failed — restore world overrides that applyInstanceChanges cleared
+            restoreOverrides();
             return false;
         }
         prefab.updateInstances(m_world, true);
@@ -42,26 +62,27 @@ public:
     }
 
     bool undo() override {
-        // Restore the saved overrides on each instance entity
-        for (auto& [entityId, overrides] : m_savedOverrides) {
-            if (!m_world.isValid(entityId)) {
-                continue;
+        // Restore the original prefab file
+        {
+            std::ofstream file(m_prefabPath, std::ios::binary | std::ios::trunc);
+            if (!file.is_open()) {
+                return false;
             }
-            auto* inst = m_world.tryGetComponent<PrefabInstanceComponent>(entityId);
-            if (inst == nullptr) {
-                continue;
+            file << m_originalPrefabContent;
+            if (!file.good()) {
+                return false;
             }
-            inst->overrides = overrides;
         }
 
-        // Reload the prefab from disk (which still has the applied changes)
-        // and re-serialize from the original entity state to revert the file
+        // Restore instance overrides
+        restoreOverrides();
+
+        // Reload the restored prefab and update instances
         Prefab prefab;
-        if (prefab.loadFromFile(m_prefabPath)) {
-            // The overrides are restored on the instances, so updateInstances
-            // with respectOverrides=true will keep them
-            prefab.updateInstances(m_world, true);
+        if (!prefab.loadFromFile(m_prefabPath)) {
+            return false;
         }
+        prefab.updateInstances(m_world, true);
         return true;
     }
 
@@ -81,10 +102,23 @@ private:
         });
     }
 
+    void restoreOverrides() {
+        for (auto& [entityId, overrides] : m_savedOverrides) {
+            if (!m_world.isValid(entityId)) {
+                continue;
+            }
+            auto* inst = m_world.tryGetComponent<PrefabInstanceComponent>(entityId);
+            if (inst != nullptr) {
+                inst->overrides = overrides;
+            }
+        }
+    }
+
     World& m_world;
     World::EntityId m_rootId;
     UUID m_prefabId;
     std::filesystem::path m_prefabPath;
+    String m_originalPrefabContent;
     std::unordered_map<World::EntityId, std::vector<PrefabOverride>> m_savedOverrides;
 };
 
