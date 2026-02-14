@@ -815,7 +815,7 @@ bool Prefab::applyInstanceChanges(World& world, World::EntityId instanceRoot) {
 
     if (allOverrides.empty()) {
         LIMBO_LOG_CORE_INFO("Prefab::applyInstanceChanges: No overrides to apply");
-        return true;
+        return false;
     }
 
     // Apply each override to the prefab

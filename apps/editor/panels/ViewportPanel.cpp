@@ -273,8 +273,18 @@ void ViewportPanel::renderScene() {
 
     // Render all entities (sprites render on top of physics debug)
     auto& world = m_editor.getWorld();
+    auto& assetManager = m_editor.getAssetManager();
     world.each<TransformComponent, SpriteRendererComponent>(
-        [](World::EntityId, TransformComponent& transform, SpriteRendererComponent& sprite) {
+        [&assetManager](World::EntityId, TransformComponent& transform,
+                        SpriteRendererComponent& sprite) {
+            if (sprite.textureId.isValid()) {
+                auto texture = assetManager.get<TextureAsset>(sprite.textureId);
+                if (texture && texture->getTexture()) {
+                    Renderer2D::drawQuad(transform.getMatrix(), *texture->getTexture(),
+                                         sprite.uvMin, sprite.uvMax, sprite.color);
+                    return;
+                }
+            }
             Renderer2D::drawQuad(transform.getMatrix(), sprite.color);
         });
 
