@@ -694,8 +694,7 @@ void Prefab::updateInstances(World& world, bool respectOverrides) const {
                 if (canUpdate("Rigidbody2D", "fixedRotation") && data.contains("fixedRotation")) {
                     c.fixedRotation = data["fixedRotation"].get<bool>();
                 }
-                if (canUpdate("Rigidbody2D", "linearVelocity") &&
-                    data.contains("linearVelocity")) {
+                if (canUpdate("Rigidbody2D", "linearVelocity") && data.contains("linearVelocity")) {
                     c.linearVelocity = deserializeVec2(data["linearVelocity"]);
                 }
                 if (canUpdate("Rigidbody2D", "angularVelocity") &&
@@ -705,8 +704,7 @@ void Prefab::updateInstances(World& world, bool respectOverrides) const {
                 if (canUpdate("Rigidbody2D", "linearDamping") && data.contains("linearDamping")) {
                     c.linearDamping = data["linearDamping"].get<f32>();
                 }
-                if (canUpdate("Rigidbody2D", "angularDamping") &&
-                    data.contains("angularDamping")) {
+                if (canUpdate("Rigidbody2D", "angularDamping") && data.contains("angularDamping")) {
                     c.angularDamping = data["angularDamping"].get<f32>();
                 }
             } else if (typeName == "BoxCollider2D") {
@@ -753,8 +751,7 @@ void Prefab::updateInstances(World& world, bool respectOverrides) const {
                 if (canUpdate("CircleCollider2D", "friction") && data.contains("friction")) {
                     c.friction = data["friction"].get<f32>();
                 }
-                if (canUpdate("CircleCollider2D", "restitution") &&
-                    data.contains("restitution")) {
+                if (canUpdate("CircleCollider2D", "restitution") && data.contains("restitution")) {
                     c.restitution = data["restitution"].get<f32>();
                 }
                 if (canUpdate("CircleCollider2D", "restitutionThreshold") &&

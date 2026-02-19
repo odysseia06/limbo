@@ -470,10 +470,8 @@ void EditorApp::renderMenuBar() {
         m_showPrefabCloseDialog = false;
     }
 
-    if (ImGui::BeginPopupModal("Close Prefab?", nullptr,
-                               ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("Prefab '%s' has unsaved changes.",
-                    m_prefabStage.getPrefabName().c_str());
+    if (ImGui::BeginPopupModal("Close Prefab?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Prefab '%s' has unsaved changes.", m_prefabStage.getPrefabName().c_str());
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();

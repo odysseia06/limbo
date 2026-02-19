@@ -84,13 +84,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install clang-format
-        run: sudo apt-get install -y clang-format-15
-
       - name: Check formatting
         run: |
-          find engine apps tests -name "*.cpp" -o -name "*.hpp" | \
-            xargs clang-format-15 --dry-run --Werror
+          find engine apps tests \( -name "*.cpp" -o -name "*.hpp" \) -print0 | \
+            xargs -0 clang-format --dry-run --Werror
 
   clang-tidy:
     runs-on: ubuntu-latest

@@ -280,13 +280,11 @@ void PrefabOverridesPanel::drawToolbar() {
     // Apply All button
     if (ImGui::Button("Apply All", ImVec2(buttonWidth, 0))) {
         // Find the prefab file on disk
-        std::filesystem::path prefabsDir =
-            std::filesystem::current_path() / "assets" / "prefabs";
+        std::filesystem::path prefabsDir = std::filesystem::current_path() / "assets" / "prefabs";
         std::filesystem::path foundPath;
 
         if (std::filesystem::exists(prefabsDir)) {
-            for (const auto& entry :
-                 std::filesystem::recursive_directory_iterator(prefabsDir)) {
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(prefabsDir)) {
                 if (!entry.is_regular_file() || entry.path().extension() != ".prefab") {
                     continue;
                 }

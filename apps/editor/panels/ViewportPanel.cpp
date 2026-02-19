@@ -197,12 +197,10 @@ void ViewportPanel::handleAssetDrop() {
                 ext == ".tga") {
                 // Compute path relative to asset root for AssetManager
                 auto const& assetRoot = m_editor.getAssetManager().getAssetRoot();
-                std::filesystem::path relativePath =
-                    std::filesystem::relative(path, assetRoot);
+                std::filesystem::path relativePath = std::filesystem::relative(path, assetRoot);
 
                 // Load the texture via AssetManager
-                auto texture =
-                    m_editor.getAssetManager().load<TextureAsset>(relativePath);
+                auto texture = m_editor.getAssetManager().load<TextureAsset>(relativePath);
 
                 AssetId textureAssetId;
                 if (texture && texture->getState() == AssetState::Loaded) {
@@ -216,8 +214,7 @@ void ViewportPanel::handleAssetDrop() {
                         auto& transform = e.getComponent<TransformComponent>();
                         transform.position = glm::vec3(worldPos, 0.0f);
 
-                        auto& sprite =
-                            e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
+                        auto& sprite = e.addComponent<SpriteRendererComponent>(glm::vec4(1.0f));
                         sprite.textureId = textureAssetId;
 
                         LIMBO_LOG_EDITOR_INFO("Created sprite from: {}", assetPath);

@@ -333,7 +333,8 @@ TEST_CASE("Prefab: updateInstances respects overrides", "[scene][prefab]") {
                            nlohmann::json::array({0.0f, 0.0f, 1.0f, 1.0f}));
 
     // Set instance color to blue (the override value)
-    instance.getComponent<limbo::SpriteRendererComponent>().color = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    instance.getComponent<limbo::SpriteRendererComponent>().color =
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
     // Change prefab to green
     auto* prefabEntity = prefab.findEntity("root");
