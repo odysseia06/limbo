@@ -177,6 +177,7 @@ private:
     bool m_showDemoWindow = false;
     bool m_showSceneSelectPopup = false;
     bool m_showProfiler = false;
+    bool m_showPrefabCloseDialog = false;
 
     // Layout state
     bool m_layoutInitialized = false;

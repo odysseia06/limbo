@@ -7,6 +7,8 @@
 #include <limbo/ecs/Entity.hpp>
 #include <limbo/ecs/Components.hpp>
 #include <limbo/ecs/Hierarchy.hpp>
+#include <limbo/physics/2d/PhysicsComponents2D.hpp>
+#include <limbo/scripting/ScriptComponent.hpp>
 #include <limbo/scene/Prefab.hpp>
 
 using Catch::Matchers::WithinAbs;
@@ -249,4 +251,132 @@ TEST_CASE("Prefab: Multiple instantiation", "[scene][prefab]") {
             prefab.getPrefabId());
     REQUIRE(instance3.getComponent<limbo::PrefabInstanceComponent>().prefabId ==
             prefab.getPrefabId());
+}
+
+TEST_CASE("Prefab: updateInstances syncs SpriteRenderer", "[scene][prefab]") {
+    limbo::World world;
+
+    // Create source entity with sprite
+    auto source = world.createEntity("Sprite");
+    source.addComponent<limbo::TransformComponent>();
+    source.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    limbo::Prefab prefab = limbo::Prefab::createFromEntity(world, source.id());
+
+    // Instantiate
+    limbo::World world2;
+    auto instance = prefab.instantiate(world2);
+
+    REQUIRE(instance.hasComponent<limbo::SpriteRendererComponent>());
+    auto& sprite = instance.getComponent<limbo::SpriteRendererComponent>();
+    REQUIRE_THAT(sprite.color.r, WithinAbs(1.0f, 0.001f));
+
+    // Modify the prefab source color
+    auto* prefabEntity = prefab.findEntity("root");
+    REQUIRE(prefabEntity != nullptr);
+    prefabEntity->components["SpriteRenderer"]["color"] =
+        nlohmann::json::array({0.0f, 1.0f, 0.0f, 1.0f});
+
+    // Update instances
+    prefab.updateInstances(world2, false);
+
+    auto& updatedSprite = instance.getComponent<limbo::SpriteRendererComponent>();
+    REQUIRE_THAT(updatedSprite.color.r, WithinAbs(0.0f, 0.001f));
+    REQUIRE_THAT(updatedSprite.color.g, WithinAbs(1.0f, 0.001f));
+}
+
+TEST_CASE("Prefab: updateInstances syncs BoxCollider2D", "[scene][prefab]") {
+    limbo::World world;
+
+    auto source = world.createEntity("Physics");
+    source.addComponent<limbo::TransformComponent>();
+    source.addComponent<limbo::BoxCollider2DComponent>(glm::vec2(1.0f, 1.0f));
+
+    limbo::Prefab prefab = limbo::Prefab::createFromEntity(world, source.id());
+
+    limbo::World world2;
+    auto instance = prefab.instantiate(world2);
+
+    REQUIRE(instance.hasComponent<limbo::BoxCollider2DComponent>());
+    auto& box = instance.getComponent<limbo::BoxCollider2DComponent>();
+    REQUIRE_THAT(box.size.x, WithinAbs(1.0f, 0.001f));
+
+    // Modify the prefab
+    auto* prefabEntity = prefab.findEntity("root");
+    REQUIRE(prefabEntity != nullptr);
+    prefabEntity->components["BoxCollider2D"]["size"] = nlohmann::json::array({2.0f, 3.0f});
+    prefabEntity->components["BoxCollider2D"]["friction"] = 0.8f;
+
+    prefab.updateInstances(world2, false);
+
+    auto& updatedBox = instance.getComponent<limbo::BoxCollider2DComponent>();
+    REQUIRE_THAT(updatedBox.size.x, WithinAbs(2.0f, 0.001f));
+    REQUIRE_THAT(updatedBox.size.y, WithinAbs(3.0f, 0.001f));
+    REQUIRE_THAT(updatedBox.friction, WithinAbs(0.8f, 0.001f));
+}
+
+TEST_CASE("Prefab: updateInstances respects overrides", "[scene][prefab]") {
+    limbo::World world;
+
+    auto source = world.createEntity("Source");
+    source.addComponent<limbo::TransformComponent>(glm::vec3(1.0f, 2.0f, 3.0f));
+    source.addComponent<limbo::SpriteRendererComponent>(glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+
+    limbo::Prefab prefab = limbo::Prefab::createFromEntity(world, source.id());
+
+    limbo::World world2;
+    auto instance = prefab.instantiate(world2);
+
+    // Mark color as overridden on the instance
+    auto& prefabInst = instance.getComponent<limbo::PrefabInstanceComponent>();
+    prefabInst.setOverride("SpriteRenderer", "color",
+                           nlohmann::json::array({0.0f, 0.0f, 1.0f, 1.0f}));
+
+    // Set instance color to blue (the override value)
+    instance.getComponent<limbo::SpriteRendererComponent>().color =
+        glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);
+
+    // Change prefab to green
+    auto* prefabEntity = prefab.findEntity("root");
+    prefabEntity->components["SpriteRenderer"]["color"] =
+        nlohmann::json::array({0.0f, 1.0f, 0.0f, 1.0f});
+
+    // Update with respectOverrides = true
+    prefab.updateInstances(world2, true);
+
+    // Color should stay blue (overridden), not change to green
+    auto& sprite = instance.getComponent<limbo::SpriteRendererComponent>();
+    REQUIRE_THAT(sprite.color.b, WithinAbs(1.0f, 0.001f));
+    REQUIRE_THAT(sprite.color.g, WithinAbs(0.0f, 0.001f));
+
+    // But sortingLayer should update (not overridden)
+    prefabEntity->components["SpriteRenderer"]["sortingLayer"] = 5;
+    prefab.updateInstances(world2, true);
+    REQUIRE(instance.getComponent<limbo::SpriteRendererComponent>().sortingLayer == 5);
+}
+
+TEST_CASE("Prefab: updateInstances syncs Script component", "[scene][prefab]") {
+    limbo::World world;
+
+    auto source = world.createEntity("Scripted");
+    source.addComponent<limbo::TransformComponent>();
+    auto& script = source.addComponent<limbo::ScriptComponent>();
+    script.scriptPath = "scripts/player.lua";
+    script.enabled = true;
+
+    limbo::Prefab prefab = limbo::Prefab::createFromEntity(world, source.id());
+
+    limbo::World world2;
+    auto instance = prefab.instantiate(world2);
+
+    REQUIRE(instance.hasComponent<limbo::ScriptComponent>());
+    REQUIRE(instance.getComponent<limbo::ScriptComponent>().scriptPath == "scripts/player.lua");
+
+    // Modify prefab script path
+    auto* prefabEntity = prefab.findEntity("root");
+    prefabEntity->components["Script"]["scriptPath"] = "scripts/enemy.lua";
+
+    prefab.updateInstances(world2, false);
+
+    REQUIRE(instance.getComponent<limbo::ScriptComponent>().scriptPath == "scripts/enemy.lua");
 }

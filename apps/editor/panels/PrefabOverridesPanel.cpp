@@ -1,11 +1,128 @@
 #include "PrefabOverridesPanel.hpp"
+#include "../commands/Command.hpp"
 #include "EditorApp.hpp"
 
+#include <limbo/ecs/Hierarchy.hpp>
 #include <limbo/scene/Prefab.hpp>
 
 #include <imgui.h>
 
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+
 namespace limbo::editor {
+
+namespace {
+
+/// Command to apply all prefab overrides (undoable)
+///
+/// Captures the original prefab file content and instance overrides before
+/// applying, so undo can fully restore both the asset file and world state.
+class ApplyAllOverridesCommand : public Command {
+public:
+    ApplyAllOverridesCommand(World& world, World::EntityId rootId, UUID prefabId,
+                             std::filesystem::path prefabPath)
+        : m_world(world), m_rootId(rootId), m_prefabId(prefabId),
+          m_prefabPath(std::move(prefabPath)) {}
+
+    bool execute() override {
+        // Snapshot the original prefab file for undo
+        {
+            std::ifstream file(m_prefabPath, std::ios::binary);
+            if (!file.is_open()) {
+                return false;
+            }
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            m_originalPrefabContent = ss.str();
+        }
+
+        // Snapshot instance overrides for undo
+        m_savedOverrides.clear();
+        captureOverrides(m_rootId);
+
+        // Load prefab, apply overrides to its data, and save to disk.
+        // applyInstanceChanges modifies both the Prefab object and clears
+        // overrides on the world entities, so if save fails we must restore.
+        Prefab prefab;
+        if (!prefab.loadFromFile(m_prefabPath)) {
+            return false;
+        }
+        if (!prefab.applyInstanceChanges(m_world, m_rootId)) {
+            return false;
+        }
+        if (!prefab.saveToFile(m_prefabPath)) {
+            // Save failed — restore world overrides that applyInstanceChanges cleared
+            restoreOverrides();
+            return false;
+        }
+        prefab.updateInstances(m_world, true);
+        return true;
+    }
+
+    bool undo() override {
+        // Restore the original prefab file
+        {
+            std::ofstream file(m_prefabPath, std::ios::binary | std::ios::trunc);
+            if (!file.is_open()) {
+                return false;
+            }
+            file << m_originalPrefabContent;
+            if (!file.good()) {
+                return false;
+            }
+        }
+
+        // Restore instance overrides
+        restoreOverrides();
+
+        // Reload the restored prefab and update instances
+        Prefab prefab;
+        if (!prefab.loadFromFile(m_prefabPath)) {
+            return false;
+        }
+        prefab.updateInstances(m_world, true);
+        return true;
+    }
+
+    [[nodiscard]] String getDescription() const override { return "Apply All Prefab Overrides"; }
+
+    COMMAND_TYPE_ID()
+
+private:
+    void captureOverrides(World::EntityId entityId) {
+        auto* inst = m_world.tryGetComponent<PrefabInstanceComponent>(entityId);
+        if (inst != nullptr && inst->prefabId == m_prefabId) {
+            m_savedOverrides[entityId] = inst->overrides;
+        }
+        Hierarchy::forEachChild(m_world, entityId, [this](World::EntityId childId) {
+            captureOverrides(childId);
+            return true;
+        });
+    }
+
+    void restoreOverrides() {
+        for (auto& [entityId, overrides] : m_savedOverrides) {
+            if (!m_world.isValid(entityId)) {
+                continue;
+            }
+            auto* inst = m_world.tryGetComponent<PrefabInstanceComponent>(entityId);
+            if (inst != nullptr) {
+                inst->overrides = overrides;
+            }
+        }
+    }
+
+    World& m_world;
+    World::EntityId m_rootId;
+    UUID m_prefabId;
+    std::filesystem::path m_prefabPath;
+    String m_originalPrefabContent;
+    std::unordered_map<World::EntityId, std::vector<PrefabOverride>> m_savedOverrides;
+};
+
+}  // namespace
 
 PrefabOverridesPanel::PrefabOverridesPanel(EditorApp& editor) : m_editor(editor) {}
 
@@ -162,8 +279,32 @@ void PrefabOverridesPanel::drawToolbar() {
 
     // Apply All button
     if (ImGui::Button("Apply All", ImVec2(buttonWidth, 0))) {
-        // TODO: Apply all overrides to the prefab asset
-        LIMBO_LOG_EDITOR_INFO("Apply All - not yet fully implemented");
+        // Find the prefab file on disk
+        std::filesystem::path prefabsDir = std::filesystem::current_path() / "assets" / "prefabs";
+        std::filesystem::path foundPath;
+
+        if (std::filesystem::exists(prefabsDir)) {
+            for (const auto& entry : std::filesystem::recursive_directory_iterator(prefabsDir)) {
+                if (!entry.is_regular_file() || entry.path().extension() != ".prefab") {
+                    continue;
+                }
+                Prefab tempPrefab;
+                if (tempPrefab.loadFromFile(entry.path()) &&
+                    tempPrefab.getPrefabId() == rootPrefabInst.prefabId) {
+                    foundPath = entry.path();
+                    break;
+                }
+            }
+        }
+
+        if (!foundPath.empty()) {
+            auto cmd = std::make_unique<ApplyAllOverridesCommand>(
+                m_editor.getWorld(), prefabRoot.id(), rootPrefabInst.prefabId, foundPath);
+            m_editor.executeCommand(std::move(cmd));
+        } else {
+            LIMBO_LOG_EDITOR_WARN("Could not find prefab asset with ID: {}",
+                                  rootPrefabInst.prefabId.toString());
+        }
     }
     if (ImGui::IsItemHovered()) {
         ImGui::SetTooltip("Apply all overrides to the prefab asset");

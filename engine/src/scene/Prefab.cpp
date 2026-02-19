@@ -560,47 +560,227 @@ void Prefab::deserializeEntityComponents(World& world, World::EntityId entityId,
 }
 
 void Prefab::updateInstances(World& world, bool respectOverrides) const {
-    // Find all instances of this prefab
     auto view = world.view<PrefabInstanceComponent>();
 
     for (auto entityId : view) {
         auto& instance = view.get<PrefabInstanceComponent>(entityId);
 
-        // Only update if this is from our prefab
         if (instance.prefabId != m_prefabId) {
             continue;
         }
 
-        // Find the corresponding prefab entity
         const PrefabEntity* prefabEntity = findEntity(instance.localId);
         if (prefabEntity == nullptr) {
             continue;
         }
 
-        // Update each component
-        for (const auto& [typeName, data] : prefabEntity->components) {
-            // For now, simplified update - just update Transform as example
-            // Full implementation would check each property against overrides
-            if (typeName == "Transform" && world.hasComponent<TransformComponent>(entityId)) {
-                auto& transform = world.getComponent<TransformComponent>(entityId);
+        // Helper: returns true if the property should be updated (no override blocking it)
+        auto canUpdate = [&](const String& comp, const String& prop) {
+            return !respectOverrides || !instance.hasOverride(comp, prop);
+        };
 
-                if (!respectOverrides || !instance.hasOverride("Transform", "position")) {
-                    if (data.contains("position")) {
-                        transform.position = deserializeVec3(data["position"]);
-                    }
+        for (const auto& [typeName, data] : prefabEntity->components) {
+            if (typeName == "Transform") {
+                if (!world.hasComponent<TransformComponent>(entityId)) {
+                    world.addComponent<TransformComponent>(entityId);
                 }
-                if (!respectOverrides || !instance.hasOverride("Transform", "rotation")) {
-                    if (data.contains("rotation")) {
-                        transform.rotation = deserializeVec3(data["rotation"]);
-                    }
+                auto& c = world.getComponent<TransformComponent>(entityId);
+                if (canUpdate("Transform", "position") && data.contains("position")) {
+                    c.position = deserializeVec3(data["position"]);
                 }
-                if (!respectOverrides || !instance.hasOverride("Transform", "scale")) {
-                    if (data.contains("scale")) {
-                        transform.scale = deserializeVec3(data["scale"]);
-                    }
+                if (canUpdate("Transform", "rotation") && data.contains("rotation")) {
+                    c.rotation = deserializeVec3(data["rotation"]);
+                }
+                if (canUpdate("Transform", "scale") && data.contains("scale")) {
+                    c.scale = deserializeVec3(data["scale"]);
+                }
+            } else if (typeName == "SpriteRenderer") {
+                if (!world.hasComponent<SpriteRendererComponent>(entityId)) {
+                    world.addComponent<SpriteRendererComponent>(entityId);
+                }
+                auto& c = world.getComponent<SpriteRendererComponent>(entityId);
+                if (canUpdate("SpriteRenderer", "color") && data.contains("color")) {
+                    c.color = deserializeVec4(data["color"]);
+                }
+                if (canUpdate("SpriteRenderer", "sortingLayer") && data.contains("sortingLayer")) {
+                    c.sortingLayer = data["sortingLayer"].get<i32>();
+                }
+                if (canUpdate("SpriteRenderer", "sortingOrder") && data.contains("sortingOrder")) {
+                    c.sortingOrder = data["sortingOrder"].get<i32>();
+                }
+                if (canUpdate("SpriteRenderer", "textureId") && data.contains("textureId")) {
+                    c.textureId = AssetId(UUID::fromString(data["textureId"].get<String>()));
+                }
+                if (canUpdate("SpriteRenderer", "uvMin") && data.contains("uvMin")) {
+                    c.uvMin = deserializeVec2(data["uvMin"]);
+                }
+                if (canUpdate("SpriteRenderer", "uvMax") && data.contains("uvMax")) {
+                    c.uvMax = deserializeVec2(data["uvMax"]);
+                }
+            } else if (typeName == "QuadRenderer") {
+                if (!world.hasComponent<QuadRendererComponent>(entityId)) {
+                    world.addComponent<QuadRendererComponent>(entityId);
+                }
+                auto& c = world.getComponent<QuadRendererComponent>(entityId);
+                if (canUpdate("QuadRenderer", "color") && data.contains("color")) {
+                    c.color = deserializeVec4(data["color"]);
+                }
+                if (canUpdate("QuadRenderer", "size") && data.contains("size")) {
+                    c.size = deserializeVec2(data["size"]);
+                }
+                if (canUpdate("QuadRenderer", "sortingLayer") && data.contains("sortingLayer")) {
+                    c.sortingLayer = data["sortingLayer"].get<i32>();
+                }
+                if (canUpdate("QuadRenderer", "sortingOrder") && data.contains("sortingOrder")) {
+                    c.sortingOrder = data["sortingOrder"].get<i32>();
+                }
+            } else if (typeName == "CircleRenderer") {
+                if (!world.hasComponent<CircleRendererComponent>(entityId)) {
+                    world.addComponent<CircleRendererComponent>(entityId);
+                }
+                auto& c = world.getComponent<CircleRendererComponent>(entityId);
+                if (canUpdate("CircleRenderer", "color") && data.contains("color")) {
+                    c.color = deserializeVec4(data["color"]);
+                }
+                if (canUpdate("CircleRenderer", "radius") && data.contains("radius")) {
+                    c.radius = data["radius"].get<f32>();
+                }
+                if (canUpdate("CircleRenderer", "segments") && data.contains("segments")) {
+                    c.segments = data["segments"].get<i32>();
+                }
+                if (canUpdate("CircleRenderer", "sortingLayer") && data.contains("sortingLayer")) {
+                    c.sortingLayer = data["sortingLayer"].get<i32>();
+                }
+                if (canUpdate("CircleRenderer", "sortingOrder") && data.contains("sortingOrder")) {
+                    c.sortingOrder = data["sortingOrder"].get<i32>();
+                }
+            } else if (typeName == "Camera") {
+                if (!world.hasComponent<CameraComponent>(entityId)) {
+                    world.addComponent<CameraComponent>(entityId);
+                }
+                auto& c = world.getComponent<CameraComponent>(entityId);
+                if (canUpdate("Camera", "projectionType") && data.contains("projectionType")) {
+                    String projType = data["projectionType"].get<String>();
+                    c.projectionType = (projType == "orthographic")
+                                           ? CameraComponent::ProjectionType::Orthographic
+                                           : CameraComponent::ProjectionType::Perspective;
+                }
+                if (canUpdate("Camera", "fov") && data.contains("fov")) {
+                    c.fov = data["fov"].get<f32>();
+                }
+                if (canUpdate("Camera", "orthoSize") && data.contains("orthoSize")) {
+                    c.orthoSize = data["orthoSize"].get<f32>();
+                }
+                if (canUpdate("Camera", "nearClip") && data.contains("nearClip")) {
+                    c.nearClip = data["nearClip"].get<f32>();
+                }
+                if (canUpdate("Camera", "farClip") && data.contains("farClip")) {
+                    c.farClip = data["farClip"].get<f32>();
+                }
+                if (canUpdate("Camera", "primary") && data.contains("primary")) {
+                    c.primary = data["primary"].get<bool>();
+                }
+            } else if (typeName == "Rigidbody2D") {
+                if (!world.hasComponent<Rigidbody2DComponent>(entityId)) {
+                    world.addComponent<Rigidbody2DComponent>(entityId);
+                }
+                auto& c = world.getComponent<Rigidbody2DComponent>(entityId);
+                if (canUpdate("Rigidbody2D", "type") && data.contains("type")) {
+                    c.type = static_cast<BodyType>(data["type"].get<int>());
+                }
+                if (canUpdate("Rigidbody2D", "gravityScale") && data.contains("gravityScale")) {
+                    c.gravityScale = data["gravityScale"].get<f32>();
+                }
+                if (canUpdate("Rigidbody2D", "fixedRotation") && data.contains("fixedRotation")) {
+                    c.fixedRotation = data["fixedRotation"].get<bool>();
+                }
+                if (canUpdate("Rigidbody2D", "linearVelocity") && data.contains("linearVelocity")) {
+                    c.linearVelocity = deserializeVec2(data["linearVelocity"]);
+                }
+                if (canUpdate("Rigidbody2D", "angularVelocity") &&
+                    data.contains("angularVelocity")) {
+                    c.angularVelocity = data["angularVelocity"].get<f32>();
+                }
+                if (canUpdate("Rigidbody2D", "linearDamping") && data.contains("linearDamping")) {
+                    c.linearDamping = data["linearDamping"].get<f32>();
+                }
+                if (canUpdate("Rigidbody2D", "angularDamping") && data.contains("angularDamping")) {
+                    c.angularDamping = data["angularDamping"].get<f32>();
+                }
+            } else if (typeName == "BoxCollider2D") {
+                if (!world.hasComponent<BoxCollider2DComponent>(entityId)) {
+                    world.addComponent<BoxCollider2DComponent>(entityId);
+                }
+                auto& c = world.getComponent<BoxCollider2DComponent>(entityId);
+                if (canUpdate("BoxCollider2D", "size") && data.contains("size")) {
+                    c.size = deserializeVec2(data["size"]);
+                }
+                if (canUpdate("BoxCollider2D", "offset") && data.contains("offset")) {
+                    c.offset = deserializeVec2(data["offset"]);
+                }
+                if (canUpdate("BoxCollider2D", "density") && data.contains("density")) {
+                    c.density = data["density"].get<f32>();
+                }
+                if (canUpdate("BoxCollider2D", "friction") && data.contains("friction")) {
+                    c.friction = data["friction"].get<f32>();
+                }
+                if (canUpdate("BoxCollider2D", "restitution") && data.contains("restitution")) {
+                    c.restitution = data["restitution"].get<f32>();
+                }
+                if (canUpdate("BoxCollider2D", "restitutionThreshold") &&
+                    data.contains("restitutionThreshold")) {
+                    c.restitutionThreshold = data["restitutionThreshold"].get<f32>();
+                }
+                if (canUpdate("BoxCollider2D", "isTrigger") && data.contains("isTrigger")) {
+                    c.isTrigger = data["isTrigger"].get<bool>();
+                }
+            } else if (typeName == "CircleCollider2D") {
+                if (!world.hasComponent<CircleCollider2DComponent>(entityId)) {
+                    world.addComponent<CircleCollider2DComponent>(entityId);
+                }
+                auto& c = world.getComponent<CircleCollider2DComponent>(entityId);
+                if (canUpdate("CircleCollider2D", "radius") && data.contains("radius")) {
+                    c.radius = data["radius"].get<f32>();
+                }
+                if (canUpdate("CircleCollider2D", "offset") && data.contains("offset")) {
+                    c.offset = deserializeVec2(data["offset"]);
+                }
+                if (canUpdate("CircleCollider2D", "density") && data.contains("density")) {
+                    c.density = data["density"].get<f32>();
+                }
+                if (canUpdate("CircleCollider2D", "friction") && data.contains("friction")) {
+                    c.friction = data["friction"].get<f32>();
+                }
+                if (canUpdate("CircleCollider2D", "restitution") && data.contains("restitution")) {
+                    c.restitution = data["restitution"].get<f32>();
+                }
+                if (canUpdate("CircleCollider2D", "restitutionThreshold") &&
+                    data.contains("restitutionThreshold")) {
+                    c.restitutionThreshold = data["restitutionThreshold"].get<f32>();
+                }
+                if (canUpdate("CircleCollider2D", "isTrigger") && data.contains("isTrigger")) {
+                    c.isTrigger = data["isTrigger"].get<bool>();
+                }
+            } else if (typeName == "Script") {
+                if (!world.hasComponent<ScriptComponent>(entityId)) {
+                    world.addComponent<ScriptComponent>(entityId);
+                }
+                auto& c = world.getComponent<ScriptComponent>(entityId);
+                if (canUpdate("Script", "scriptPath") && data.contains("scriptPath")) {
+                    c.scriptPath = data["scriptPath"].get<String>();
+                }
+                if (canUpdate("Script", "enabled") && data.contains("enabled")) {
+                    c.enabled = data["enabled"].get<bool>();
+                }
+            } else if (typeName == "Static") {
+                if (!world.hasComponent<StaticComponent>(entityId)) {
+                    world.addComponent<StaticComponent>(entityId);
+                }
+            } else if (typeName == "Active") {
+                if (!world.hasComponent<ActiveComponent>(entityId)) {
+                    world.addComponent<ActiveComponent>(entityId);
                 }
             }
-            // Add more component types as needed...
         }
     }
 }
@@ -632,7 +812,7 @@ bool Prefab::applyInstanceChanges(World& world, World::EntityId instanceRoot) {
 
     if (allOverrides.empty()) {
         LIMBO_LOG_CORE_INFO("Prefab::applyInstanceChanges: No overrides to apply");
-        return true;
+        return false;
     }
 
     // Apply each override to the prefab

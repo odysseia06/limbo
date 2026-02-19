@@ -397,10 +397,8 @@ void EditorApp::renderMenuBar() {
             // Scene name (clickable to return to scene)
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7f, 0.7f, 0.7f, 1.0f));
             if (ImGui::SmallButton(sceneName.c_str())) {
-                // Close prefab and return to scene
                 if (m_prefabStage.hasUnsavedChanges()) {
-                    // TODO: Show confirmation dialog
-                    m_prefabStage.close(true);  // Save by default for now
+                    m_showPrefabCloseDialog = true;
                 } else {
                     m_prefabStage.close(false);
                 }
@@ -440,8 +438,7 @@ void EditorApp::renderMenuBar() {
             ImGui::SameLine();
             if (ImGui::Button("Close")) {
                 if (m_prefabStage.hasUnsavedChanges()) {
-                    // TODO: Show confirmation dialog
-                    m_prefabStage.close(true);  // Save by default for now
+                    m_showPrefabCloseDialog = true;
                 } else {
                     m_prefabStage.close(false);
                 }
@@ -465,6 +462,34 @@ void EditorApp::renderMenuBar() {
                     Renderer2D::getStats().quadCount);
 
         ImGui::EndMenuBar();
+    }
+
+    // Prefab close confirmation dialog
+    if (m_showPrefabCloseDialog) {
+        ImGui::OpenPopup("Close Prefab?");
+        m_showPrefabCloseDialog = false;
+    }
+
+    if (ImGui::BeginPopupModal("Close Prefab?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Prefab '%s' has unsaved changes.", m_prefabStage.getPrefabName().c_str());
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Save", ImVec2(100, 0))) {
+            m_prefabStage.close(true);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Discard", ImVec2(100, 0))) {
+            m_prefabStage.close(false);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(100, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 }
 
@@ -494,6 +519,7 @@ void EditorApp::setupDockingLayout(ImGuiID dockspaceId) {
     ImGui::DockBuilderDockWindow("Hierarchy", dockLeft);
     ImGui::DockBuilderDockWindow("Viewport", dockCenter);
     ImGui::DockBuilderDockWindow("Inspector", dockRight);
+    ImGui::DockBuilderDockWindow("Prefab Overrides", dockRight);
 
     // Bottom section: tabbed panels (Asset Browser, Asset Pipeline, Console)
     ImGui::DockBuilderDockWindow("Asset Browser", dockBottom);
