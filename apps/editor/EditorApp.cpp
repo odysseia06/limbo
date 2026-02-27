@@ -1,4 +1,5 @@
 #include "EditorApp.hpp"
+#include "EditorUtils.hpp"
 
 #include "commands/EntityCommands.hpp"
 #include "commands/PropertyCommands.hpp"
@@ -7,6 +8,8 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+
+#include <cstring>
 
 namespace limbo::editor {
 
@@ -169,6 +172,98 @@ void EditorApp::onRender([[maybe_unused]] f32 interpolationAlpha) {
         if (ImGui::Button("Cancel", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
+        ImGui::EndPopup();
+    }
+
+    // Save As popup
+    if (m_showSaveAsPopup) {
+        ImGui::OpenPopup("Save Scene As");
+        m_showSaveAsPopup = false;
+    }
+
+    if (ImGui::BeginPopupModal("Save Scene As", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Enter scene filename:");
+        ImGui::Separator();
+
+        // Filename input
+        ImGui::SetNextItemWidth(300);
+        bool const enterPressed =
+            ImGui::InputText("##filename", m_saveAsFilename, sizeof(m_saveAsFilename),
+                             ImGuiInputTextFlags_EnterReturnsTrue);
+
+        // Show existing scenes for reference
+        ImGui::Spacing();
+        ImGui::TextDisabled("Existing scenes:");
+        std::filesystem::path const scenesDir = m_assetManager.getAssetRoot() / "scenes";
+        if (std::filesystem::exists(scenesDir)) {
+            ImGui::BeginChild("ExistingScenes", ImVec2(300, 100), true);
+            for (const auto& entry : std::filesystem::directory_iterator(scenesDir)) {
+                if (entry.path().extension() == ".json") {
+                    std::string const filename = entry.path().filename().string();
+                    if (ImGui::Selectable(filename.c_str())) {
+                        // Copy filename to input (without extension for editing)
+                        std::string stem = entry.path().stem().string();
+                        strncpy(m_saveAsFilename, stem.c_str(), sizeof(m_saveAsFilename) - 1);
+                        m_saveAsFilename[sizeof(m_saveAsFilename) - 1] = '\0';
+                    }
+                }
+            }
+            ImGui::EndChild();
+        }
+
+        ImGui::Separator();
+
+        bool shouldSave = enterPressed;
+        if (ImGui::Button("Save", ImVec2(120, 0))) {
+            shouldSave = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        // Handle save action
+        if (shouldSave) {
+            std::string filename = sanitizeSceneFilename(m_saveAsFilename);
+            if (!filename.empty()) {
+                m_saveAsTargetPath = scenesDir / filename;
+
+                // Check if file exists
+                if (std::filesystem::exists(m_saveAsTargetPath)) {
+                    m_showOverwriteConfirm = true;
+                } else {
+                    performSaveAs(m_saveAsTargetPath);
+                }
+                ImGui::CloseCurrentPopup();
+            }
+        }
+
+        ImGui::EndPopup();
+    }
+
+    // Overwrite confirmation popup
+    if (m_showOverwriteConfirm) {
+        ImGui::OpenPopup("Confirm Overwrite");
+        m_showOverwriteConfirm = false;
+    }
+
+    if (ImGui::BeginPopupModal("Confirm Overwrite", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("File already exists:");
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "%s",
+                           m_saveAsTargetPath.filename().string().c_str());
+        ImGui::Spacing();
+        ImGui::Text("Do you want to overwrite it?");
+        ImGui::Separator();
+
+        if (ImGui::Button("Overwrite", ImVec2(120, 0))) {
+            performSaveAs(m_saveAsTargetPath);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+
         ImGui::EndPopup();
     }
 
@@ -594,7 +689,20 @@ void EditorApp::newScene() {
     m_sceneModified = false;
     m_commandHistory.clear();
     deselectAll();
+    updateWindowTitle();
     LIMBO_LOG_EDITOR_INFO("New scene created");
+}
+
+void EditorApp::markSceneModified() {
+    if (m_prefabStage.isOpen()) {
+        m_prefabStage.markModified();
+    } else {
+        bool const wasModified = m_sceneModified;
+        m_sceneModified = true;
+        if (!wasModified) {
+            updateWindowTitle();
+        }
+    }
 }
 
 bool EditorApp::executeCommand(Unique<Command> command) {
@@ -631,6 +739,7 @@ void EditorApp::loadSceneFromPath(const std::filesystem::path& scenePath) {
             m_currentScenePath = scenePath;
             m_sceneModified = false;
             deselectAll();
+            updateWindowTitle();
             LIMBO_LOG_EDITOR_INFO("Scene loaded: {}", scenePath.string());
         } else {
             LIMBO_LOG_EDITOR_ERROR("Failed to load scene: {}", serializer.getError());
@@ -649,6 +758,7 @@ void EditorApp::saveScene() {
     SceneSerializer serializer(getWorld());
     if (serializer.saveToFile(m_currentScenePath)) {
         m_sceneModified = false;
+        updateWindowTitle();
         LIMBO_LOG_EDITOR_INFO("Scene saved: {}", m_currentScenePath.string());
     } else {
         LIMBO_LOG_EDITOR_ERROR("Failed to save scene: {}", serializer.getError());
@@ -656,20 +766,35 @@ void EditorApp::saveScene() {
 }
 
 void EditorApp::saveSceneAs() {
-    // TODO: Save file dialog
-    // For now, save to default location
-    std::filesystem::path const scenePath =
-        m_assetManager.getAssetRoot() / "scenes" / "default.json";
-    std::filesystem::create_directories(scenePath.parent_path());
+    // Initialize filename from current scene path if available
+    if (!m_currentScenePath.empty()) {
+        std::string stem = m_currentScenePath.stem().string();
+        strncpy(m_saveAsFilename, stem.c_str(), sizeof(m_saveAsFilename) - 1);
+        m_saveAsFilename[sizeof(m_saveAsFilename) - 1] = '\0';
+    } else {
+        strncpy(m_saveAsFilename, "untitled", sizeof(m_saveAsFilename) - 1);
+    }
+
+    // Show the Save As popup
+    m_showSaveAsPopup = true;
+}
+
+void EditorApp::performSaveAs(const std::filesystem::path& path) {
+    std::filesystem::create_directories(path.parent_path());
 
     SceneSerializer serializer(getWorld());
-    if (serializer.saveToFile(scenePath)) {
-        m_currentScenePath = scenePath;
+    if (serializer.saveToFile(path)) {
+        m_currentScenePath = path;
         m_sceneModified = false;
-        LIMBO_LOG_EDITOR_INFO("Scene saved: {}", scenePath.string());
+        updateWindowTitle();
+        LIMBO_LOG_EDITOR_INFO("Scene saved: {}", path.string());
     } else {
         LIMBO_LOG_EDITOR_ERROR("Failed to save scene: {}", serializer.getError());
     }
+}
+
+void EditorApp::updateWindowTitle() {
+    getWindow().setTitle(buildEditorWindowTitle(m_currentScenePath, m_sceneModified));
 }
 
 void EditorApp::onPlay() {
@@ -738,6 +863,7 @@ void EditorApp::onStop() {
 
         // Restore modification flag
         m_sceneModified = m_wasModifiedBeforePlay;
+        updateWindowTitle();
 
         // Deselect entity (entity IDs may have changed)
         deselectAll();

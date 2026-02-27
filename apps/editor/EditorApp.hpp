@@ -61,6 +61,8 @@ private:
     void openScene();
     void saveScene();
     void saveSceneAs();
+    void performSaveAs(const std::filesystem::path& path);
+    void updateWindowTitle();
 
     // Play controls
     void onPlay();
@@ -74,13 +76,7 @@ public:
     [[nodiscard]] Entity getSelectedEntity() const { return m_selectedEntity; }
 
     // Scene/Prefab modification tracking
-    void markSceneModified() {
-        if (m_prefabStage.isOpen()) {
-            m_prefabStage.markModified();
-        } else {
-            m_sceneModified = true;
-        }
-    }
+    void markSceneModified();
 
     // Load scene from file path (used by asset browser)
     void loadSceneFromPath(const std::filesystem::path& scenePath);
@@ -178,6 +174,12 @@ private:
     bool m_showSceneSelectPopup = false;
     bool m_showProfiler = false;
     bool m_showPrefabCloseDialog = false;
+
+    // Save As dialog state
+    bool m_showSaveAsPopup = false;
+    bool m_showOverwriteConfirm = false;
+    char m_saveAsFilename[256]{};
+    std::filesystem::path m_saveAsTargetPath;
 
     // Layout state
     bool m_layoutInitialized = false;

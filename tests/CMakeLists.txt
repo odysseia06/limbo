@@ -19,6 +19,7 @@ set(TEST_SOURCES
     physics/test_physics2d.cpp
     physics/test_physics_system.cpp
     scripting/test_scripting.cpp
+    editor/test_save_dialog.cpp
 )
 
 # Create test executable
@@ -30,6 +31,12 @@ target_link_libraries(limbo_tests
     PRIVATE
         limbo::engine
         Catch2::Catch2
+)
+
+# Editor utility headers (for editor tests)
+target_include_directories(limbo_tests
+    PRIVATE
+        ${CMAKE_SOURCE_DIR}/apps/editor
 )
 
 # Apply warnings

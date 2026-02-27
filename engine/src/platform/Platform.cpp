@@ -91,6 +91,12 @@ void Window::setShouldClose(bool value) {
     glfwSetWindowShouldClose(m_window, value ? GLFW_TRUE : GLFW_FALSE);
 }
 
+void Window::setTitle(const String& title) {
+    if (m_window) {
+        glfwSetWindowTitle(m_window, title.c_str());
+    }
+}
+
 // Platform functions
 
 namespace platform {

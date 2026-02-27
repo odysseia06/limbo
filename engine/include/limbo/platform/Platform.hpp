@@ -37,6 +37,8 @@ public:
     [[nodiscard]] i32 getHeight() const { return m_height; }
     [[nodiscard]] GLFWwindow* getNativeHandle() const { return m_window; }
 
+    void setTitle(const String& title);
+
 private:
     explicit Window(GLFWwindow* window, i32 width, i32 height);
 
